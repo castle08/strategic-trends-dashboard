@@ -1,0 +1,359 @@
+{
+  "generatedAt": "2025-08-09T12:59:40.346Z",
+  "sourceSummary": {
+    "totalFetched": 8,
+    "afterDedupe": 8,
+    "sources": [
+      "Marketing Brew",
+      "Creative Review",
+      "Adweek",
+      "Campaign Live"
+    ]
+  },
+  "trends": [
+    {
+      "id": "bd2d73b8-d93a-47c0-aed2-b8c9487411cf",
+      "title": "Sustainable Packaging Design Revolution Transforms E-commerce",
+      "url": "https://example.com/sustainable-packaging",
+      "source": "Creative Review",
+      "publishedAt": "2025-08-09T08:59:40.342Z",
+      "summary": "Innovative biodegradable materials and minimal design approaches are reshaping how brands think about product packaging and environmental impact.",
+      "category": "Design",
+      "tags": [
+        "sustainable",
+        "packaging",
+        "design",
+        "revolution",
+        "transforms"
+      ],
+      "scores": {
+        "novelty": 55.32972910786934,
+        "velocity": 57.684661731223684,
+        "relevance": 74.35950937879184,
+        "confidence": 70,
+        "total": 116.78340722386525
+      },
+      "whyItMatters": "Sustainable Packaging Design Revolution Transforms E-commerce represents a significant development in design.",
+      "brandAngles": [
+        "Brand awareness",
+        "Innovation positioning"
+      ],
+      "exampleUseCases": [
+        "Marketing campaigns",
+        "Product development"
+      ],
+      "creative": {
+        "shortCardCopy": "Sustainable Packaging Design Revolution Transforms E-commerce...",
+        "imagePrompt": "Professional illustration of sustainable packaging design revolution transforms e-commerce",
+        "altText": "Visual representation of Sustainable Packaging Design Revolution Transforms E-commerce",
+        "podcastSnippet": "Here's what you need to know about Sustainable Packaging Design Revolution Transforms E-commerce: Innovative biodegradable materials and minimal design approaches are reshaping how brands think about product packaging and environmental impact."
+      },
+      "viz": {
+        "size": 7,
+        "intensity": 1.2806392494308025,
+        "colorHint": "hsl(182, 65%, 47%)"
+      }
+    },
+    {
+      "id": "50c90048-d71a-4114-bcb8-ff439306b8d2",
+      "title": "Data Privacy Regulations Drive New Customer Consent UX Patterns",
+      "url": "https://example.com/privacy-ux-patterns",
+      "source": "Creative Review",
+      "publishedAt": "2025-08-09T00:59:40.342Z",
+      "summary": "Designers are creating more transparent and user-friendly ways to handle data consent, turning compliance into competitive advantage.",
+      "category": "Data/Analytics",
+      "tags": [
+        "data",
+        "privacy",
+        "regulations",
+        "drive",
+        "customer"
+      ],
+      "scores": {
+        "novelty": 58.83546218999096,
+        "velocity": 75.3104956025619,
+        "relevance": 69.51234339671444,
+        "confidence": 70,
+        "total": 112.88404924057275
+      },
+      "whyItMatters": "Data Privacy Regulations Drive New Customer Consent UX Patterns represents a significant development in data/analytics.",
+      "brandAngles": [
+        "Brand awareness",
+        "Innovation positioning"
+      ],
+      "exampleUseCases": [
+        "Marketing campaigns",
+        "Product development"
+      ],
+      "creative": {
+        "shortCardCopy": "Data Privacy Regulations Drive New Customer Consent UX Patterns...",
+        "imagePrompt": "Professional illustration of data privacy regulations drive new customer consent ux patterns",
+        "altText": "Visual representation of Data Privacy Regulations Drive New Customer Consent UX Patterns",
+        "podcastSnippet": "Here's what you need to know about Data Privacy Regulations Drive New Customer Consent UX Patterns: Designers are creating more transparent and user-friendly ways to handle data consent, turning compliance into competitive advantage."
+      },
+      "viz": {
+        "size": 8,
+        "intensity": 1.5802784252435522,
+        "colorHint": "hsl(169, 87%, 55%)"
+      }
+    },
+    {
+      "id": "f2d03ffe-7f7b-4e57-8f38-20b87765460e",
+      "title": "Voice Commerce Integration Drives 40% Increase in Smart Speaker Sales",
+      "url": "https://example.com/voice-commerce",
+      "source": "Adweek",
+      "publishedAt": "2025-08-09T06:59:40.342Z",
+      "summary": "Voice-activated shopping experiences are becoming mainstream, with major brands investing heavily in conversational commerce platforms.",
+      "category": "Technology",
+      "tags": [
+        "voice",
+        "commerce",
+        "integration",
+        "drives",
+        "increase"
+      ],
+      "scores": {
+        "novelty": 65.31351581960922,
+        "velocity": 71.635779661479,
+        "relevance": 73.30088601569923,
+        "confidence": 70,
+        "total": 105.09381806129531
+      },
+      "whyItMatters": "Voice Commerce Integration Drives 40% Increase in Smart Speaker Sales represents a significant development in technology.",
+      "brandAngles": [
+        "Brand awareness",
+        "Innovation positioning"
+      ],
+      "exampleUseCases": [
+        "Marketing campaigns",
+        "Product development"
+      ],
+      "creative": {
+        "shortCardCopy": "Voice Commerce Integration Drives 40% Increase in Smart Speaker Sales...",
+        "imagePrompt": "Professional illustration of voice commerce integration drives 40% increase in smart speaker sales",
+        "altText": "Visual representation of Voice Commerce Integration Drives 40% Increase in Smart Speaker Sales",
+        "podcastSnippet": "Here's what you need to know about Voice Commerce Integration Drives 40% Increase in Smart Speaker Sales: Voice-activated shopping experiences are becoming mainstream, with major brands investing heavily in conversational commerce platforms."
+      },
+      "viz": {
+        "size": 8,
+        "intensity": 1.517808254245143,
+        "colorHint": "hsl(44, 75%, 58%)"
+      }
+    },
+    {
+      "id": "81776a14-41ce-4f6c-bcc4-c80df8e74c0d",
+      "title": "Brand Purpose Marketing Evolved: From Statements to Measurable Action",
+      "url": "https://example.com/brand-purpose-evolution",
+      "source": "Campaign Live",
+      "publishedAt": "2025-08-08T20:59:40.342Z",
+      "summary": "Companies are moving beyond purpose-driven messaging to demonstrate real impact through transparent metrics and community partnerships.",
+      "category": "Marketing",
+      "tags": [
+        "brand",
+        "purpose",
+        "marketing",
+        "evolved:",
+        "from"
+      ],
+      "scores": {
+        "novelty": 67.34818021974185,
+        "velocity": 63.80333583169063,
+        "relevance": 73.44527162087562,
+        "confidence": 70,
+        "total": 102.97379537711554
+      },
+      "whyItMatters": "Brand Purpose Marketing Evolved: From Statements to Measurable Action represents a significant development in marketing.",
+      "brandAngles": [
+        "Brand awareness",
+        "Innovation positioning"
+      ],
+      "exampleUseCases": [
+        "Marketing campaigns",
+        "Product development"
+      ],
+      "creative": {
+        "shortCardCopy": "Brand Purpose Marketing Evolved: From Statements to Measurable Action...",
+        "imagePrompt": "Professional illustration of brand purpose marketing evolved: from statements to measurable action",
+        "altText": "Visual representation of Brand Purpose Marketing Evolved: From Statements to Measurable Action",
+        "podcastSnippet": "Here's what you need to know about Brand Purpose Marketing Evolved: From Statements to Measurable Action: Companies are moving beyond purpose-driven messaging to demonstrate real impact through transparent metrics and community partnerships."
+      },
+      "viz": {
+        "size": 8,
+        "intensity": 1.3846567091387407,
+        "colorHint": "hsl(54, 78%, 54%)"
+      }
+    },
+    {
+      "id": "a4e52ee1-74b9-4923-b3a4-01b4f0039c25",
+      "title": "AI-Powered Personalization Reaches New Heights in 2025 Marketing",
+      "url": "https://example.com/ai-personalization-2025",
+      "source": "Marketing Brew",
+      "publishedAt": "2025-08-09T10:59:40.341Z",
+      "summary": "Machine learning algorithms are now enabling hyper-personalized customer experiences across all touchpoints, with 73% improvement in conversion rates.",
+      "category": "Marketing",
+      "tags": [
+        "ai-powered",
+        "personalization",
+        "reaches",
+        "heights",
+        "2025"
+      ],
+      "scores": {
+        "novelty": 77.42937652894112,
+        "velocity": 56.272857296142945,
+        "relevance": 60.3299489772701,
+        "confidence": 70,
+        "total": 99.01206855088283
+      },
+      "whyItMatters": "AI-Powered Personalization Reaches New Heights in 2025 Marketing represents a significant development in marketing.",
+      "brandAngles": [
+        "Brand awareness",
+        "Innovation positioning"
+      ],
+      "exampleUseCases": [
+        "Marketing campaigns",
+        "Product development"
+      ],
+      "creative": {
+        "shortCardCopy": "AI-Powered Personalization Reaches New Heights in 2025 Marketing...",
+        "imagePrompt": "Professional illustration of ai-powered personalization reaches new heights in 2025 marketing",
+        "altText": "Visual representation of AI-Powered Personalization Reaches New Heights in 2025 Marketing",
+        "podcastSnippet": "Here's what you need to know about AI-Powered Personalization Reaches New Heights in 2025 Marketing: Machine learning algorithms are now enabling hyper-personalized customer experiences across all touchpoints, with 73% improvement in conversion rates."
+      },
+      "viz": {
+        "size": 7,
+        "intensity": 1.25663857403443,
+        "colorHint": "hsl(54, 78%, 54%)"
+      }
+    },
+    {
+      "id": "2ed79b9b-19dd-4e77-a775-1d651ee62758",
+      "title": "Gen Z's Social Media Habits Shift Towards Authentic Micro-Influencers",
+      "url": "https://example.com/gen-z-micro-influencers",
+      "source": "Campaign Live",
+      "publishedAt": "2025-08-09T04:59:40.342Z",
+      "summary": "Young consumers increasingly trust recommendations from smaller, niche content creators over celebrity endorsements, changing influencer marketing strategies.",
+      "category": "Social Media",
+      "tags": [
+        "social",
+        "media",
+        "habits",
+        "shift",
+        "towards"
+      ],
+      "scores": {
+        "novelty": 54.00427118468356,
+        "velocity": 79.78390851099417,
+        "relevance": 78.48006064004487,
+        "confidence": 70,
+        "total": 95.2655311133064
+      },
+      "whyItMatters": "Gen Z's Social Media Habits Shift Towards Authentic Micro-Influencers represents a significant development in social media.",
+      "brandAngles": [
+        "Brand awareness",
+        "Innovation positioning"
+      ],
+      "exampleUseCases": [
+        "Marketing campaigns",
+        "Product development"
+      ],
+      "creative": {
+        "shortCardCopy": "Gen Z's Social Media Habits Shift Towards Authentic Micro-Influencers...",
+        "imagePrompt": "Professional illustration of gen z's social media habits shift towards authentic micro-influencers",
+        "altText": "Visual representation of Gen Z's Social Media Habits Shift Towards Authentic Micro-Influencers",
+        "podcastSnippet": "Here's what you need to know about Gen Z's Social Media Habits Shift Towards Authentic Micro-Influencers: Young consumers increasingly trust recommendations from smaller, niche content creators over celebrity endorsements, changing influencer marketing strategies."
+      },
+      "viz": {
+        "size": 8,
+        "intensity": 1.6563264446869008,
+        "colorHint": "hsl(289, 71%, 57%)"
+      }
+    },
+    {
+      "id": "81ab2e18-df7e-479c-88fa-519c39b815df",
+      "title": "Augmented Reality Try-On Technology Reduces Return Rates by 35%",
+      "url": "https://example.com/ar-try-on",
+      "source": "Marketing Brew",
+      "publishedAt": "2025-08-09T02:59:40.342Z",
+      "summary": "Fashion and beauty brands implementing AR fitting solutions see significant improvements in customer satisfaction and reduced logistics costs.",
+      "category": "Technology",
+      "tags": [
+        "augmented",
+        "reality",
+        "try-on",
+        "technology",
+        "reduces"
+      ],
+      "scores": {
+        "novelty": 73.26925940618536,
+        "velocity": 42.407758026730775,
+        "relevance": 61.478066375166975,
+        "confidence": 70,
+        "total": 92.68315642803117
+      },
+      "whyItMatters": "Augmented Reality Try-On Technology Reduces Return Rates by 35% represents a significant development in technology.",
+      "brandAngles": [
+        "Brand awareness",
+        "Innovation positioning"
+      ],
+      "exampleUseCases": [
+        "Marketing campaigns",
+        "Product development"
+      ],
+      "creative": {
+        "shortCardCopy": "Augmented Reality Try-On Technology Reduces Return Rates by 35%...",
+        "imagePrompt": "Professional illustration of augmented reality try-on technology reduces return rates by 35%",
+        "altText": "Visual representation of Augmented Reality Try-On Technology Reduces Return Rates by 35%",
+        "podcastSnippet": "Here's what you need to know about Augmented Reality Try-On Technology Reduces Return Rates by 35%: Fashion and beauty brands implementing AR fitting solutions see significant improvements in customer satisfaction and reduced logistics costs."
+      },
+      "viz": {
+        "size": 7,
+        "intensity": 1.0209318864544232,
+        "colorHint": "hsl(44, 75%, 58%)"
+      }
+    },
+    {
+      "id": "e42be0eb-4f82-40d9-816d-afdf1c7a29d3",
+      "title": "Livestream Shopping Events Generate $2.3B in Q4 Sales",
+      "url": "https://example.com/livestream-shopping",
+      "source": "Adweek",
+      "publishedAt": "2025-08-08T22:59:40.342Z",
+      "summary": "Interactive video commerce platforms are creating new engagement models, blending entertainment with immediate purchase opportunities.",
+      "category": "Technology",
+      "tags": [
+        "livestream",
+        "shopping",
+        "events",
+        "generate",
+        "$2.3b"
+      ],
+      "scores": {
+        "novelty": 54.605694969889186,
+        "velocity": 41.64396905573862,
+        "relevance": 68.78588394550907,
+        "confidence": 70,
+        "total": 88.13833048917633
+      },
+      "whyItMatters": "Livestream Shopping Events Generate $2.3B in Q4 Sales represents a significant development in technology.",
+      "brandAngles": [
+        "Brand awareness",
+        "Innovation positioning"
+      ],
+      "exampleUseCases": [
+        "Marketing campaigns",
+        "Product development"
+      ],
+      "creative": {
+        "shortCardCopy": "Livestream Shopping Events Generate $2.3B in Q4 Sales...",
+        "imagePrompt": "Professional illustration of livestream shopping events generate $2.3b in q4 sales",
+        "altText": "Visual representation of Livestream Shopping Events Generate $2.3B in Q4 Sales",
+        "podcastSnippet": "Here's what you need to know about Livestream Shopping Events Generate $2.3B in Q4 Sales: Interactive video commerce platforms are creating new engagement models, blending entertainment with immediate purchase opportunities."
+      },
+      "viz": {
+        "size": 7,
+        "intensity": 1.0079474739475565,
+        "colorHint": "hsl(44, 75%, 58%)"
+      }
+    }
+  ]
+}

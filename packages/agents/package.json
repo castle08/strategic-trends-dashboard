@@ -1,0 +1,24 @@
+{
+  "name": "@trends/agents",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./trend-maker": "./src/trend-maker.ts"
+  },
+  "dependencies": {
+    "@trends/shared": "workspace:*",
+    "@anthropic-ai/sdk": "^0.59.0",
+    "openai": "^4.28.0",
+    "zod": "^3.22.4",
+    "dotenv": "^16.4.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.5",
+    "typescript": "^5.3.3"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "categories": {
+    "AI/ML": 1.2,
+    "Marketing": 1.0,
+    "Design": 1.1,
+    "Technology": 1.0,
+    "Social Media": 0.9,
+    "Advertising": 1.0,
+    "Branding": 1.1,
+    "Consumer Behavior": 1.0,
+    "Innovation": 1.2,
+    "Data/Analytics": 1.0,
+    "Sustainability": 1.1,
+    "E-commerce": 0.9
+  },
+  "sources": {
+    "Marketing Brew": 1.0,
+    "Creative Review": 1.1,
+    "Adweek": 1.0,
+    "Campaign Live": 1.0,
+    "Google Trends": 0.8,
+    "Reddit Tech": 0.7,
+    "Twitter Trends": 0.6
+  },
+  "recencyBoost": 1.5,
+  "confidenceThreshold": 60
+}

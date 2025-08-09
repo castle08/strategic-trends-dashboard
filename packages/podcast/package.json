@@ -1,0 +1,26 @@
+{
+  "name": "@trends/podcast",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./builder": "./src/podcast-builder.ts"
+  },
+  "dependencies": {
+    "@trends/shared": "workspace:*",
+    "node-fetch": "^3.3.2",
+    "fluent-ffmpeg": "^2.1.2",
+    "uuid": "^9.0.1",
+    "dotenv": "^16.4.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.5",
+    "@types/fluent-ffmpeg": "^2.1.24",
+    "@types/uuid": "^9.0.8",
+    "typescript": "^5.3.3"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  }
+}

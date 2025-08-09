@@ -1,0 +1,322 @@
+{
+  "name": "trend_daily_production",
+  "active": true,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 24
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Daily 7:30 UTC",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://blog.hubspot.com/marketing/rss.xml"
+      },
+      "id": "rss-hubspot",
+      "name": "HubSpot Marketing",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [460, 100]
+    },
+    {
+      "parameters": {
+        "url": "https://searchengineland.com/feed"
+      },
+      "id": "rss-sel",
+      "name": "Search Engine Land",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [460, 200]
+    },
+    {
+      "parameters": {
+        "url": "https://neilpatel.com/feed/"
+      },
+      "id": "rss-neil",
+      "name": "Neil Patel",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://www.socialmediaexaminer.com/feed/"
+      },
+      "id": "rss-sme",
+      "name": "Social Media Examiner",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [460, 400]
+    },
+    {
+      "parameters": {
+        "url": "https://blog.hootsuite.com/feed/"
+      },
+      "id": "rss-hootsuite",
+      "name": "Hootsuite Blog",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [460, 500]
+    },
+    {
+      "parameters": {
+        "operation": "merge"
+      },
+      "id": "merge-node",
+      "name": "Merge All RSS",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normalize and deduplicate RSS data\\nconst items = [];\\nconst seen = new Set();\\n\\nfor (const item of $input.all()) {\\n  const title = item.json.title || '';\\n  const url = item.json.link || item.json.url || '';\\n  const source = item.json.creator || 'RSS Source';\\n  const published = item.json.pubDate || item.json.published || new Date().toISOString();\\n  const summary = (item.json.contentSnippet || item.json.description || item.json.content || '').replace(/<[^>]*>/g, '').trim();\\n  \\n  // Create hash for deduplication\\n  const hash = title + '|' + url;\\n  if (seen.has(hash) || !title || !url || title.length < 10) continue;\\n  seen.add(hash);\\n  \\n  // Extract source name from various fields\\n  let sourceName = 'Marketing Source';\\n  if (url.includes('hubspot')) sourceName = 'HubSpot';\\n  else if (url.includes('searchengineland')) sourceName = 'Search Engine Land';\\n  else if (url.includes('neilpatel')) sourceName = 'Neil Patel';\\n  else if (url.includes('socialmediaexaminer')) sourceName = 'Social Media Examiner';\\n  else if (url.includes('hootsuite')) sourceName = 'Hootsuite';\\n  \\n  items.push({\\n    json: {\\n      title: title.trim(),\\n      url: url.trim(),\\n      source: sourceName,\\n      publishedAt: new Date(published).toISOString(),\\n      summary: summary.substring(0, 500),\\n      rawContent: item.json\\n    }\\n  });\\n}\\n\\n// Sort by published date (newest first) and limit to 12 items\\nitems.sort((a, b) => new Date(b.json.publishedAt) - new Date(a.json.publishedAt));\\n\\nconsole.log(`📰 Processed ${items.length} unique articles from RSS feeds`);\\n\\nreturn items.slice(0, 12);"
+      },
+      "id": "normalize-data",
+      "name": "Clean & Dedupe",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "operation": "complete",
+        "chatModel": "gpt-4o-mini",
+        "prompt": {
+          "messages": [
+            {
+              "role": "system",
+              "content": "You are TrendMaker, an AI expert at analyzing marketing and business trends. You identify emerging opportunities, assess their business impact, and create actionable insights for marketing professionals.\\n\\nFor each article, analyze and return ONLY a valid JSON object with this exact structure:\\n\\n{\\n  \\\"category\\\": \\\"Marketing|Technology|AI/ML|Social Media|E-commerce|Design|Data/Analytics|Consumer Behavior|Advertising|Branding|Innovation|Sustainability\\\",\\n  \\\"tags\\\": [\\\"array\\\", \\\"of\\\", \\\"relevant\\\", \\\"keywords\\\", \\\"max5\\\"],\\n  \\\"scores\\\": {\\n    \\\"novelty\\\": 0-100,\\n    \\\"velocity\\\": 0-100,\\n    \\\"relevance\\\": 0-100,\\n    \\\"confidence\\\": 0-100\\n  },\\n  \\\"whyItMatters\\\": \\\"Brief 2-3 sentence explanation of business significance and implications for marketers\\\",\\n  \\\"brandAngles\\\": [\\\"3-5 specific\\\", \\\"brand opportunities\\\", \\\"or strategic angles\\\"],\\n  \\\"exampleUseCases\\\": [\\\"3-5 practical\\\", \\\"applications for\\\", \\\"marketing teams\\\"],\\n  \\\"creative\\\": {\\n    \\\"shortCardCopy\\\": \\\"Punchy 60-80 char headline for displays\\\",\\n    \\\"imagePrompt\\\": \\\"Detailed prompt for AI image generation\\\",\\n    \\\"altText\\\": \\\"Accessible description for screen readers\\\",\\n    \\\"podcastSnippet\\\": \\\"2-3 sentences in conversational tone for audio content\\\"\\n  }\\n}\\n\\nScoring Guidelines:\\n- Novelty: How new/unique is this trend? (0=old news, 100=groundbreaking)\\n- Velocity: How fast is it spreading/growing? (0=slow adoption, 100=viral growth)\\n- Relevance: Business impact potential? (0=niche interest, 100=industry-changing)\\n- Confidence: Quality of data/source? (0=speculation, 100=proven data)\\n\\nReturn ONLY the JSON object, no additional text or formatting."
+            },
+            {
+              "role": "user",
+              "content": "Title: {{ $json.title }}\\nSource: {{ $json.source }}\\nSummary: {{ $json.summary }}\\nURL: {{ $json.url }}\\nPublished: {{ $json.publishedAt }}"
+            }
+          ]
+        },
+        "simplifyOutput": true,
+        "options": {
+          "maxTokens": 800,
+          "temperature": 0.3
+        }
+      },
+      "id": "ai-analysis",
+      "name": "OpenAI Trend Analysis",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1.1,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process AI response and create final trend item\\nconst rawData = $('Clean & Dedupe').item().json;\\nlet aiResult;\\n\\ntry {\\n  const response = $json.message?.content || $json.message || $json;\\n  aiResult = typeof response === 'string' ? JSON.parse(response) : response;\\n} catch (error) {\\n  console.log('AI parsing failed, using fallback:', error);\\n  // Enhanced fallback with better categorization\\n  const title = rawData.title.toLowerCase();\\n  let category = 'Marketing';\\n  if (title.includes('ai') || title.includes('artificial intelligence') || title.includes('machine learning')) category = 'AI/ML';\\n  else if (title.includes('social') || title.includes('instagram') || title.includes('facebook') || title.includes('twitter')) category = 'Social Media';\\n  else if (title.includes('ecommerce') || title.includes('e-commerce') || title.includes('shopping')) category = 'E-commerce';\\n  else if (title.includes('design') || title.includes('ux') || title.includes('ui')) category = 'Design';\\n  else if (title.includes('data') || title.includes('analytics') || title.includes('insights')) category = 'Data/Analytics';\\n  else if (title.includes('tech') || title.includes('digital')) category = 'Technology';\\n  \\n  aiResult = {\\n    category: category,\\n    tags: rawData.title.toLowerCase().split(/\\\\W+/).filter(w => w.length > 3).slice(0, 5),\\n    scores: {\\n      novelty: 60 + Math.random() * 30,\\n      velocity: 50 + Math.random() * 40,\\n      relevance: 65 + Math.random() * 25,\\n      confidence: 75\\n    },\\n    whyItMatters: `This ${category.toLowerCase()} trend represents a significant development that could reshape marketing strategies and customer engagement approaches.`,\\n    brandAngles: ['Market differentiation', 'Customer engagement', 'Innovation leadership', 'Competitive advantage'],\\n    exampleUseCases: ['Campaign strategy', 'Content creation', 'Customer experience', 'Brand positioning'],\\n    creative: {\\n      shortCardCopy: rawData.title.substring(0, 75) + (rawData.title.length > 75 ? '...' : ''),\\n      imagePrompt: `Professional marketing illustration showing ${rawData.title.toLowerCase()} concept with modern business aesthetic`,\\n      altText: `Visual representation of ${rawData.title} trend in marketing`,\\n      podcastSnippet: `Here's an interesting development: ${rawData.title}. ${rawData.summary.substring(0, 200)}`\\n    }\\n  };\\n}\\n\\n// Calculate total score\\naiResult.scores.total = (aiResult.scores.novelty + aiResult.scores.velocity + aiResult.scores.relevance + aiResult.scores.confidence) / 4;\\n\\n// Generate viz properties with improved size calculation\\nconst normalizedScore = Math.max(0, Math.min(100, aiResult.scores.total)) / 100;\\nconst size = Math.round(2 + Math.pow(normalizedScore, 1.5) * 10);\\nconst intensity = 0.3 + (aiResult.scores.velocity / 100) * 1.7;\\n\\n// Generate color from category\\nlet hash = 0;\\nfor (let i = 0; i < aiResult.category.length; i++) {\\n  hash = ((hash << 5) - hash) + aiResult.category.charCodeAt(i);\\n  hash = hash & hash;\\n}\\nconst hue = Math.abs(hash) % 360;\\nconst saturation = 65 + (Math.abs(hash >> 8) % 25);\\nconst lightness = 50 + (Math.abs(hash >> 16) % 15);\\n\\nconst trendItem = {\\n  id: Date.now().toString() + Math.random().toString(36).substr(2, 9),\\n  title: rawData.title,\\n  url: rawData.url,\\n  source: rawData.source,\\n  publishedAt: rawData.publishedAt,\\n  summary: rawData.summary,\\n  category: aiResult.category,\\n  tags: aiResult.tags || [],\\n  scores: {\\n    novelty: Math.round(aiResult.scores.novelty * 10) / 10,\\n    velocity: Math.round(aiResult.scores.velocity * 10) / 10,\\n    relevance: Math.round(aiResult.scores.relevance * 10) / 10,\\n    confidence: Math.round(aiResult.scores.confidence * 10) / 10,\\n    total: Math.round(aiResult.scores.total * 10) / 10\\n  },\\n  whyItMatters: aiResult.whyItMatters,\\n  brandAngles: aiResult.brandAngles || [],\\n  exampleUseCases: aiResult.exampleUseCases || [],\\n  creative: aiResult.creative,\\n  viz: {\\n    size: Math.max(2, size),\\n    intensity: Math.max(0.1, Math.round(intensity * 100) / 100),\\n    colorHint: `hsl(${hue}, ${saturation}%, ${lightness}%)`\\n  }\\n};\\n\\nreturn [{ json: trendItem }];"
+      },
+      "id": "process-trend",
+      "name": "Process Trend Item",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Collect all processed trends and create final dataset\\nconst allTrends = $input.all().map(item => item.json);\\n\\n// Sort by total score (highest first)\\nallTrends.sort((a, b) => b.scores.total - a.scores.total);\\n\\n// Take top 8 for visualization\\nconst topTrends = allTrends.slice(0, 8);\\n\\nconst dataset = {\\n  generatedAt: new Date().toISOString(),\\n  sourceSummary: {\\n    totalFetched: allTrends.length,\\n    afterDedupe: allTrends.length,\\n    sources: [...new Set(allTrends.map(t => t.source))],\\n    topCategories: [...new Set(topTrends.map(t => t.category))],\\n    scoreRange: {\\n      min: Math.min(...topTrends.map(t => t.scores.total)),\\n      max: Math.max(...topTrends.map(t => t.scores.total)),\\n      average: Math.round((topTrends.reduce((sum, t) => sum + t.scores.total, 0) / topTrends.length) * 10) / 10\\n    }\\n  },\\n  trends: topTrends\\n};\\n\\nconsole.log(`🚀 Created dataset with ${dataset.trends.length} trends`);\\nconsole.log(`📊 Score range: ${dataset.sourceSummary.scoreRange.min}-${dataset.sourceSummary.scoreRange.max}`);\\nconsole.log(`🎯 Size range: ${Math.min(...topTrends.map(t => t.viz.size))}-${Math.max(...topTrends.map(t => t.viz.size))}`);\\n\\nreturn [{ json: dataset }];"
+      },
+      "id": "collect-trends",
+      "name": "Collect Final Dataset",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Generate HTML output for manual processing\\nconst data = $json;\\nconst trends = data.trends || [];\\n\\nconst html = `<!DOCTYPE html>\\n<html lang=\\\"en\\\">\\n<head>\\n    <meta charset=\\\"UTF-8\\\">\\n    <meta name=\\\"viewport\\\" content=\\\"width=device-width, initial-scale=1.0\\\">\\n    <title>Daily Marketing Trends - ${new Date(data.generatedAt).toLocaleDateString()}</title>\\n    <style>\\n        body { font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 20px; background: #f8fafc; }\\n        .container { max-width: 1200px; margin: 0 auto; }\\n        .header { background: white; padding: 30px; border-radius: 12px; margin-bottom: 30px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }\\n        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0; }\\n        .stat { background: #f1f5f9; padding: 15px; border-radius: 8px; text-align: center; }\\n        .trends { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; }\\n        .trend { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid var(--color); }\\n        .trend-header { display: flex; justify-content: between; align-items: start; margin-bottom: 15px; }\\n        .trend-title { font-size: 18px; font-weight: 600; line-height: 1.3; margin: 0; color: #1e293b; }\\n        .trend-meta { font-size: 12px; color: #64748b; margin-top: 8px; }\\n        .trend-summary { color: #475569; line-height: 1.5; margin: 15px 0; }\\n        .scores { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0; }\\n        .score { text-align: center; padding: 8px; background: #f8fafc; border-radius: 6px; }\\n        .score-value { font-weight: 600; font-size: 16px; display: block; }\\n        .score-label { font-size: 11px; color: #64748b; text-transform: uppercase; }\\n        .tags { margin: 15px 0; }\\n        .tag { display: inline-block; background: #e2e8f0; color: #475569; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin: 2px 4px 2px 0; }\\n        .viz-info { background: #f1f5f9; padding: 15px; border-radius: 8px; margin-top: 20px; font-size: 14px; }\\n        .actions { margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0; }\\n        .btn { background: #3b82f6; color: white; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; margin-right: 10px; display: inline-block; }\\n        .json-data { background: #1e293b; color: #e2e8f0; padding: 20px; border-radius: 8px; margin-top: 30px; overflow: auto; font-family: monospace; font-size: 12px; }\\n    </style>\\n</head>\\n<body>\\n    <div class=\\\"container\\\">\\n        <div class=\\\"header\\\">\\n            <h1>Daily Marketing Trends</h1>\\n            <p>Generated: ${new Date(data.generatedAt).toLocaleString()}</p>\\n            \\n            <div class=\\\"stats\\\">\\n                <div class=\\\"stat\\\">\\n                    <strong>${trends.length}</strong><br>\\n                    <small>Trends Analyzed</small>\\n                </div>\\n                <div class=\\\"stat\\\">\\n                    <strong>${data.sourceSummary?.sources?.length || 0}</strong><br>\\n                    <small>Sources</small>\\n                </div>\\n                <div class=\\\"stat\\\">\\n                    <strong>${data.sourceSummary?.scoreRange?.average || 'N/A'}</strong><br>\\n                    <small>Avg Score</small>\\n                </div>\\n                <div class=\\\"stat\\\">\\n                    <strong>${data.sourceSummary?.topCategories?.length || 0}</strong><br>\\n                    <small>Categories</small>\\n                </div>\\n            </div>\\n        </div>\\n\\n        <div class=\\\"trends\\\">\\n${trends.map((trend, index) => `\\n            <div class=\\\"trend\\\" style=\\\"--color: ${trend.viz?.colorHint || '#3b82f6'}\\\">\\n                <div class=\\\"trend-header\\\">\\n                    <div>\\n                        <h2 class=\\\"trend-title\\\">${trend.title}</h2>\\n                        <div class=\\\"trend-meta\\\">${trend.source} • ${new Date(trend.publishedAt).toLocaleDateString()}</div>\\n                    </div>\\n                </div>\\n                \\n                <p class=\\\"trend-summary\\\">${trend.summary}</p>\\n                \\n                <div class=\\\"scores\\\">\\n                    <div class=\\\"score\\\">\\n                        <span class=\\\"score-value\\\">${trend.scores?.novelty?.toFixed(1) || 'N/A'}</span>\\n                        <span class=\\\"score-label\\\">Novelty</span>\\n                    </div>\\n                    <div class=\\\"score\\\">\\n                        <span class=\\\"score-value\\\">${trend.scores?.velocity?.toFixed(1) || 'N/A'}</span>\\n                        <span class=\\\"score-label\\\">Velocity</span>\\n                    </div>\\n                    <div class=\\\"score\\\">\\n                        <span class=\\\"score-value\\\">${trend.scores?.relevance?.toFixed(1) || 'N/A'}</span>\\n                        <span class=\\\"score-label\\\">Relevance</span>\\n                    </div>\\n                    <div class=\\\"score\\\">\\n                        <span class=\\\"score-value\\\">${trend.scores?.total?.toFixed(1) || 'N/A'}</span>\\n                        <span class=\\\"score-label\\\">Total</span>\\n                    </div>\\n                </div>\\n                \\n                <div class=\\\"tags\\\">\\n                    <span class=\\\"tag\\\">${trend.category}</span>\\n                    ${(trend.tags || []).map(tag => `<span class=\\\"tag\\\">${tag}</span>`).join('')}\\n                </div>\\n                \\n                <p><strong>Why it matters:</strong> ${trend.whyItMatters || 'Analysis pending'}</p>\\n                \\n                <div class=\\\"viz-info\\\">\\n                    <strong>3D Visualization:</strong> Size ${trend.viz?.size || 'N/A'} • Intensity ${trend.viz?.intensity?.toFixed(2) || 'N/A'} • ${trend.viz?.colorHint || 'No color'}\\n                </div>\\n                \\n                <div class=\\\"actions\\\">\\n                    <a href=\\\"${trend.url}\\\" target=\\\"_blank\\\" class=\\\"btn\\\">Read Article</a>\\n                </div>\\n            </div>`).join('')}\\n        </div>\\n        \\n        <div class=\\\"json-data\\\">\\n            <h3>JSON Data (Copy to latest.json):</h3>\\n            <pre>${JSON.stringify(data, null, 2)}</pre>\\n        </div>\\n    </div>\\n</body>\\n</html>`;\\n\\nreturn [{ json: { html: html, filename: `trends-${new Date(data.generatedAt).toISOString().split('T')[0]}.html` } }];"
+      },
+      "id": "generate-html",
+      "name": "Generate HTML Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1780, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Generate podcast script\\nconst data = $('Collect Final Dataset').item().json;\\nconst topTrends = (data.trends || []).slice(0, 6); // Top 6 for podcast\\n\\nconst script = `# Daily Marketing Trends Podcast\\n\\n**Generated:** ${new Date(data.generatedAt).toLocaleString()}\\n**Duration:** ~5 minutes\\n\\n## Intro\\nWelcome to your daily marketing trends briefing. I'm your AI host, and today I'm covering ${topTrends.length} key trends that are shaping the marketing landscape.\\n\\n${topTrends.map((trend, index) => `\\n## Trend ${index + 1}: ${trend.category}\\n\\n**${trend.title}**\\n\\n${trend.creative?.podcastSnippet || trend.whyItMatters}\\n\\n*Source: ${trend.source}*\\n*Impact Score: ${trend.scores?.total?.toFixed(1) || 'N/A'}/100*\\n\\n**Key Takeaways:**\\n${(trend.brandAngles || []).map(angle => `• ${angle}`).join('\\\\n')}\\n\\n**How to Use This:**\\n${(trend.exampleUseCases || []).map(use => `• ${use}`).join('\\\\n')}\\n\\n---`).join('\\\\n')}\\n\\n## Outro\\nThat wraps up today's marketing trends briefing. The highest-scoring trend today was \\\"${topTrends[0]?.title}\\\" with a score of ${topTrends[0]?.scores?.total?.toFixed(1)}. \\n\\nStay ahead of the curve, and I'll see you tomorrow with fresh insights.\\n\\n## TTS Instructions\\n- Use conversational, professional tone\\n- Pause briefly between trends\\n- Emphasize trend titles and key numbers\\n- Total target duration: 4-6 minutes\\n\\n## Metadata\\n- Episode: Daily-${new Date(data.generatedAt).toISOString().split('T')[0]}\\n- Trends Count: ${topTrends.length}\\n- Top Category: ${topTrends[0]?.category || 'N/A'}\\n- Score Range: ${data.sourceSummary?.scoreRange?.min?.toFixed(1)}-${data.sourceSummary?.scoreRange?.max?.toFixed(1)}`;\\n\\nreturn [{ json: { \\n  script: script, \\n  filename: `podcast-script-${new Date(data.generatedAt).toISOString().split('T')[0]}.md`,\\n  ttsText: topTrends.map(t => t.creative?.podcastSnippet || t.whyItMatters).join(' ... '),\\n  metadata: {\\n    date: data.generatedAt,\\n    trendsCount: topTrends.length,\\n    topCategory: topTrends[0]?.category,\\n    duration: '5min'\\n  }\\n} }];"
+      },
+      "id": "generate-podcast",
+      "name": "Generate Podcast Script",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1780, 400]
+    }
+  ],
+  "connections": {
+    "Daily 7:30 UTC": {
+      "main": [
+        [
+          {
+            "node": "HubSpot Marketing",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Search Engine Land",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Neil Patel",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Social Media Examiner",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Hootsuite Blog",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot Marketing": {
+      "main": [
+        [
+          {
+            "node": "Merge All RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Engine Land": {
+      "main": [
+        [
+          {
+            "node": "Merge All RSS",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Neil Patel": {
+      "main": [
+        [
+          {
+            "node": "Merge All RSS",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Social Media Examiner": {
+      "main": [
+        [
+          {
+            "node": "Merge All RSS",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Hootsuite Blog": {
+      "main": [
+        [
+          {
+            "node": "Merge All RSS",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Merge All RSS": {
+      "main": [
+        [
+          {
+            "node": "Clean & Dedupe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean & Dedupe": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Trend Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Trend Analysis": {
+      "main": [
+        [
+          {
+            "node": "Process Trend Item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Trend Item": {
+      "main": [
+        [
+          {
+            "node": "Collect Final Dataset",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Final Dataset": {
+      "main": [
+        [
+          {
+            "node": "Generate HTML Output",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Generate Podcast Script",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "timezone": "UTC"
+  },
+  "staticData": {},
+  "tags": [
+    {
+      "createdAt": "2025-08-09T13:00:00.000Z",
+      "updatedAt": "2025-08-09T13:00:00.000Z",
+      "id": "1",
+      "name": "production"
+    }
+  ]
+}

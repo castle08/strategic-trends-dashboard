@@ -1,0 +1,202 @@
+{
+  "trends": [
+    {
+      "id": "trend_1",
+      "title": "The Rise of AI-Generated Micro-Influencers",
+      "url": "https://example.com/trends/ai-micro-influencers",
+      "source": "TrendWatch AI",
+      "publishedAt": "2025-08-08T20:00:00.000Z",
+      "summary": "Brands are experimenting with AI-generated influencer personas to deliver hyper-targeted social campaigns without human scheduling or contracts.",
+      "category": "Social Media",
+      "tags": [
+        "AI influencers",
+        "personalization",
+        "social commerce",
+        "brand storytelling"
+      ],
+      "scores": {
+        "novelty": 88,
+        "velocity": 92,
+        "relevance": 90,
+        "confidence": 85,
+        "total": 88.75
+      },
+      "whyItMatters": "AI-driven personas can help brands scale influencer campaigns at lower cost while maintaining creative control and tailoring messages to niche communities.",
+      "brandAngles": [
+        "cost-efficient influencer campaigns",
+        "hyper-personalized content",
+        "risk-free talent management"
+      ],
+      "exampleUseCases": [
+        "Launching niche seasonal campaigns",
+        "Creating multilingual influencer personas",
+        "Testing campaign concepts without real-world risk"
+      ],
+      "creative": {
+        "shortCardCopy": "AI Personas Are the New Influencers",
+        "imagePrompt": "AI-generated influencer interacting with followers on a smartphone screen",
+        "altText": "AI influencer on a social media feed",
+        "podcastSnippet": "Discover how brands are using AI-generated micro-influencers to win over niche audiences."
+      },
+      "viz": {
+        "size": 11,
+        "intensity": 1.9,
+        "colorHint": "hsl(280, 70%, 60%)"
+      }
+    },
+    {
+      "id": "trend_2",
+      "title": "Shoppable Short-Form Video Overtakes Static Social Ads",
+      "url": "https://example.com/trends/shoppable-video-boom",
+      "source": "SocialCommerce Daily",
+      "publishedAt": "2025-08-07T11:00:00.000Z",
+      "summary": "Interactive, shoppable videos on TikTok, Instagram Reels, and YouTube Shorts are driving higher conversion rates than traditional feed ads.",
+      "category": "Social Commerce",
+      "tags": [
+        "shoppable content",
+        "short-form video",
+        "conversion optimization",
+        "ecommerce"
+      ],
+      "scores": {
+        "novelty": 75,
+        "velocity": 88,
+        "relevance": 92,
+        "confidence": 85,
+        "total": 85
+      },
+      "whyItMatters": "Consumers increasingly expect to purchase directly from within content, removing friction and boosting impulse buys.",
+      "brandAngles": [
+        "integrated shopping experiences",
+        "creator-led product launches",
+        "real-time conversion tracking"
+      ],
+      "exampleUseCases": [
+        "Partnering with creators for shoppable Reels",
+        "Embedding product tags in TikTok challenges",
+        "Running seasonal sales through short-form content"
+      ],
+      "creative": {
+        "shortCardCopy": "Short-Form Video Now Outperforms Static Ads",
+        "imagePrompt": "A smartphone playing a shoppable video with product tags",
+        "altText": "Interactive shoppable video",
+        "podcastSnippet": "Why shoppable short-form video is converting more than static ads — and how to jump in."
+      },
+      "viz": {
+        "size": 10,
+        "intensity": 1.72,
+        "colorHint": "hsl(38, 78%, 69%)"
+      }
+    },
+    {
+      "id": "trend_3",
+      "title": "Retail Media Networks Expand Beyond Grocery",
+      "url": "https://example.com/trends/retail-media-networks-2025",
+      "source": "AdMarket Insights",
+      "publishedAt": "2025-08-06T16:00:00.000Z",
+      "summary": "Retail media, once dominated by supermarkets, is expanding into fashion, home goods, and electronics, creating new brand opportunities.",
+      "category": "Retail Media",
+      "tags": [
+        "retail media",
+        "programmatic ads",
+        "omnichannel marketing",
+        "commerce media"
+      ],
+      "scores": {
+        "novelty": 72,
+        "velocity": 80,
+        "relevance": 94,
+        "confidence": 88,
+        "total": 83.5
+      },
+      "whyItMatters": "Retailers with rich shopper data are becoming key media players, allowing brands to target consumers close to purchase.",
+      "brandAngles": [
+        "data-driven targeting",
+        "point-of-sale influence",
+        "category expansion"
+      ],
+      "exampleUseCases": [
+        "Running ads on electronics retailer apps",
+        "Creating co-branded content with fashion chains",
+        "Leveraging first-party purchase data for retargeting"
+      ],
+      "creative": {
+        "shortCardCopy": "Retail Media Goes Mainstream",
+        "imagePrompt": "Digital billboards inside a retail store",
+        "altText": "In-store retail media screens",
+        "podcastSnippet": "How retail media networks are moving beyond grocery into every category."
+      },
+      "viz": {
+        "size": 10,
+        "intensity": 1.6,
+        "colorHint": "hsl(204, 80%, 52%)"
+      }
+    },
+    {
+      "id": "trend_4",
+      "title": "Brands Turn to Predictive Creative Testing",
+      "url": "https://example.com/trends/predictive-creative-testing",
+      "source": "CreativeTech Weekly",
+      "publishedAt": "2025-08-05T19:00:00.000Z",
+      "summary": "Machine learning models can now forecast the performance of ad creatives before they go live.",
+      "category": "AdTech",
+      "tags": [
+        "predictive analytics",
+        "creative testing",
+        "AI marketing",
+        "campaign optimization"
+      ],
+      "scores": {
+        "novelty": 85,
+        "velocity": 78,
+        "relevance": 90,
+        "confidence": 86,
+        "total": 84.75
+      },
+      "whyItMatters": "Predictive testing reduces wasted spend and accelerates creative iteration by showing which concepts will perform best before launch.",
+      "brandAngles": [
+        "pre-launch optimization",
+        "cost savings",
+        "data-backed creativity"
+      ],
+      "exampleUseCases": [
+        "A/B testing ad scripts before production",
+        "Forecasting engagement for social campaigns",
+        "Prioritizing high-performing concepts in media buys"
+      ],
+      "creative": {
+        "shortCardCopy": "Test Ads Before They Go Live",
+        "imagePrompt": "AI system scoring multiple ad creatives",
+        "altText": "Predictive creative analysis",
+        "podcastSnippet": "Why brands are embracing predictive creative testing to save budget and time."
+      },
+      "viz": {
+        "size": 9,
+        "intensity": 1.55,
+        "colorHint": "hsl(43, 61%, 69%)"
+      }
+    }
+  ],
+  "sourceSummary": {
+    "totalFetched": 4,
+    "afterDedupe": 4,
+    "sources": [
+      "TrendWatch AI",
+      "SocialCommerce Daily",
+      "AdMarket Insights",
+      "CreativeTech Weekly"
+    ],
+    "topCategories": [
+      "Social Media",
+      "Social Commerce",
+      "Retail Media",
+      "AdTech"
+    ],
+    "scoreRange": {
+      "min": 83.5,
+      "max": 88.75,
+      "average": 85.75
+    }
+  },
+  "generatedAt": "2025-08-09T14:33:02.210Z"
+}

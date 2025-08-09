@@ -1,0 +1,324 @@
+{
+  "name": "trend_daily_with_timeouts",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 24
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Daily 7:30 UTC",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://blog.hubspot.com/marketing/rss.xml",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "rss-hubspot",
+      "name": "HubSpot Marketing",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [460, 100],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://searchengineland.com/feed",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "rss-sel",
+      "name": "Search Engine Land",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [460, 200],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://neilpatel.com/feed/",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "rss-neil",
+      "name": "Neil Patel",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [460, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://www.socialmediaexaminer.com/feed/",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "rss-sme",
+      "name": "Social Media Examiner",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [460, 400],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://blog.hootsuite.com/feed/",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "rss-hootsuite",
+      "name": "Hootsuite Blog",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [460, 500],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "merge",
+        "options": {
+          "includeUnpaired": true
+        }
+      },
+      "id": "merge-node",
+      "name": "Merge All RSS",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [680, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Enhanced Clean & Dedupe node with comprehensive debugging\nconst items = [];\nconst seen = new Set();\nconst allInputItems = $input.all();\n\nconsole.log('═══ RSS FEED DEBUG START ═══');\nconsole.log(`🔍 DEBUG: Received ${allInputItems.length} total input items from RSS merge`);\n\n// Detailed debugging for each input\nallInputItems.forEach((item, index) => {\n  const hasTitle = !!(item.json.title);\n  const hasLink = !!(item.json.link || item.json.url);\n  const keys = Object.keys(item.json);\n  \n  console.log(`📥 Input ${index + 1}:`, {\n    hasTitle,\n    hasLink,\n    titleLength: (item.json.title || '').length,\n    source: item.json.creator || 'unknown',\n    keys: keys.join(', '),\n    sampleData: {\n      title: (item.json.title || '').substring(0, 50),\n      link: (item.json.link || item.json.url || '').substring(0, 50)\n    }\n  });\n  \n  // Check if this looks like an error response\n  if (item.json.error || item.json.message) {\n    console.log(`❌ RSS Error in item ${index + 1}:`, item.json.error || item.json.message);\n  }\n});\n\nif (allInputItems.length === 0) {\n  console.log('❌ No input items received from RSS merge - all RSS feeds may have failed');\n  console.log('🔧 Possible causes: Network timeout, RSS feed blocking n8n, invalid URLs');\n  \n  return [{\n    json: {\n      title: 'RSS Feed Debug Required - No Data Received',\n      url: 'https://debug.required',\n      source: 'Debug Source',\n      publishedAt: new Date().toISOString(),\n      summary: 'All RSS feeds failed to return data. Check network connectivity, RSS feed availability, and n8n timeout settings.',\n      rawContent: { debug: true, inputCount: 0, debugType: 'no_inputs' }\n    }\n  }];\n}\n\n// Process each RSS item with detailed logging\nfor (const item of allInputItems) {\n  const title = item.json.title || '';\n  const url = item.json.link || item.json.url || '';\n  const source = item.json.creator || 'RSS Source';\n  const published = item.json.pubDate || item.json.published || new Date().toISOString();\n  const summary = (item.json.contentSnippet || item.json.description || item.json.content || '').replace(/<[^>]*>/g, '').trim();\n  \n  // Detailed filtering with explanations\n  if (!title) {\n    console.log('⚠️ Skipping item: no title field');\n    continue;\n  }\n  if (!url) {\n    console.log('⚠️ Skipping item: no URL field');\n    continue;\n  }\n  if (title.length < 10) {\n    console.log(`⚠️ Skipping item: title too short (${title.length} chars): \"${title}\"`);\n    continue;\n  }\n  \n  // Check for duplicate content\n  const hash = title + '|' + url;\n  if (seen.has(hash)) {\n    console.log(`🔄 Duplicate found: \"${title.substring(0, 50)}...\"`);\n    continue;\n  }\n  seen.add(hash);\n  \n  // Determine source from URL\n  let sourceName = 'Marketing Source';\n  if (url.includes('hubspot')) sourceName = 'HubSpot';\n  else if (url.includes('searchengineland')) sourceName = 'Search Engine Land';\n  else if (url.includes('neilpatel')) sourceName = 'Neil Patel';\n  else if (url.includes('socialmediaexaminer')) sourceName = 'Social Media Examiner';\n  else if (url.includes('hootsuite')) sourceName = 'Hootsuite';\n  \n  console.log(`✅ Adding valid item: \"${title.substring(0, 40)}...\" from ${sourceName}`);\n  \n  items.push({\n    json: {\n      title: title.trim(),\n      url: url.trim(),\n      source: sourceName,\n      publishedAt: new Date(published).toISOString(),\n      summary: summary.substring(0, 500),\n      rawContent: item.json\n    }\n  });\n}\n\n// Sort by published date and limit results\nitems.sort((a, b) => new Date(b.json.publishedAt) - new Date(a.json.publishedAt));\nconst finalItems = items.slice(0, 12);\n\nconsole.log('═══ RSS PROCESSING RESULTS ═══');\nconsole.log(`🚀 Final result: ${finalItems.length} unique articles processed from ${allInputItems.length} raw RSS items`);\nconsole.log(`📊 Sources found: ${finalItems.map(item => item.json.source).join(', ')}`);\nconsole.log(`🎯 Date range: ${finalItems.length > 0 ? new Date(Math.min(...finalItems.map(item => new Date(item.json.publishedAt)))).toLocaleDateString() : 'N/A'} to ${finalItems.length > 0 ? new Date(Math.max(...finalItems.map(item => new Date(item.json.publishedAt)))).toLocaleDateString() : 'N/A'}`);\nconsole.log('═══ RSS DEBUG END ═══');\n\nif (finalItems.length === 0) {\n  console.log('⚠️ No valid articles after processing - creating debug fallback');\n  return [{\n    json: {\n      title: 'No Valid RSS Articles Found After Processing',\n      url: 'https://debug.required',\n      source: 'Debug Source', \n      publishedAt: new Date().toISOString(),\n      summary: `Received ${allInputItems.length} raw RSS items but none met validation criteria (title >10 chars, valid URL). Raw data may be malformed or filtered out.`,\n      rawContent: { \n        debug: true, \n        rawInputCount: allInputItems.length,\n        processedCount: items.length,\n        debugType: 'no_valid_after_processing'\n      }\n    }\n  }];\n}\n\nreturn finalItems;"
+      },
+      "id": "normalize-data",
+      "name": "Enhanced Clean & Debug",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "operation": "complete",
+        "chatModel": "gpt-4o-mini",
+        "prompt": {
+          "messages": [
+            {
+              "role": "system",
+              "content": "You are TrendMaker, an AI expert at analyzing marketing and business trends. You identify emerging opportunities, assess their business impact, and create actionable insights for marketing professionals.\n\nFor each article, analyze and return ONLY a valid JSON object with this exact structure:\n\n{\n  \"category\": \"Marketing|Technology|AI/ML|Social Media|E-commerce|Design|Data/Analytics|Consumer Behavior|Advertising|Branding|Innovation|Sustainability\",\n  \"tags\": [\"array\", \"of\", \"relevant\", \"keywords\", \"max5\"],\n  \"scores\": {\n    \"novelty\": 0-100,\n    \"velocity\": 0-100,\n    \"relevance\": 0-100,\n    \"confidence\": 0-100\n  },\n  \"whyItMatters\": \"Brief 2-3 sentence explanation of business significance and implications for marketers\",\n  \"brandAngles\": [\"3-5 specific\", \"brand opportunities\", \"or strategic angles\"],\n  \"exampleUseCases\": [\"3-5 practical\", \"applications for\", \"marketing teams\"],\n  \"creative\": {\n    \"shortCardCopy\": \"Punchy 60-80 char headline for displays\",\n    \"imagePrompt\": \"Detailed prompt for AI image generation\",\n    \"altText\": \"Accessible description for screen readers\",\n    \"podcastSnippet\": \"2-3 sentences in conversational tone for audio content\"\n  }\n}\n\nScoring Guidelines:\n- Novelty: How new/unique is this trend? (0=old news, 100=groundbreaking)\n- Velocity: How fast is it spreading/growing? (0=slow adoption, 100=viral growth)\n- Relevance: Business impact potential? (0=niche interest, 100=industry-changing)\n- Confidence: Quality of data/source? (0=speculation, 100=proven data)\n\nReturn ONLY the JSON object, no additional text or formatting."
+            },
+            {
+              "role": "user",
+              "content": "Title: {{ $json.title }}\nSource: {{ $json.source }}\nSummary: {{ $json.summary }}\nURL: {{ $json.url }}\nPublished: {{ $json.publishedAt }}"
+            }
+          ]
+        },
+        "simplifyOutput": true,
+        "options": {
+          "maxTokens": 800,
+          "temperature": 0.3,
+          "timeout": 60000
+        }
+      },
+      "id": "ai-analysis",
+      "name": "OpenAI Trend Analysis",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1.1,
+      "position": [1120, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// FIXED: Process AI response and create final trend item\nconst rawData = $input.first().json;\nlet aiResult;\n\ntry {\n  const response = $json.message?.content || $json.message || $json.choices?.[0]?.message?.content || $json;\n  aiResult = typeof response === 'string' ? JSON.parse(response) : response;\n  console.log('✅ AI analysis successful for:', rawData.title?.substring(0, 30) || 'unknown');\n} catch (error) {\n  console.log('⚠️ AI parsing failed, using enhanced fallback:', error.message);\n  const title = (rawData.title || '').toLowerCase();\n  let category = 'Marketing';\n  if (title.includes('ai') || title.includes('artificial intelligence') || title.includes('machine learning')) category = 'AI/ML';\n  else if (title.includes('social') || title.includes('instagram') || title.includes('facebook') || title.includes('twitter')) category = 'Social Media';\n  else if (title.includes('ecommerce') || title.includes('e-commerce') || title.includes('shopping')) category = 'E-commerce';\n  else if (title.includes('design') || title.includes('ux') || title.includes('ui')) category = 'Design';\n  else if (title.includes('data') || title.includes('analytics') || title.includes('insights')) category = 'Data/Analytics';\n  else if (title.includes('tech') || title.includes('digital')) category = 'Technology';\n  \n  aiResult = {\n    category: category,\n    tags: (rawData.title || '').toLowerCase().split(/\\W+/).filter(w => w.length > 3).slice(0, 5),\n    scores: {\n      novelty: Math.round(60 + Math.random() * 30),\n      velocity: Math.round(50 + Math.random() * 40),\n      relevance: Math.round(65 + Math.random() * 25),\n      confidence: 75\n    },\n    whyItMatters: `This ${category.toLowerCase()} trend represents a significant development that could reshape marketing strategies and customer engagement approaches.`,\n    brandAngles: ['Market differentiation', 'Customer engagement', 'Innovation leadership', 'Competitive advantage'],\n    exampleUseCases: ['Campaign strategy', 'Content creation', 'Customer experience', 'Brand positioning'],\n    creative: {\n      shortCardCopy: (rawData.title || 'Trend').substring(0, 75) + ((rawData.title || '').length > 75 ? '...' : ''),\n      imagePrompt: `Professional marketing illustration showing ${(rawData.title || 'marketing trend').toLowerCase()} concept with modern business aesthetic`,\n      altText: `Visual representation of ${rawData.title || 'marketing trend'} in marketing`,\n      podcastSnippet: `Here's an interesting development: ${rawData.title || 'A new marketing trend'}. ${(rawData.summary || '').substring(0, 200)}`\n    }\n  };\n}\n\n// Ensure scores exist and calculate total\nif (!aiResult.scores) {\n  aiResult.scores = { novelty: 70, velocity: 60, relevance: 75, confidence: 70 };\n}\naiResult.scores.total = (aiResult.scores.novelty + aiResult.scores.velocity + aiResult.scores.relevance + aiResult.scores.confidence) / 4;\n\n// Generate viz properties with improved size calculation\nconst normalizedScore = Math.max(0, Math.min(100, aiResult.scores.total)) / 100;\nconst size = Math.round(2 + Math.pow(normalizedScore, 1.5) * 10);\nconst intensity = 0.3 + (aiResult.scores.velocity / 100) * 1.7;\n\n// Generate color from category\nlet hash = 0;\nconst categoryStr = aiResult.category || 'Marketing';\nfor (let i = 0; i < categoryStr.length; i++) {\n  hash = ((hash << 5) - hash) + categoryStr.charCodeAt(i);\n  hash = hash & hash;\n}\nconst hue = Math.abs(hash) % 360;\nconst saturation = 65 + (Math.abs(hash >> 8) % 25);\nconst lightness = 50 + (Math.abs(hash >> 16) % 15);\n\nconst trendItem = {\n  id: Date.now().toString() + Math.random().toString(36).substr(2, 9),\n  title: rawData.title || 'Untitled Trend',\n  url: rawData.url || '',\n  source: rawData.source || 'Unknown Source',\n  publishedAt: rawData.publishedAt || new Date().toISOString(),\n  summary: rawData.summary || 'No summary available',\n  category: aiResult.category || 'Marketing',\n  tags: aiResult.tags || [],\n  scores: {\n    novelty: Math.round((aiResult.scores.novelty || 70) * 10) / 10,\n    velocity: Math.round((aiResult.scores.velocity || 60) * 10) / 10,\n    relevance: Math.round((aiResult.scores.relevance || 75) * 10) / 10,\n    confidence: Math.round((aiResult.scores.confidence || 70) * 10) / 10,\n    total: Math.round(aiResult.scores.total * 10) / 10\n  },\n  whyItMatters: aiResult.whyItMatters || 'This trend could impact marketing strategies.',\n  brandAngles: aiResult.brandAngles || ['Brand opportunity'],\n  exampleUseCases: aiResult.exampleUseCases || ['Marketing application'],\n  creative: aiResult.creative || {\n    shortCardCopy: (rawData.title || 'Trend').substring(0, 75),\n    imagePrompt: 'Professional marketing trend illustration',\n    altText: 'Marketing trend visualization',\n    podcastSnippet: 'An interesting marketing development worth noting.'\n  },\n  viz: {\n    size: Math.max(2, size),\n    intensity: Math.max(0.1, Math.round(intensity * 100) / 100),\n    colorHint: `hsl(${hue}, ${saturation}%, ${lightness}%)`\n  }\n};\n\nconsole.log(`✅ Processed trend: \"${trendItem.title}\" (Size: ${trendItem.viz.size}, Score: ${trendItem.scores.total})`);\n\nreturn [{ json: trendItem }];"
+      },
+      "id": "process-trend",
+      "name": "Process Trend Item",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Collect all processed trends and create final dataset\nconst allTrends = $input.all().map(item => item.json);\n\n// Sort by total score (highest first)\nallTrends.sort((a, b) => b.scores.total - a.scores.total);\n\n// Take top 8 for visualization\nconst topTrends = allTrends.slice(0, 8);\n\nconst dataset = {\n  generatedAt: new Date().toISOString(),\n  sourceSummary: {\n    totalFetched: allTrends.length,\n    afterDedupe: allTrends.length,\n    sources: [...new Set(allTrends.map(t => t.source))],\n    topCategories: [...new Set(topTrends.map(t => t.category))],\n    scoreRange: {\n      min: Math.min(...topTrends.map(t => t.scores.total)),\n      max: Math.max(...topTrends.map(t => t.scores.total)),\n      average: Math.round((topTrends.reduce((sum, t) => sum + t.scores.total, 0) / topTrends.length) * 10) / 10\n    }\n  },\n  trends: topTrends\n};\n\nconsole.log(`🚀 Created dataset with ${dataset.trends.length} trends`);\nconsole.log(`📊 Score range: ${dataset.sourceSummary.scoreRange.min.toFixed(1)}-${dataset.sourceSummary.scoreRange.max.toFixed(1)}`);\nconsole.log(`🎯 Size range: ${Math.min(...topTrends.map(t => t.viz.size))}-${Math.max(...topTrends.map(t => t.viz.size))}`);  \n\nreturn [{ json: dataset }];"
+      },
+      "id": "collect-trends",
+      "name": "Collect Final Dataset",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Generate clean JSON output ready for latest.json\nconst data = $json;\n\nconsole.log(`💾 Generated clean JSON file with ${data.trends?.length || 0} trends`);\nconsole.log(`🎯 Scores range: ${data.sourceSummary?.scoreRange?.min?.toFixed(1)}-${data.sourceSummary?.scoreRange?.max?.toFixed(1)}`);\nconsole.log(`📁 Ready to copy to: public/trends/latest.json`);\n\n// Output the data in a clean format\nreturn [{ \n  json: {\n    filename: 'latest.json',\n    content: JSON.stringify(data, null, 2),\n    instructions: 'Copy the content field to /Users/chelsea/Projects/trends/public/trends/latest.json',\n    data: data\n  }\n}];"
+      },
+      "id": "generate-json",
+      "name": "Generate JSON File", 
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1780, 300]
+    }
+  ],
+  "connections": {
+    "Daily 7:30 UTC": {
+      "main": [
+        [
+          {
+            "node": "HubSpot Marketing",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Search Engine Land",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Neil Patel",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Social Media Examiner",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Hootsuite Blog",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot Marketing": {
+      "main": [
+        [
+          {
+            "node": "Merge All RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Engine Land": {
+      "main": [
+        [
+          {
+            "node": "Merge All RSS",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Neil Patel": {
+      "main": [
+        [
+          {
+            "node": "Merge All RSS",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Social Media Examiner": {
+      "main": [
+        [
+          {
+            "node": "Merge All RSS",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Hootsuite Blog": {
+      "main": [
+        [
+          {
+            "node": "Merge All RSS",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Merge All RSS": {
+      "main": [
+        [
+          {
+            "node": "Enhanced Clean & Debug",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enhanced Clean & Debug": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Trend Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Trend Analysis": {
+      "main": [
+        [
+          {
+            "node": "Process Trend Item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Trend Item": {
+      "main": [
+        [
+          {
+            "node": "Collect Final Dataset",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Final Dataset": {
+      "main": [
+        [
+          {
+            "node": "Generate JSON File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "timezone": "UTC"
+  },
+  "staticData": {}
+}

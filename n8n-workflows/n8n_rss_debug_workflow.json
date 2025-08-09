@@ -1,0 +1,57 @@
+{
+  "name": "RSS Debug Test",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "manual-trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://blog.hubspot.com/marketing/rss.xml"
+      },
+      "id": "rss-hubspot",
+      "name": "HubSpot RSS Test",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [460, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// RSS Feed Debug and Processing\nconsole.log('=== RSS FEED DEBUG START ===');\n\nconst allInputItems = $input.all();\nconsole.log(`🔍 Total items received: ${allInputItems.length}`);\n\n// Debug each item in detail\nallInputItems.forEach((item, index) => {\n  console.log(`📰 Item ${index + 1}:`);\n  console.log(`  - Title: ${item.json.title || 'NO TITLE'}`);\n  console.log(`  - Link: ${item.json.link || 'NO LINK'}`);\n  console.log(`  - PubDate: ${item.json.pubDate || 'NO DATE'}`);\n  console.log(`  - Description length: ${(item.json.description || '').length}`);\n  console.log(`  - Content snippet length: ${(item.json.contentSnippet || '').length}`);\n  console.log(`  - Creator: ${item.json.creator || 'NO CREATOR'}`);\n  console.log(`  - Available keys: ${Object.keys(item.json).join(', ')}`);\n  \n  // Show first 100 chars of description\n  if (item.json.description) {\n    console.log(`  - Description preview: ${item.json.description.substring(0, 100)}...`);\n  }\n});\n\nif (allInputItems.length === 0) {\n  console.log('❌ ERROR: No RSS items received!');\n  console.log('🔧 Possible causes:');\n  console.log('  - RSS feed URL is blocked or unreachable');\n  console.log('  - Network connectivity issues');\n  console.log('  - RSS feed temporarily down');\n  console.log('  - n8n timeout (default is usually 5-10 seconds)');\n  \n  return [{\n    json: {\n      error: 'No RSS items received',\n      debug: 'RSS feeds may be failing or blocked',\n      timestamp: new Date().toISOString(),\n      suggestions: [\n        'Check RSS URL in browser',\n        'Verify network connectivity',\n        'Check n8n timeout settings',\n        'Try different RSS feed URL'\n      ]\n    }\n  }];\n}\n\n// Process and return first few items for detailed inspection\nconst results = allInputItems.slice(0, 5).map((item, index) => {\n  // Extract and clean description\n  const description = item.json.description || item.json.contentSnippet || '';\n  const cleanDescription = description.replace(/<[^>]*>/g, '').trim();\n  \n  return {\n    json: {\n      id: index + 1,\n      title: (item.json.title || 'No Title').trim(),\n      url: item.json.link || 'No URL',\n      source: 'HubSpot',\n      publishedAt: item.json.pubDate || 'No Date',\n      summary: cleanDescription.substring(0, 200),\n      creator: item.json.creator || 'Unknown',\n      hasDescription: !!description,\n      descriptionLength: description.length,\n      cleanDescriptionLength: cleanDescription.length,\n      allAvailableKeys: Object.keys(item.json),\n      rawItemSample: {\n        title: item.json.title,\n        link: item.json.link,\n        pubDate: item.json.pubDate,\n        hasContent: !!(item.json.content || item.json.contentSnippet)\n      }\n    }\n  };\n});\n\nconsole.log(`✅ Successfully processed ${results.length} items for analysis`);\nconsole.log(`📊 Title lengths: ${results.map(r => r.json.title.length).join(', ')}`);\nconsole.log(`🔗 All have URLs: ${results.every(r => r.json.url && r.json.url !== 'No URL')}`);\nconsole.log(`📅 All have dates: ${results.every(r => r.json.publishedAt && r.json.publishedAt !== 'No Date')}`);\nconsole.log('=== RSS FEED DEBUG END ===');\n\nreturn results;"
+      },
+      "id": "debug-process",
+      "name": "Debug RSS Processing",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 200]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "HubSpot RSS Test",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot RSS Test": {
+      "main": [
+        [
+          {
+            "node": "Debug RSS Processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

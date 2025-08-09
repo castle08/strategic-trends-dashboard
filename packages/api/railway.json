@@ -1,0 +1,10 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "buildCommand": "echo 'No build needed'"
+  },
+  "deploy": {
+    "startCommand": "node src/webhook.js",
+    "healthcheckPath": "/health"
+  }
+}

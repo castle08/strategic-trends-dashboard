@@ -1,0 +1,33 @@
+{
+  "name": "trend-intelligence-hub",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "scripts": {
+    "dev:screens": "pnpm --filter screens-app dev",
+    "dev:three": "pnpm --filter three-dashboard dev",
+    "dev:api": "pnpm --filter @trends/api dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "daily:simulate": "tsx packages/agents/src/simulate-daily.ts",
+    "podcast:simulate": "tsx packages/podcast/src/simulate-podcast.ts",
+    "test": "pnpm -r test"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@types/node": "^20.11.5",
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0",
+    "eslint": "^8.56.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  }
+}

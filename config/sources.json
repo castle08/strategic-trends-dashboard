@@ -1,0 +1,56 @@
+{
+  "sources": [
+    {
+      "name": "Marketing Brew",
+      "type": "rss",
+      "url": "https://www.morningbrew.com/marketing/feed",
+      "enabled": true,
+      "requiresAuth": false
+    },
+    {
+      "name": "Creative Review",
+      "type": "rss", 
+      "url": "https://www.creativereview.co.uk/feed/",
+      "enabled": true,
+      "requiresAuth": false
+    },
+    {
+      "name": "Adweek",
+      "type": "rss",
+      "url": "https://www.adweek.com/feed/",
+      "enabled": true,
+      "requiresAuth": false
+    },
+    {
+      "name": "Campaign Live",
+      "type": "rss",
+      "url": "https://www.campaignlive.co.uk/feed",
+      "enabled": true,
+      "requiresAuth": false
+    },
+    {
+      "name": "Google Trends",
+      "type": "api",
+      "url": "https://trends.google.com/trends/api",
+      "enabled": false,
+      "requiresAuth": true,
+      "authKey": "GOOGLE_TRENDS_API_KEY"
+    },
+    {
+      "name": "Reddit Tech",
+      "type": "api",
+      "url": "https://www.reddit.com/r/technology/hot.json",
+      "enabled": false,
+      "requiresAuth": true,
+      "authKey": "REDDIT_CLIENT_ID"
+    },
+    {
+      "name": "Twitter Trends",
+      "type": "api", 
+      "url": "https://api.twitter.com/2/trends/by/woeid/1",
+      "enabled": false,
+      "requiresAuth": true,
+      "authKey": "TWITTER_BEARER_TOKEN"
+    }
+  ]
+}
