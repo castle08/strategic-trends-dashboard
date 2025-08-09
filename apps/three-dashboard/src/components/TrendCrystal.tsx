@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Html, Text } from '@react-three/drei';
+import { Html } from '@react-three/drei';
 import { TrendItem } from '@trends/shared';
 import * as THREE from 'three';
 
