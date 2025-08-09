@@ -1,18 +1,5 @@
 {
-  "name": "strategic-trends-dashboard",
-  "version": 2,
   "installCommand": "npm install",
   "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "framework": "vite",
-  "routes": [
-    {
-      "src": "/api/trends",
-      "dest": "/api/trends.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
-  ]
+  "outputDirectory": "dist"
 }
