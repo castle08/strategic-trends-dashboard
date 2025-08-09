@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TrendsData } from '@trends/shared';
+import { TrendsData } from './types';
 import TrendCard from './components/TrendCard';
 import LoadingScreen from './components/LoadingScreen';
 import ErrorScreen from './components/ErrorScreen';
@@ -77,15 +77,19 @@ function App() {
       }
 
       try {
-        const response = await fetch('/public/trends/latest.json');
+        console.log('🔄 Fetching trends from local N8N data...');
+        const response = await fetch('/trends/latest.json');
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data: TrendsData = await response.json();
+        console.log('✅ Successfully loaded trends data:', data);
+        console.log('📊 Trends count:', data.trends?.length);
         setTrendsData(data);
         setError(null);
       } catch (err) {
-        console.error('Failed to fetch trends:', err);
+        console.error('❌ Failed to fetch trends:', err);
+        console.log('🔄 Falling back to demo data');
         setError('Failed to load trends data');
         setTrendsData(DEMO_DATA);
       } finally {
@@ -115,8 +119,8 @@ function App() {
   const currentTrend = trendsData.trends[currentIndex];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center p-8">
-      <div className="w-full max-w-6xl">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-slate-800 to-black flex items-center justify-center overflow-hidden">
+      <div className="w-full max-w-[95vw]">
         <TrendCard 
           trend={currentTrend} 
           index={currentIndex}
@@ -124,21 +128,28 @@ function App() {
           generatedAt={trendsData.generatedAt}
         />
         
-        {/* Progress indicators */}
-        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-2">
+        {/* Modern Progress indicators */}
+        <div className="fixed bottom-12 left-1/2 transform -translate-x-1/2 flex space-x-3">
           {trendsData.trends.map((_, index) => (
             <div
               key={index}
-              className={`h-2 w-8 rounded-full transition-all duration-300 ${
-                index === currentIndex ? 'bg-white' : 'bg-white/30'
+              className={`h-1 rounded-full transition-all duration-500 ${
+                index === currentIndex 
+                  ? 'bg-blue-400 w-16' 
+                  : 'bg-white/20 w-8'
               }`}
             />
           ))}
         </div>
 
-        {/* Status indicator */}
-        <div className="fixed top-4 right-4 text-sm text-white/70">
-          {isDemoMode ? 'DEMO MODE' : 'LIVE'} • {trendsData.trends.length} trends
+        {/* Modern Status indicator */}
+        <div className="fixed top-8 right-8 backdrop-blur-sm bg-black/30 rounded-xl px-4 py-2 text-white/70 text-lg font-medium">
+          <div className="flex items-center space-x-2">
+            <div className={`w-2 h-2 rounded-full ${isDemoMode ? 'bg-yellow-400' : 'bg-green-400'}`} />
+            <span>{isDemoMode ? 'DEMO' : 'LIVE'}</span>
+            <span className="text-white/50">•</span>
+            <span>{trendsData.trends.length} trends</span>
+          </div>
         </div>
       </div>
     </div>

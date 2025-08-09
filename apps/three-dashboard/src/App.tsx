@@ -162,8 +162,8 @@ function App() {
       }
 
       try {
-        console.log('🔄 Fetching trends from /api/trends...');
-        const response = await fetch('/api/trends');
+        console.log('🔄 Fetching trends from local N8N data...');
+        const response = await fetch('/trends/latest.json');
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }

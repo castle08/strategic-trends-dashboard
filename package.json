@@ -11,6 +11,7 @@
     "dev:screens": "pnpm --filter screens-app dev",
     "dev:three": "pnpm --filter three-dashboard dev",
     "dev:api": "pnpm --filter @trends/api dev",
+    "update-endpoint": "node update-trends-endpoint.js",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
@@ -22,6 +23,9 @@
     "apps/*",
     "packages/*"
   ],
+  "dependencies": {
+    "express": "^4.21.2"
+  },
   "devDependencies": {
     "@types/node": "^20.11.5",
     "@typescript-eslint/eslint-plugin": "^6.19.0",
