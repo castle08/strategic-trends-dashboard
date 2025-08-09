@@ -1,6 +1,6 @@
 import { useState, useEffect, Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { TrendsData, TrendItem } from '@trends/shared';
+import { TrendsData, TrendItem } from './types';
 import Scene from './components/Scene';
 import UI from './components/UI';
 import LoadingScreen from './components/LoadingScreen';

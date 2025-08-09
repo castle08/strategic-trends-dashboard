@@ -1,7 +1,7 @@
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { OrbitControls, Environment, Float } from '@react-three/drei';
-import { TrendItem } from '@trends/shared';
+import { TrendItem } from '../types';
 import * as THREE from 'three';
 import TrendCrystal from './TrendCrystal';
 

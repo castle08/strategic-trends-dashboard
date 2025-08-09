@@ -10,7 +10,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@trends/shared": "workspace:*",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "@react-three/fiber": "^8.15.19",
