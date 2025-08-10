@@ -1,0 +1,12 @@
+{
+  "functions": {
+    "api/merge-audio.js": {
+      "maxDuration": 30
+    }
+  },
+  "build": {
+    "env": {
+      "FFMPEG_PATH": "/usr/bin/ffmpeg"
+    }
+  }
+}

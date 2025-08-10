@@ -1,0 +1,19 @@
+{
+  "name": "audio-merge-service",
+  "version": "1.0.0",
+  "description": "FFmpeg audio merging service for n8n workflows",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'No build needed'",
+    "start": "echo 'Use vercel dev for local development'"
+  },
+  "dependencies": {
+    "fluent-ffmpeg": "^2.1.2",
+    "multer": "^1.4.5-lts.1",
+    "cors": "^2.8.5"
+  },
+  "keywords": ["ffmpeg", "audio", "merge", "vercel", "n8n"],
+  "author": "",
+  "license": "MIT"
+}
