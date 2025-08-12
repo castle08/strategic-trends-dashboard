@@ -272,8 +272,8 @@ Return only the JSON object, no additional text.`;
   }
 
   private calculateWeightedScore(item: TrendItem): number {
-    const categoryWeight = this.weights.categories[item.category] || 1.0;
-    const sourceWeight = this.weights.sources[item.source] || 1.0;
+    const categoryWeight = this.weights.categories[item.category || 'default'] || 1.0;
+    const sourceWeight = this.weights.sources[item.source || 'default'] || 1.0;
     
     const hoursOld = item.publishedAt 
       ? (Date.now() - new Date(item.publishedAt).getTime()) / (1000 * 60 * 60)
