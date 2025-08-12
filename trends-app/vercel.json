@@ -1,7 +1,7 @@
 {
   "installCommand": "npm install",
-  "buildCommand": "cd trends-app && npm run build",
-  "outputDirectory": "trends-app/dist",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
   "functions": {
     "api/merge-audio.js": {
       "maxDuration": 30
