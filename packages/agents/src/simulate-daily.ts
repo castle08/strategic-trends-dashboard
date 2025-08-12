@@ -4,7 +4,7 @@ import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { config } from 'dotenv';
 import { TrendMaker } from './trend-maker.js';
-import { TrendsData, RawTrendItem, WeightsConfig } from '@trends/shared';
+import { TrendsData, RawTrendItem, WeightsConfig } from './types';
 
 config();
 

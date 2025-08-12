@@ -1,6 +1,6 @@
 {
-  "installCommand": "pnpm install",
-  "buildCommand": "cd trends-app && pnpm run build",
+  "installCommand": "npm install",
+  "buildCommand": "cd trends-app && npm run build",
   "outputDirectory": "trends-app/dist",
   "functions": {
     "api/merge-audio.js": {

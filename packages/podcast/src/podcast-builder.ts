@@ -3,7 +3,7 @@ import { join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import fetch from 'node-fetch';
 import ffmpeg from 'fluent-ffmpeg';
-import { TrendItem, PodcastEpisode, PodcastFeed, getWeekNumber } from '@trends/shared';
+import { TrendItem, PodcastEpisode, PodcastFeed, getWeekNumber } from './types';
 
 export class PodcastBuilder {
   private elevenLabsKey: string | null;

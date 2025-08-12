@@ -4,7 +4,7 @@ import { readFile } from 'fs/promises';
 import { join } from 'path';
 import { config } from 'dotenv';
 import { PodcastBuilder } from './podcast-builder.js';
-import { TrendsData } from '@trends/shared';
+import { TrendsData } from './types';
 
 config();
 
