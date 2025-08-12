@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T&P Group Color Palette - Trends Dashboard</title>
+    <style>
+        body {
+            font-family: 'Space Grotesk', system-ui, sans-serif;
+            background: #000;
+            color: white;
+            margin: 0;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+        .section {
+            margin-bottom: 3rem;
+        }
+        .section h2 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: #f3f4f6;
+        }
+        .primary-section h2 {
+            color: #22c55e;
+        }
+        .secondary-section h2 {
+            color: #f59e0b;
+        }
+        .palette-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .color-card {
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+        }
+        .primary-card {
+            border-color: rgba(34, 197, 94, 0.3);
+            background: rgba(34, 197, 94, 0.05);
+        }
+        .secondary-card {
+            border-color: rgba(245, 158, 11, 0.3);
+            background: rgba(245, 158, 11, 0.05);
+        }
+        .color-preview {
+            height: 80px;
+            border-radius: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .color-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        .color-details {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            font-family: monospace;
+        }
+        .color-details div {
+            margin-bottom: 0.2rem;
+        }
+        .index {
+            background: rgba(255,255,255,0.1);
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.2rem;
+            display: inline-block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.8rem;
+        }
+        .primary-badge {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.2rem;
+            display: inline-block;
+            font-weight: 600;
+            margin-left: 0.5rem;
+            font-size: 0.75rem;
+        }
+        .secondary-badge {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.2rem;
+            display: inline-block;
+            font-weight: 600;
+            margin-left: 0.5rem;
+            font-size: 0.75rem;
+        }
+        .summary {
+            margin-top: 3rem;
+            padding: 2rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 T&P Group Complete Color Palette</h1>
+        <p style="text-align: center; opacity: 0.7; margin-bottom: 3rem;">
+            10 colors total: 6 primary (maximum distinction) + 4 secondary (backup for extra categories)
+        </p>
+        
+        <!-- PRIMARY COLORS -->
+        <div class="section primary-section">
+            <h2>🎯 PRIMARY COLORS (Assigned First)</h2>
+            <div class="palette-grid">
+                <!-- Primary 1: Warm Coral -->
+                <div class="color-card primary-card">
+                    <div class="index">Index: 0</div><div class="primary-badge">1st Priority</div>
+                    <div class="color-preview" style="background: linear-gradient(27deg, #e97e5f, #f2a365 50%, #d49c6a);"></div>
+                    <div class="color-name">Warm Coral</div>
+                    <div class="color-details">
+                        <div><strong>Solid:</strong> #f2a365</div>
+                        <div>Coral → Warm peach → Golden brown</div>
+                    </div>
+                </div>
+
+                <!-- Primary 2: Sapphire Blue -->
+                <div class="color-card primary-card">
+                    <div class="index">Index: 1</div><div class="primary-badge">2nd Priority</div>
+                    <div class="color-preview" style="background: linear-gradient(27deg, #1e40af, #3b82f6 50%, #2563b8);"></div>
+                    <div class="color-name">Sapphire Blue</div>
+                    <div class="color-details">
+                        <div><strong>Solid:</strong> #3b82f6</div>
+                        <div>Deep blue → Bright blue → Medium blue</div>
+                    </div>
+                </div>
+
+                <!-- Primary 3: Emerald Green -->
+                <div class="color-card primary-card">
+                    <div class="index">Index: 2</div><div class="primary-badge">3rd Priority</div>
+                    <div class="color-preview" style="background: linear-gradient(27deg, #059669, #10b981 50%, #0d7a5f);"></div>
+                    <div class="color-name">Emerald Green</div>
+                    <div class="color-details">
+                        <div><strong>Solid:</strong> #10b981</div>
+                        <div>Deep green → Bright green → Darker green</div>
+                    </div>
+                </div>
+
+                <!-- Primary 4: Lavender Purple -->
+                <div class="color-card primary-card">
+                    <div class="index">Index: 3</div><div class="primary-badge">4th Priority</div>
+                    <div class="color-preview" style="background: linear-gradient(27deg, #803bff, #ab81fa 50%, #8b5fb8);"></div>
+                    <div class="color-name">Lavender Purple</div>
+                    <div class="color-details">
+                        <div><strong>Solid:</strong> #ab81fa</div>
+                        <div>Purple → Lavender → Deeper purple</div>
+                    </div>
+                </div>
+
+                <!-- Primary 5: Amber Yellow -->
+                <div class="color-card primary-card">
+                    <div class="index">Index: 4</div><div class="primary-badge">5th Priority</div>
+                    <div class="color-preview" style="background: linear-gradient(27deg, #f59e0b, #fbbf24 50%, #e6930b);"></div>
+                    <div class="color-name">Amber Yellow</div>
+                    <div class="color-details">
+                        <div><strong>Solid:</strong> #fbbf24</div>
+                        <div>Amber → Yellow → Deeper amber</div>
+                    </div>
+                </div>
+
+                <!-- Primary 6: Rose Pink -->
+                <div class="color-card primary-card">
+                    <div class="index">Index: 5</div><div class="primary-badge">6th Priority</div>
+                    <div class="color-preview" style="background: linear-gradient(207deg, #d46a97, #c2548c 50%, #b83a6b);"></div>
+                    <div class="color-name">Rose Pink</div>
+                    <div class="color-details">
+                        <div><strong>Solid:</strong> #d46a97</div>
+                        <div>Pink → Deeper pink → Burgundy</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECONDARY COLORS -->
+        <div class="section secondary-section">
+            <h2>🔄 SECONDARY COLORS (Backup for Extra Categories)</h2>
+            <div class="palette-grid">
+                <!-- Secondary 1: Burnt Orange -->
+                <div class="color-card secondary-card">
+                    <div class="index">Index: 6</div><div class="secondary-badge">Backup</div>
+                    <div class="color-preview" style="background: linear-gradient(27deg, #7c2d12, #ea580c 50%, #c2410c);"></div>
+                    <div class="color-name">Burnt Orange</div>
+                    <div class="color-details">
+                        <div><strong>Solid:</strong> #ea580c</div>
+                        <div>Dark brown → Orange → Red-orange</div>
+                    </div>
+                </div>
+
+                <!-- Secondary 2: Cyan Blue -->
+                <div class="color-card secondary-card">
+                    <div class="index">Index: 7</div><div class="secondary-badge">Backup</div>
+                    <div class="color-preview" style="background: linear-gradient(27deg, #164e63, #0891b2 50%, #0e7490);"></div>
+                    <div class="color-name">Cyan Blue</div>
+                    <div class="color-details">
+                        <div><strong>Solid:</strong> #0891b2</div>
+                        <div>Dark teal → Cyan → Deep cyan</div>
+                    </div>
+                </div>
+
+                <!-- Secondary 3: Ruby Red -->
+                <div class="color-card secondary-card">
+                    <div class="index">Index: 8</div><div class="secondary-badge">Backup</div>
+                    <div class="color-preview" style="background: linear-gradient(27deg, #881337, #be185d 50%, #9f1239);"></div>
+                    <div class="color-name">Ruby Red</div>
+                    <div class="color-details">
+                        <div><strong>Solid:</strong> #be185d</div>
+                        <div>Dark crimson → Ruby → Deep red</div>
+                    </div>
+                </div>
+
+                <!-- Secondary 4: Bronze Brown -->
+                <div class="color-card secondary-card">
+                    <div class="index">Index: 9</div><div class="secondary-badge">Backup</div>
+                    <div class="color-preview" style="background: linear-gradient(27deg, #78350f, #a16207 50%, #92400e);"></div>
+                    <div class="color-name">Bronze Brown</div>
+                    <div class="color-details">
+                        <div><strong>Solid:</strong> #a16207</div>
+                        <div>Dark brown → Bronze → Golden brown</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="summary">
+            <h2>🎯 Assignment Strategy</h2>
+            <p><strong>Primary Colors (0-5):</strong> Maximum visual distinction for the most common categories</p>
+            <p><strong>Secondary Colors (6-9):</strong> Additional options when more than 6 categories are needed</p>
+            
+            <h3>Priority Order:</h3>
+            <ol style="columns: 2; gap: 2rem;">
+                <li>Warm Coral</li>
+                <li>Sapphire Blue</li>
+                <li>Emerald Green</li>
+                <li>Lavender Purple</li>
+                <li>Amber Yellow</li>
+                <li>Rose Pink</li>
+                <li>Burnt Orange</li>
+                <li>Cyan Blue</li>
+                <li>Ruby Red</li>
+                <li>Bronze Brown</li>
+            </ol>
+
+            <p><strong>Usage:</strong> TV screens use gradients for backgrounds, 3D dashboard uses solid colors for crystals.</p>
+        </div>
+    </div>
+</body>
+</html>

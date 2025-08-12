@@ -1,0 +1,15 @@
+{
+  "installCommand": "pnpm install",
+  "buildCommand": "cd trends-app && pnpm run build",
+  "outputDirectory": "trends-app/dist",
+  "functions": {
+    "api/merge-audio.js": {
+      "maxDuration": 30
+    }
+  },
+  "build": {
+    "env": {
+      "FFMPEG_PATH": "/usr/bin/ffmpeg"
+    }
+  }
+}

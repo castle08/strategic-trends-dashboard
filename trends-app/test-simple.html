@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Trends with Images</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        #container {
+            width: 100vw;
+            height: 100vh;
+        }
+        .trend-card {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            color: white;
+            text-align: center;
+            min-width: 200px;
+            backdrop-filter: blur(10px);
+        }
+        .trend-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            line-height: 1.2;
+        }
+        .trend-image {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        .no-image {
+            width: 150px;
+            height: 150px;
+            background: rgba(255, 0, 0, 0.2);
+            border: 2px solid rgba(255, 0, 0, 0.5);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+            font-size: 12px;
+            color: #ff6666;
+        }
+        .image-status {
+            font-size: 12px;
+            color: #00ff00;
+        }
+        .no-image-status {
+            font-size: 12px;
+            color: #ff6666;
+        }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+
+    <script type="module">
+        import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+        import { Html } from 'https://unpkg.com/three@0.160.0/examples/jsm/loaders/HTML.js';
+
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('container').appendChild(renderer.domElement);
+
+        // Camera position
+        camera.position.z = 50;
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+        scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(10, 10, 5);
+        scene.add(directionalLight);
+
+        // Fetch trends data
+        async function fetchTrends() {
+            try {
+                console.log('🔄 Fetching trends...');
+                const response = await fetch('https://strategic-trends-dashboard-standalo.vercel.app/api/trends');
+                const data = await response.json();
+                console.log('📊 Received data:', data);
+                
+                if (data.trends && data.trends.length > 0) {
+                    displayTrends(data.trends);
+                } else {
+                    console.error('❌ No trends data');
+                }
+            } catch (error) {
+                console.error('❌ Error fetching trends:', error);
+            }
+        }
+
+        // Display trends as 3D cards
+        function displayTrends(trends) {
+            console.log('🎨 Displaying trends:', trends.length);
+            
+            trends.forEach((trend, index) => {
+                console.log(`📝 Trend ${index + 1}:`, {
+                    title: trend.title,
+                    hasImage: !!trend.creative?.imageUrl,
+                    imageUrl: trend.creative?.imageUrl,
+                    scores: trend.scores,
+                    whyItMatters: trend.whyItMatters
+                });
+
+                // Create card element
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'trend-card';
+                
+                const imageContent = trend.creative?.imageUrl ? 
+                    `<img src="${trend.creative.imageUrl}" alt="${trend.title}" class="trend-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                     <div class="no-image" style="display: none;">Image Failed to Load</div>
+                     <div class="image-status">✅ Generated Image</div>` : 
+                    `<div class="no-image">❌ No Image Generated</div>
+                     <div class="no-image-status">No image available</div>`;
+                
+                cardDiv.innerHTML = `
+                    <div class="trend-title">${trend.title || 'No Title'}</div>
+                    ${imageContent}
+                `;
+
+                // Create 3D object to hold the HTML
+                const group = new THREE.Group();
+                
+                // Add HTML element
+                const htmlElement = new Html(cardDiv);
+                group.add(htmlElement);
+                
+                // Position in 3D space (circular arrangement)
+                const angle = (index / trends.length) * Math.PI * 2;
+                const radius = 25;
+                const x = Math.cos(angle) * radius;
+                const y = Math.sin(angle) * radius;
+                const z = 0;
+                
+                group.position.set(x, y, z);
+                
+                // Add to scene
+                scene.add(group);
+            });
+        }
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Gentle rotation of the entire scene
+            scene.rotation.y += 0.002;
+            
+            renderer.render(scene, camera);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Start
+        fetchTrends();
+        animate();
+    </script>
+</body>
+</html>

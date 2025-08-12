@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trends API Debug</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .header {
+            background: #333;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .trend-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .trend-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .trend-category {
+            background: #007bff;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        .trend-score {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .trend-summary {
+            color: #555;
+            margin-bottom: 10px;
+        }
+        .trend-why-matters {
+            background: #f8f9fa;
+            padding: 10px;
+            border-left: 4px solid #007bff;
+            margin-bottom: 10px;
+        }
+        .trend-creative {
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .trend-image-url {
+            background: #d4edda;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .trend-image-url a {
+            color: #155724;
+            text-decoration: none;
+        }
+        .trend-image-url a:hover {
+            text-decoration: underline;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .refresh-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .refresh-btn:hover {
+            background: #0056b3;
+        }
+        .api-info {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .image-container {
+            margin-top: 10px;
+        }
+        
+        .trend-image-preview {
+            width: 200px;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #28a745;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .image-link {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .image-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 Trends API Debug Page</h1>
+        <p>Raw data from: <strong id="api-url">Loading...</strong></p>
+        <button class="refresh-btn" onclick="fetchTrends()">🔄 Refresh Data</button>
+    </div>
+
+    <div id="api-info" class="api-info" style="display: none;">
+        <h3>📊 API Response Info</h3>
+        <div id="api-details"></div>
+    </div>
+
+    <div id="error" class="error" style="display: none;"></div>
+    <div id="loading" class="loading">Loading trends data...</div>
+    <div id="trends-container"></div>
+
+    <script>
+        const API_URL = 'https://strategic-trends-dashboard-standalo.vercel.app/api/trends';
+        
+        document.getElementById('api-url').textContent = API_URL;
+
+        async function fetchTrends() {
+            const loadingEl = document.getElementById('loading');
+            const errorEl = document.getElementById('error');
+            const trendsContainer = document.getElementById('trends-container');
+            const apiInfo = document.getElementById('api-info');
+            const apiDetails = document.getElementById('api-details');
+
+            // Show loading
+            loadingEl.style.display = 'block';
+            errorEl.style.display = 'none';
+            trendsContainer.innerHTML = '';
+            apiInfo.style.display = 'none';
+
+            try {
+                console.log('🔄 Fetching from:', API_URL);
+                const response = await fetch(API_URL);
+                
+                console.log('📡 Response status:', response.status);
+                console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                console.log('📊 Raw API response:', data);
+
+                // Show API info
+                apiInfo.style.display = 'block';
+                apiDetails.innerHTML = `
+                    <p><strong>Generated At:</strong> ${data.generatedAt || 'N/A'}</p>
+                    <p><strong>Total Trends:</strong> ${data.trends?.length || 0}</p>
+                    <p><strong>Source Summary:</strong> ${JSON.stringify(data.sourceSummary || 'N/A')}</p>
+                `;
+
+                if (!data.trends || data.trends.length === 0) {
+                    throw new Error('No trends data found in response');
+                }
+
+                // Display trends
+                trendsContainer.innerHTML = data.trends.map((trend, index) => `
+                    <div class="trend-card">
+                        <div class="trend-title">${index + 1}. ${trend.title || 'No Title'}</div>
+                        <div class="trend-category">${trend.category || 'No Category'}</div>
+                        <div class="trend-score">
+                            <strong>Score:</strong> ${trend.scores?.total || 'N/A'} 
+                            (Novelty: ${trend.scores?.novelty || 'N/A'}, 
+                            Velocity: ${trend.scores?.velocity || 'N/A'}, 
+                            Relevance: ${trend.scores?.relevance || 'N/A'}, 
+                            Confidence: ${trend.scores?.confidence || 'N/A'})
+                        </div>
+                        <div class="trend-summary">
+                            <strong>Summary:</strong> ${trend.summary || 'No summary'}
+                        </div>
+                        <div class="trend-why-matters">
+                            <strong>Why It Matters:</strong> ${trend.whyItMatters || 'No description available'}
+                        </div>
+                        <div class="trend-creative">
+                            <strong>Creative Data:</strong><br>
+                            • Short Copy: ${trend.creative?.shortCardCopy || 'N/A'}<br>
+                            • Image Prompt: ${trend.creative?.imagePrompt || 'N/A'}<br>
+                            • Alt Text: ${trend.creative?.altText || 'N/A'}<br>
+                            • Podcast Snippet: ${trend.creative?.podcastSnippet || 'N/A'}
+                        </div>
+                        <div class="trend-image-url">
+                            <strong>Generated Image:</strong> 
+                            ${trend.creative?.imageUrl ? 
+                                `<div class="image-container">
+                                    <img src="${trend.creative.imageUrl}" alt="${trend.title}" class="trend-image-preview" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                                    <div class="image-error" style="display: none; color: #dc3545; font-size: 12px;">❌ Image failed to load</div>
+                                    <br />
+                                    <a href="${trend.creative.imageUrl}" target="_blank" class="image-link">View Full Size</a>
+                                </div>` : 
+                                '<span style="color: #dc3545;">❌ NO IMAGE URL</span>'
+                            }
+                        </div>
+                        <div style="font-size: 12px; color: #999; margin-top: 10px;">
+                            <strong>Raw Creative Object:</strong> ${JSON.stringify(trend.creative || {}, null, 2)}
+                        </div>
+                    </div>
+                `).join('');
+
+                loadingEl.style.display = 'none';
+
+            } catch (error) {
+                console.error('❌ Error fetching trends:', error);
+                loadingEl.style.display = 'none';
+                errorEl.style.display = 'block';
+                errorEl.innerHTML = `
+                    <h3>❌ Error Loading Trends</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p><strong>API URL:</strong> ${API_URL}</p>
+                    <p>Check the browser console for more details.</p>
+                `;
+            }
+        }
+
+        // Load on page load
+        fetchTrends();
+    </script>
+</body>
+</html>
