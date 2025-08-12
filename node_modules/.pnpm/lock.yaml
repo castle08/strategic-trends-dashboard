@@ -36,6 +36,9 @@ importers:
       '@anthropic-ai/sdk':
         specifier: ^0.59.0
         version: 0.59.0
+      '@trends/shared':
+        specifier: workspace:*
+        version: link:../shared
       dotenv:
         specifier: ^16.4.1
         version: 16.6.1
@@ -64,6 +67,9 @@ importers:
 
   packages/podcast:
     dependencies:
+      '@trends/shared':
+        specifier: workspace:*
+        version: link:../shared
       dotenv:
         specifier: ^16.4.1
         version: 16.6.1
