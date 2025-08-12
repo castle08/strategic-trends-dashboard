@@ -20,7 +20,7 @@
     "test": "pnpm -r test"
   },
   "workspaces": [
-    "apps/*",
+    "trends-app",
     "packages/*"
   ],
   "dependencies": {
