@@ -275,7 +275,9 @@ Return only the JSON object, no additional text.`;
     const categoryWeight = this.weights.categories[item.category] || 1.0;
     const sourceWeight = this.weights.sources[item.source] || 1.0;
     
-    const hoursOld = (Date.now() - new Date(item.publishedAt).getTime()) / (1000 * 60 * 60);
+    const hoursOld = item.publishedAt 
+      ? (Date.now() - new Date(item.publishedAt).getTime()) / (1000 * 60 * 60)
+      : 0;
     const recencyMultiplier = hoursOld < 24 ? this.weights.recencyBoost : 1.0;
     
     return item.scores.total * categoryWeight * sourceWeight * recencyMultiplier;
