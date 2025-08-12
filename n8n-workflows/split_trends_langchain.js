@@ -14,14 +14,21 @@ console.log(`📊 Processing first ${trendsToProcess.length} trends for image ge
 
 // Create separate items for each trend to process
 // For LangChain OpenAI node, we need to structure the data differently
+// The trend data needs to be preserved in multiple locations to ensure it survives the LangChain node
 const individualTrends = trendsToProcess.map(trend => ({
   json: {
+    // This is what the LangChain node will use for the prompt
     trend: {
       ...trend,
       imageGenerationPrompt: trend.imageGenerationPrompt
     },
+    // Preserve the original trend data in multiple locations for safety
+    originalTrend: trend,
+    inputTrend: trend,
     trendId: trend.id,
-    trendTitle: trend.title
+    trendTitle: trend.title,
+    // Also include the prompt at the top level as backup
+    prompt: trend.imageGenerationPrompt
   }
 }));
 

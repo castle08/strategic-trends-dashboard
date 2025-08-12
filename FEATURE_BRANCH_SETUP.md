@@ -16,7 +16,7 @@ git branch
 # Add all the new files
 git add n8n-workflows/generate_image_prompts.js
 git add n8n-workflows/process_image_generation.js
-git add n8n-workflows/test_v5_with_images_corrected.json
+git add n8n-workflows/test_v5_with_images_final.json
 git add IMAGE_GENERATION_IMPLEMENTATION.md
 git add FEATURE_BRANCH_SETUP.md
 
@@ -25,8 +25,9 @@ git commit -m "feat: Add image generation pipeline to n8n workflow
 
 - Add generate_image_prompts.js node for creating detailed prompts
 - Add process_image_generation.js node for handling results
-- Create test_v5_with_images_corrected.json workflow with proper OpenAI integration
+- Create test_v5_with_images_final.json workflow with proper OpenAI integration
 - Implement proper workflow: generate prompts -> split trends -> generate images -> process results
+- Handle variable trend counts by limiting to first 5 trends for testing
 - Use imageprompt.md template for detailed prompt generation
 - Include comprehensive documentation"
 ```
@@ -35,11 +36,11 @@ git commit -m "feat: Add image generation pipeline to n8n workflow
 
 ### 3.1 Import Updated Workflow
 1. Open n8n
-2. Import `n8n-workflows/test_v5_with_images_corrected.json`
+2. Import `n8n-workflows/test_v5_with_images_final.json`
 3. Verify the workflow has these nodes in order:
    - Finalize Trends
    - Generate Image Prompts (JavaScript node)
-   - Split Trends for Image Generation (JavaScript node)
+   - Split Trends for Image Generation (JavaScript node) - **Limits to first 5 trends**
    - Generate Image (OpenAI node)
    - Process Image Results (JavaScript node)
 4. Check that OpenAI credentials are available

@@ -32,4 +32,4 @@ pnpm-debug.log*
 
 # Temporary files
 *.tmp
-*.temp
+*.templive-repo/

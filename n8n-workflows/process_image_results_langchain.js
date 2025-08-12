@@ -6,7 +6,9 @@ const inputItems = $input.all();
 console.log(`🖼️ Processing ${inputItems.length} image generation results...`);
 
 // Process each result to extract the image URL and trend data
-const processedTrends = inputItems.map(item => {
+const processedTrends = inputItems.map((item, index) => {
+  console.log(`🔍 Processing item ${index + 1}:`, JSON.stringify(item.json, null, 2));
+  
   // The LangChain OpenAI node returns the image URL in a different structure
   // It might be in item.json.url, item.json.data, or item.json.result
   let imageUrl = null;
@@ -23,14 +25,20 @@ const processedTrends = inputItems.map(item => {
   }
   
   // Get the trend data from the original input
-  const trend = item.json.trend || item.json.originalTrend;
-  const trendTitle = item.json.trendTitle || trend?.title || 'Unknown Trend';
+  // The trend data should be preserved from the previous node
+  const trend = item.json.trend || item.json.originalTrend || item.json.inputTrend;
+  const trendTitle = item.json.trendTitle || trend?.title || `Trend ${index + 1}`;
+  
+  if (!trend) {
+    console.log(`❌ No trend data found for item ${index + 1}`);
+    console.log(`🔍 Available keys:`, Object.keys(item.json || {}));
+    return null; // Skip this item
+  }
   
   if (imageUrl) {
     console.log(`✅ Image generated for "${trendTitle}": ${imageUrl}`);
   } else {
     console.log(`❌ No image generated for "${trendTitle}"`);
-    console.log(`🔍 Debug - item.json structure:`, JSON.stringify(item.json, null, 2));
   }
   
   return {
@@ -40,7 +48,7 @@ const processedTrends = inputItems.map(item => {
       imageUrl: imageUrl
     }
   };
-});
+}).filter(Boolean); // Remove any null items
 
 // Count successful generations
 const successfulGenerations = processedTrends.filter(t => t.creative.imageUrl).length;

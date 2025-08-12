@@ -82,6 +82,35 @@ const TrendCard: React.FC<TrendCardProps> = ({ trend, index, total, generatedAt 
         {/* Main Content */}
         <div className="flex-1 flex flex-col justify-center space-y-8 md:space-y-12">
           
+          {/* Generated Image (if available) */}
+          {trend.creative.imageUrl && (
+            <motion.div
+              className="flex justify-center mb-8"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1 }}
+            >
+              <div className="relative">
+                <img
+                  src={trend.creative.imageUrl}
+                  alt={trend.creative.altText || trend.title}
+                  className="w-64 h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 object-cover rounded-2xl shadow-2xl"
+                  style={{
+                    border: `3px solid ${trend.viz.colorHint}`,
+                    boxShadow: `0 0 30px ${trend.viz.colorHint}40`
+                  }}
+                />
+                <div 
+                  className="absolute inset-0 rounded-2xl"
+                  style={{
+                    background: `linear-gradient(45deg, transparent 30%, ${trend.viz.colorHint}20 50%, transparent 70%)`,
+                    animation: 'shimmer 3s ease-in-out infinite'
+                  }}
+                />
+              </div>
+            </motion.div>
+          )}
+          
           {/* Title with 3D effect */}
           <motion.h1 
             className="text-4xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-white leading-tight tracking-tight"
@@ -90,7 +119,7 @@ const TrendCard: React.FC<TrendCardProps> = ({ trend, index, total, generatedAt 
             }}
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
+            transition={{ delay: trend.creative.imageUrl ? 0.4 : 0.2 }}
           >
             {trend.creative.shortCardCopy}
           </motion.h1>

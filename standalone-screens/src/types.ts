@@ -22,6 +22,7 @@ export interface TrendItem {
     imagePrompt: string;
     altText: string;
     podcastSnippet: string;
+    imageUrl?: string; // Generated 3D image URL from OpenAI
   };
   viz: {
     size: number;
