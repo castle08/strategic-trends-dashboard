@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Image Download</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            background: white;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+        }
+        .success {
+            border-left: 4px solid #28a745;
+        }
+        .error {
+            border-left: 4px solid #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <h1>🖼️ Test Image Download API</h1>
+    
+    <div class="test-section">
+        <h3>Test Image Download</h3>
+        <p>This will download an image and store it locally.</p>
+        
+        <button onclick="testDownload()">Test OpenAI Image (may be expired)</button>
+        <button onclick="testPublicImage()">Test Public Image (should work)</button>
+        <button onclick="clearResults()">Clear Results</button>
+        
+        <div id="result" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test Downloaded Image</h3>
+        <p>If download was successful, the image should appear below:</p>
+        <div id="imageContainer"></div>
+    </div>
+
+    <script>
+        async function testDownload() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.textContent = '🔄 Downloading OpenAI image...';
+            
+            // Using a fresh, valid image URL from the live API
+            const testData = {
+                imageUrl: "https://oaidalleapiprodscus.blob.core.windows.net/private/org-7XypFR3T7iMQrrjCXyZTG2Cy/user-pm5RsJwzAdwkgizfVPkXVkPn/img-mTIDBicq5nWHOKUQGtC2HaCK.png?st=2025-08-13T05%3A41%3A04Z&se=2025-08-13T07%3A41%3A04Z&sp=r&sv=2024-08-04&sr=b&rscd=inline&rsct=image/png&skoid=32836cae-d25f-4fe9-827b-1c8c59c442cc&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2025-08-12T23%3A57%3A10Z&ske=2025-08-13T23%3A57%3A10Z&sks=b&skv=2024-08-04&sig=oXt/uLm4kBthaTVP11/DqrxsOZgdevXBei6qKkSQCm8%3D",
+                trendId: "TRENDS001",
+                trendTitle: "Retail Media Networks Challenge Traditional Display Advertising"
+            };
+            
+            await performDownload(testData);
+        }
+        
+        async function testPublicImage() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.textContent = '🔄 Downloading public image...';
+            
+            // Using a public image URL that should always work
+            const testData = {
+                imageUrl: "https://picsum.photos/400/300",
+                trendId: "TEST001",
+                trendTitle: "Test Public Image"
+            };
+            
+            await performDownload(testData);
+        }
+        
+        async function performDownload(testData) {
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                const response = await fetch('/api/download-and-store-image', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Success!\n\nLocal Image URL: ${result.localImageUrl}\nFilename: ${result.filename}\nOriginal URL: ${result.originalUrl}`;
+                    
+                    // Show the downloaded image
+                    const imageContainer = document.getElementById('imageContainer');
+                    imageContainer.innerHTML = `
+                        <h4>Downloaded Image:</h4>
+                        <img src="${result.localImageUrl}" alt="Downloaded Image" style="max-width: 300px; border: 2px solid #28a745; border-radius: 8px;">
+                        <p><a href="${result.localImageUrl}" target="_blank">View Full Size</a></p>
+                    `;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Error: ${result.error}\n\nDetails: ${result.details || 'No details provided'}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Network Error: ${error.message}`;
+            }
+        }
+        
+        function clearResults() {
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('imageContainer').innerHTML = '';
+        }
+    </script>
+</body>
+</html>

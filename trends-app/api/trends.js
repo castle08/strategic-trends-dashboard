@@ -68,6 +68,12 @@ function shouldOverwriteExistingData(newData, existingData) {
     return true;
   }
   
+  // Force override if explicitly requested (for testing/debugging)
+  if (newData.forceOverride === true) {
+    console.log('✅ Force override requested - accepting new data');
+    return true;
+  }
+  
   // If new data is clearly better (has imageUrl fields), accept it
   const newDataHasImages = newData.trends.some(trend => trend.creative?.imageUrl);
   const existingDataHasImages = existingData.trends.some(trend => trend.creative?.imageUrl);
@@ -90,6 +96,12 @@ function shouldOverwriteExistingData(newData, existingData) {
   // If new data has more trends, accept it
   if (newData.trends.length > existingData.trends.length) {
     console.log(`✅ New data has more trends (${newData.trends.length} vs ${existingData.trends.length}) - accepting new data`);
+    return true;
+  }
+  
+  // If new data is newer (even by a few minutes), accept it for development
+  if (hoursDiff > 0) {
+    console.log(`✅ New data is ${hoursDiff.toFixed(1)} hours newer - accepting new data (development mode)`);
     return true;
   }
   

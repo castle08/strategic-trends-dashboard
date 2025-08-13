@@ -132,6 +132,20 @@ const TrendCrystal: React.FC<TrendCrystalProps> = ({ trend, position, selected, 
     setImageLoaded(false);
   };
 
+  // Try to load image with different strategies
+  const getImageUrl = (originalUrl: string) => {
+    if (!originalUrl) return '';
+    
+    // For development, try the proxy first, then fallback to direct URL
+    if (window.location.hostname === 'localhost') {
+      const encodedUrl = encodeURIComponent(originalUrl);
+      return `/api/proxy-image?url=${encodedUrl}`;
+    }
+    
+    // For production, try direct URL first
+    return originalUrl;
+  };
+
   console.log('🔍 About to render JSX for:', trend.title);
 
   try {
@@ -230,13 +244,13 @@ const TrendCrystal: React.FC<TrendCrystalProps> = ({ trend, position, selected, 
                     {/* Error state */}
                     {imageError && (
                       <div className="w-32 h-32 bg-red-500/20 rounded-lg flex items-center justify-center border border-red-500/30">
-                        <div className="text-red-300 text-xs">⚠️ CORS may block preview</div>
+                        <div className="text-red-300 text-xs">⚠️ Image failed to load</div>
                       </div>
                     )}
                     
                     {/* Image - Only show when loaded successfully */}
                     <img
-                      src={trend.creative.imageUrl}
+                      src={getImageUrl(trend.creative.imageUrl) || ''}
                       alt={trend.title}
                       className={`w-32 h-32 object-cover rounded-lg border-2 ${
                         imageLoaded ? 'border-green-400/50' : 'border-transparent'
@@ -244,7 +258,6 @@ const TrendCrystal: React.FC<TrendCrystalProps> = ({ trend, position, selected, 
                       onLoad={handleImageLoad}
                       onError={handleImageError}
                       style={{ display: imageLoaded ? 'block' : 'none' }}
-                      crossOrigin="anonymous"
                     />
                     
                     {/* Always show the link, even if image fails */}
