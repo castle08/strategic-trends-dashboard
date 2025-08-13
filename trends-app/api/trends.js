@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-// File path for persistent storage - use public directory for Vercel
+// File path for persistent storage - always use public directory for Vercel
 const TRENDS_FILE_PATH = path.join(process.cwd(), 'public', 'trends', 'latest.json');
 
 // Enhanced validation function to ensure data quality
@@ -104,7 +104,7 @@ function shouldOverwriteExistingData(newData, existingData) {
   return false;
 }
 
-// Read trends from file
+// Read trends from file with fallback
 function readTrendsFromFile() {
   try {
     console.log('📁 Attempting to read from:', TRENDS_FILE_PATH);
@@ -119,6 +119,23 @@ function readTrendsFromFile() {
   } catch (error) {
     console.error('❌ Error reading trends file:', error);
   }
+  
+  // Try /tmp as fallback for Vercel
+  if (process.env.VERCEL) {
+    try {
+      const tmpPath = path.join('/tmp', 'trends-latest.json');
+      console.log('🔄 Trying fallback read from /tmp:', tmpPath);
+      if (fs.existsSync(tmpPath)) {
+        const fileContent = fs.readFileSync(tmpPath, 'utf8');
+        const data = JSON.parse(fileContent);
+        console.log('📖 Read trends from /tmp fallback:', data.trends?.length || 0);
+        return data;
+      }
+    } catch (tmpError) {
+      console.error('❌ Error reading from /tmp fallback:', tmpError);
+    }
+  }
+  
   return null;
 }
 
@@ -127,12 +144,10 @@ function writeTrendsToFile(data) {
   try {
     console.log('📁 Attempting to write to:', TRENDS_FILE_PATH);
     
-    // Ensure directory exists (only for non-Vercel environments)
-    if (!process.env.VERCEL) {
-      const dir = path.dirname(TRENDS_FILE_PATH);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-      }
+    // Ensure directory exists
+    const dir = path.dirname(TRENDS_FILE_PATH);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
     }
     
     // Write to file
@@ -148,6 +163,21 @@ function writeTrendsToFile(data) {
       path: TRENDS_FILE_PATH,
       isVercel: !!process.env.VERCEL
     });
+    
+    // If we can't write to public directory, try /tmp as fallback
+    if (process.env.VERCEL) {
+      try {
+        const tmpPath = path.join('/tmp', 'trends-latest.json');
+        console.log('🔄 Trying fallback to /tmp:', tmpPath);
+        fs.writeFileSync(tmpPath, jsonData);
+        console.log('✅ Successfully wrote to /tmp fallback');
+        return true;
+      } catch (tmpError) {
+        console.error('❌ Fallback to /tmp also failed:', tmpError.message);
+        return false;
+      }
+    }
+    
     return false;
   }
 }
