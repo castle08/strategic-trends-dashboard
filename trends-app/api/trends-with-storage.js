@@ -204,7 +204,7 @@ async function readTrendsFromSupabase() {
     const { data, error } = await supabase
       .from('trends')
       .select('*')
-      .order('lastUpdated', { ascending: false })
+      .order('lastupdated', { ascending: false }) // Use lowercase to match database
       .limit(1);
     
     if (error) {
@@ -215,7 +215,14 @@ async function readTrendsFromSupabase() {
     if (data && data.length > 0) {
       const trendsData = data[0];
       console.log('📖 Read trends from Supabase:', trendsData.trends?.length || 0);
-      return trendsData;
+      // Transform back to expected format
+      return {
+        trends: trendsData.trends,
+        generatedAt: trendsData.generatedat,
+        lastUpdated: trendsData.lastupdated,
+        storageType: trendsData.storagetype,
+        version: trendsData.version
+      };
     } else {
       console.log('📁 No trends data in Supabase');
     }
@@ -233,9 +240,9 @@ async function writeTrendsToSupabase(data) {
     // Add metadata
     const dataWithMetadata = {
       trends: data.trends,
-      generatedAt: data.generatedAt,
-      lastUpdated: new Date().toISOString(),
-      storageType: 'supabase-blob',
+      generatedat: data.generatedAt, // Use lowercase to match database
+      lastupdated: new Date().toISOString(), // Use lowercase to match database
+      storagetype: 'supabase-blob', // Use lowercase to match database
       version: '1.0'
     };
     
