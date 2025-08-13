@@ -3,7 +3,7 @@ import fs from 'fs';
 
 const trendsData = JSON.parse(fs.readFileSync('apps/screens-app/public/trends/latest.json', 'utf8'));
 
-fetch('https://strategic-trends-dashboard-standalone.vercel.app/api/trends', {
+fetch('https://trends-dashboard-six.vercel.app/api/trends', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',

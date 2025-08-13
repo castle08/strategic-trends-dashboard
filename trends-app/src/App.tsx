@@ -166,7 +166,7 @@ function App() {
       setError(null);
       try {
         // Use the live API endpoint for development
-        const apiUrl = 'https://strategic-trends-dashboard-standalo.vercel.app/api/trends';
+        const apiUrl = 'https://trends-dashboard-six.vercel.app/api/trends';
         console.log('🔄 Fetching trends from:', apiUrl);
         
         const response = await fetch(apiUrl);
