@@ -1,8 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 
-// File path for persistent storage
-const TRENDS_FILE_PATH = path.join(process.cwd(), 'public', 'trends', 'latest.json');
+// File path for persistent storage - use /tmp for Vercel serverless functions
+const TRENDS_FILE_PATH = process.env.VERCEL 
+  ? path.join('/tmp', 'trends-latest.json')
+  : path.join(process.cwd(), 'public', 'trends', 'latest.json');
 
 // Enhanced validation function to ensure data quality
 function validateTrendsData(data) {
@@ -98,11 +100,14 @@ function shouldOverwriteExistingData(newData, existingData) {
 // Read trends from file
 function readTrendsFromFile() {
   try {
+    console.log('📁 Attempting to read from:', TRENDS_FILE_PATH);
     if (fs.existsSync(TRENDS_FILE_PATH)) {
       const fileContent = fs.readFileSync(TRENDS_FILE_PATH, 'utf8');
       const data = JSON.parse(fileContent);
       console.log('📖 Read trends from file:', data.trends?.length || 0);
       return data;
+    } else {
+      console.log('📁 File does not exist:', TRENDS_FILE_PATH);
     }
   } catch (error) {
     console.error('❌ Error reading trends file:', error);
@@ -110,21 +115,32 @@ function readTrendsFromFile() {
   return null;
 }
 
-// Write trends to file
+// Write trends to file with enhanced error handling
 function writeTrendsToFile(data) {
   try {
-    // Ensure directory exists
-    const dir = path.dirname(TRENDS_FILE_PATH);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+    console.log('📁 Attempting to write to:', TRENDS_FILE_PATH);
+    
+    // Ensure directory exists (only for non-Vercel environments)
+    if (!process.env.VERCEL) {
+      const dir = path.dirname(TRENDS_FILE_PATH);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
     }
     
     // Write to file
-    fs.writeFileSync(TRENDS_FILE_PATH, JSON.stringify(data, null, 2));
-    console.log('💾 Wrote trends to file:', data.trends?.length || 0);
+    const jsonData = JSON.stringify(data, null, 2);
+    fs.writeFileSync(TRENDS_FILE_PATH, jsonData);
+    console.log('💾 Successfully wrote trends to file:', data.trends?.length || 0);
     return true;
   } catch (error) {
     console.error('❌ Error writing trends file:', error);
+    console.error('❌ Error details:', {
+      message: error.message,
+      code: error.code,
+      path: TRENDS_FILE_PATH,
+      isVercel: !!process.env.VERCEL
+    });
     return false;
   }
 }
@@ -171,7 +187,14 @@ export default function handler(req, res) {
       const writeSuccess = writeTrendsToFile(req.body);
       if (!writeSuccess) {
         console.log('❌ Failed to write to file');
-        return res.status(500).json({ error: 'Failed to save trends data' });
+        return res.status(500).json({ 
+          error: 'Failed to save trends data',
+          debug: {
+            filePath: TRENDS_FILE_PATH,
+            isVercel: !!process.env.VERCEL,
+            dataSize: JSON.stringify(req.body).length
+          }
+        });
       }
       
       console.log('✅ Trends data updated and saved to file');
@@ -184,7 +207,10 @@ export default function handler(req, res) {
       });
     } catch (error) {
       console.error('❌ Error updating trends:', error);
-      return res.status(500).json({ error: 'Failed to update trends' });
+      return res.status(500).json({ 
+        error: 'Failed to update trends',
+        details: error.message
+      });
     }
   }
 
@@ -203,7 +229,8 @@ export default function handler(req, res) {
           error: 'No trends data available',
           debug: {
             hasData: false,
-            dataType: typeof trendsData
+            dataType: typeof trendsData,
+            filePath: TRENDS_FILE_PATH
           }
         });
       }
