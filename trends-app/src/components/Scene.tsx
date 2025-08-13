@@ -4,7 +4,6 @@ import { OrbitControls, Environment, Float } from '@react-three/drei';
 import { TrendItem } from '../types';
 import * as THREE from 'three';
 import TrendCrystal from './TrendCrystal';
-import TrendCrystalWithImage from './TrendCrystalWithImage';
 
 interface SceneProps {
   trends: TrendItem[];
@@ -75,23 +74,13 @@ const Scene: React.FC<SceneProps> = ({ trends, onTrendSelect, selectedTrend }) =
             rotationIntensity={0.3}
             floatIntensity={0.3}
           >
-            {trend.creative.imageUrl ? (
-              <TrendCrystalWithImage
-                trend={trend}
-                position={positions[index]}
-                selected={selectedTrend?.id === trend.id}
-                onSelect={() => onTrendSelect(trend)}
-                anyTrendSelected={selectedTrend !== null}
-              />
-            ) : (
-              <TrendCrystal
-                trend={trend}
-                position={positions[index]}
-                selected={selectedTrend?.id === trend.id}
-                onSelect={() => onTrendSelect(trend)}
-                anyTrendSelected={selectedTrend !== null}
-              />
-            )}
+            <TrendCrystal
+              trend={trend}
+              position={positions[index]}
+              selected={selectedTrend?.id === trend.id}
+              onSelect={() => onTrendSelect(trend)}
+              anyTrendSelected={selectedTrend !== null}
+            />
           </Float>
         ))}
       </group>
