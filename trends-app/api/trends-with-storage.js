@@ -54,7 +54,7 @@ function validateTrendsData(data) {
 }
 
 // Enhanced validation to prevent overwriting with empty data
-function shouldOverwriteExistingData(newData, existingData) {
+function shouldOverwriteExistingData(newData, existingData, forceOverride = false) {
   console.log('🔍 Checking if we should overwrite existing data...');
   
   // If no existing data, always accept new data
@@ -69,12 +69,24 @@ function shouldOverwriteExistingData(newData, existingData) {
     return true;
   }
   
+  // Check for force override parameter
+  if (forceOverride === true) {
+    console.log('✅ Force override requested - accepting new data');
+    return true;
+  }
+  
   // If new data is clearly better (has imageUrl fields), accept it
   const newDataHasImages = newData.trends.some(trend => trend.creative?.imageUrl);
   const existingDataHasImages = existingData.trends.some(trend => trend.creative?.imageUrl);
   
   if (newDataHasImages && !existingDataHasImages) {
     console.log('✅ New data has images, existing data doesn\'t - accepting new data');
+    return true;
+  }
+  
+  // If both have images, but new data has more recent images, accept it
+  if (newDataHasImages && existingDataHasImages) {
+    console.log('✅ Both datasets have images - accepting new data to refresh expired URLs');
     return true;
   }
   
@@ -291,7 +303,8 @@ export default async function handler(req, res) {
       
       // Check if we should overwrite existing data
       const existingData = await readTrendsFromSupabase();
-      if (!shouldOverwriteExistingData(req.body, existingData)) {
+      const forceOverride = req.body?.forceOverride || req.query?.force === 'true';
+      if (!shouldOverwriteExistingData(req.body, existingData, forceOverride)) {
         console.log('❌ Not overwriting existing data - keeping current data');
         return res.status(200).json({ 
           success: true, 
