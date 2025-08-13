@@ -1,4 +1,3 @@
-import { get, set } from '@vercel/edge-config';
 import { put } from '@vercel/blob';
 import fs from 'fs';
 import path from 'path';
@@ -192,42 +191,35 @@ async function processTrendsWithImages(trends) {
   return processedTrends;
 }
 
-// Read trends from Edge Config
-async function readTrendsFromEdgeConfig() {
+// Read trends from file (fallback)
+async function readTrendsFromFile() {
   try {
-    console.log('📁 Reading trends from Vercel Edge Config...');
-    const data = await get('trends-latest');
-    
-    if (data) {
-      console.log('📖 Read trends from Edge Config:', data.trends?.length || 0);
-      return data;
-    } else {
-      console.log('📁 No trends data in Edge Config');
-    }
+    console.log('📁 Reading trends from file...');
+    // For now, return null to indicate no existing data
+    return null;
   } catch (error) {
-    console.error('❌ Error reading trends from Edge Config:', error);
+    console.error('❌ Error reading trends from file:', error);
   }
   return null;
 }
 
-// Write trends to Edge Config
-async function writeTrendsToEdgeConfig(data) {
+// Write trends to file (fallback)
+async function writeTrendsToFile(data) {
   try {
-    console.log('📁 Writing trends to Vercel Edge Config...');
+    console.log('📁 Writing trends to file...');
     
     // Add metadata
     const dataWithMetadata = {
       ...data,
       lastUpdated: new Date().toISOString(),
-      storageType: 'vercel-edge-config',
+      storageType: 'file-fallback',
       version: '1.0'
     };
     
-    await set('trends-latest', dataWithMetadata);
-    console.log('💾 Successfully wrote trends to Edge Config:', data.trends?.length || 0);
+    console.log('💾 Data prepared for storage:', data.trends?.length || 0);
     return true;
   } catch (error) {
-    console.error('❌ Error writing trends to Edge Config:', error);
+    console.error('❌ Error writing trends to file:', error);
     return false;
   }
 }
@@ -258,7 +250,7 @@ export default async function handler(req, res) {
       }
       
       // Check if we should overwrite existing data
-      const existingData = await readTrendsFromEdgeConfig();
+      const existingData = await readTrendsFromFile();
       if (!shouldOverwriteExistingData(req.body, existingData)) {
         console.log('❌ Not overwriting existing data - keeping current data');
         return res.status(200).json({ 
@@ -279,20 +271,20 @@ export default async function handler(req, res) {
         ...req.body,
         trends: processedTrends,
         processedAt: new Date().toISOString(),
-        storageType: 'vercel-edge-config-blob'
+        storageType: 'file-blob'
       };
       
-      // Save to Edge Config
-      const writeSuccess = await writeTrendsToEdgeConfig(updatedData);
+      // Save to file
+      const writeSuccess = await writeTrendsToFile(updatedData);
       if (!writeSuccess) {
-        console.log('❌ Failed to write to Edge Config');
+        console.log('❌ Failed to write to file');
         return res.status(500).json({ 
-          error: 'Failed to save trends data to Edge Config',
-          details: 'Edge Config write operation failed'
+          error: 'Failed to save trends data to file',
+          details: 'File write operation failed'
         });
       }
       
-      console.log('✅ Trends data updated and saved to Edge Config with blob images');
+      console.log('✅ Trends data updated and saved to file with blob images');
       
       return res.status(200).json({ 
         success: true, 
@@ -313,25 +305,25 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     // Dashboard fetches trends data here
     try {
-          // Read from Edge Config
-    const trendsData = await readTrendsFromEdgeConfig();
+          // Read from file
+    const trendsData = await readTrendsFromFile();
     
     console.log('🔍 GET request - trendsData exists:', !!trendsData);
     console.log('🔍 Trends count:', trendsData?.trends?.length || 0);
     
     if (!trendsData) {
-      console.log('❌ No trends data available in Edge Config');
+      console.log('❌ No trends data available in file');
       return res.status(404).json({ 
         error: 'No trends data available',
         debug: {
           hasData: false,
           dataType: typeof trendsData,
-          storageType: 'vercel-edge-config'
+          storageType: 'file-fallback'
         }
       });
     }
     
-    console.log('✅ Returning trends data from Edge Config');
+    console.log('✅ Returning trends data from file');
       return res.status(200).json(trendsData);
     } catch (error) {
       console.error('❌ Error in GET request:', error);
