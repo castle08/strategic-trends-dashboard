@@ -1,6 +1,5 @@
 import { put } from '@vercel/blob';
-import fs from 'fs';
-import path from 'path';
+import { createClient } from '@supabase/supabase-js';
 
 // Enhanced validation function to ensure data quality
 function validateTrendsData(data) {
@@ -191,53 +190,69 @@ async function processTrendsWithImages(trends) {
   return processedTrends;
 }
 
-// Read trends from file (fallback)
-async function readTrendsFromFile() {
+// Initialize Supabase client
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
+
+// Read trends from Supabase
+async function readTrendsFromSupabase() {
   try {
-    console.log('📁 Reading trends from file...');
-    const filePath = path.join(process.cwd(), 'public', 'trends', 'latest.json');
+    console.log('📁 Reading trends from Supabase...');
     
-    if (fs.existsSync(filePath)) {
-      const fileContent = fs.readFileSync(filePath, 'utf8');
-      const data = JSON.parse(fileContent);
-      console.log('📖 Read trends from file:', data.trends?.length || 0);
-      return data;
+    const { data, error } = await supabase
+      .from('trends')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(1);
+    
+    if (error) {
+      console.error('❌ Error reading trends from Supabase:', error);
+      return null;
+    }
+    
+    if (data && data.length > 0) {
+      const trendsData = data[0];
+      console.log('📖 Read trends from Supabase:', trendsData.trends?.length || 0);
+      return trendsData;
     } else {
-      console.log('📁 File does not exist:', filePath);
+      console.log('📁 No trends data in Supabase');
     }
   } catch (error) {
-    console.error('❌ Error reading trends from file:', error);
+    console.error('❌ Error reading trends from Supabase:', error);
   }
   return null;
 }
 
-// Write trends to file (fallback)
-async function writeTrendsToFile(data) {
+// Write trends to Supabase
+async function writeTrendsToSupabase(data) {
   try {
-    console.log('📁 Writing trends to file...');
+    console.log('📁 Writing trends to Supabase...');
     
     // Add metadata
     const dataWithMetadata = {
-      ...data,
+      trends: data.trends,
+      generatedAt: data.generatedAt,
       lastUpdated: new Date().toISOString(),
-      storageType: 'file-fallback',
+      storageType: 'supabase-blob',
       version: '1.0'
     };
     
-    // Ensure directory exists
-    const filePath = path.join(process.cwd(), 'public', 'trends', 'latest.json');
-    const dir = path.dirname(filePath);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+    // Insert new record
+    const { error } = await supabase
+      .from('trends')
+      .insert([dataWithMetadata]);
+    
+    if (error) {
+      console.error('❌ Error writing trends to Supabase:', error);
+      return false;
     }
     
-    // Write to file
-    const jsonData = JSON.stringify(dataWithMetadata, null, 2);
-    fs.writeFileSync(filePath, jsonData);
-    console.log('💾 Successfully wrote trends to file:', data.trends?.length || 0);
+    console.log('💾 Successfully wrote trends to Supabase:', data.trends?.length || 0);
     return true;
   } catch (error) {
-    console.error('❌ Error writing trends to file:', error);
+    console.error('❌ Error writing trends to Supabase:', error);
     return false;
   }
 }
@@ -268,7 +283,7 @@ export default async function handler(req, res) {
       }
       
       // Check if we should overwrite existing data
-      const existingData = await readTrendsFromFile();
+      const existingData = await readTrendsFromSupabase();
       if (!shouldOverwriteExistingData(req.body, existingData)) {
         console.log('❌ Not overwriting existing data - keeping current data');
         return res.status(200).json({ 
@@ -289,20 +304,20 @@ export default async function handler(req, res) {
         ...req.body,
         trends: processedTrends,
         processedAt: new Date().toISOString(),
-        storageType: 'file-blob'
+        storageType: 'supabase-blob'
       };
       
-      // Save to file
-      const writeSuccess = await writeTrendsToFile(updatedData);
+      // Save to Supabase
+      const writeSuccess = await writeTrendsToSupabase(updatedData);
       if (!writeSuccess) {
-        console.log('❌ Failed to write to file');
+        console.log('❌ Failed to write to Supabase');
         return res.status(500).json({ 
-          error: 'Failed to save trends data to file',
-          details: 'File write operation failed'
+          error: 'Failed to save trends data to Supabase',
+          details: 'Supabase write operation failed'
         });
       }
       
-      console.log('✅ Trends data updated and saved to file with blob images');
+      console.log('✅ Trends data updated and saved to Supabase with blob images');
       
       return res.status(200).json({ 
         success: true, 
@@ -323,25 +338,25 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     // Dashboard fetches trends data here
     try {
-          // Read from file
-    const trendsData = await readTrendsFromFile();
+          // Read from Supabase
+    const trendsData = await readTrendsFromSupabase();
     
     console.log('🔍 GET request - trendsData exists:', !!trendsData);
     console.log('🔍 Trends count:', trendsData?.trends?.length || 0);
     
     if (!trendsData) {
-      console.log('❌ No trends data available in file');
+      console.log('❌ No trends data available in Supabase');
       return res.status(404).json({ 
         error: 'No trends data available',
         debug: {
           hasData: false,
           dataType: typeof trendsData,
-          storageType: 'file-fallback'
+          storageType: 'supabase-blob'
         }
       });
     }
     
-    console.log('✅ Returning trends data from file');
+    console.log('✅ Returning trends data from Supabase');
       return res.status(200).json(trendsData);
     } catch (error) {
       console.error('❌ Error in GET request:', error);
