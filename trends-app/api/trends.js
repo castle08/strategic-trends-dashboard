@@ -88,20 +88,17 @@ function shouldOverwriteExistingData(newData, existingData) {
   const existingGeneratedAt = new Date(existingData.generatedAt);
   const hoursDiff = (newGeneratedAt - existingGeneratedAt) / (1000 * 60 * 60);
   
-  if (hoursDiff > 0 && hoursDiff < 24) {
-    console.log(`✅ New data is ${hoursDiff.toFixed(1)} hours newer - accepting new data`);
+  console.log(`📊 Time comparison: new=${newGeneratedAt.toISOString()}, existing=${existingGeneratedAt.toISOString()}, diff=${hoursDiff.toFixed(1)} hours`);
+  
+  // For development, always accept newer data (even by minutes)
+  if (hoursDiff > 0) {
+    console.log(`✅ New data is ${hoursDiff.toFixed(1)} hours newer - accepting new data (development mode)`);
     return true;
   }
   
   // If new data has more trends, accept it
   if (newData.trends.length > existingData.trends.length) {
     console.log(`✅ New data has more trends (${newData.trends.length} vs ${existingData.trends.length}) - accepting new data`);
-    return true;
-  }
-  
-  // If new data is newer (even by a few minutes), accept it for development
-  if (hoursDiff > 0) {
-    console.log(`✅ New data is ${hoursDiff.toFixed(1)} hours newer - accepting new data (development mode)`);
     return true;
   }
   
