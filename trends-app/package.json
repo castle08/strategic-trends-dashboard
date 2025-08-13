@@ -17,9 +17,7 @@
     "three": "^0.160.1",
     "framer-motion": "^10.18.0",
     "lucide-react": "^0.312.0",
-    "leva": "^0.9.35",
-    "fluent-ffmpeg": "^2.1.2",
-    "@ffmpeg-installer/ffmpeg": "^1.1.0"
+    "leva": "^0.9.35"
   },
   "devDependencies": {
     "@types/react": "^18.2.48",
