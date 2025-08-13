@@ -1,4 +1,4 @@
-import { kv } from '@vercel/kv';
+import { get, set } from '@vercel/edge-config';
 import { put } from '@vercel/blob';
 import fs from 'fs';
 import path from 'path';
@@ -192,42 +192,42 @@ async function processTrendsWithImages(trends) {
   return processedTrends;
 }
 
-// Read trends from KV
-async function readTrendsFromKV() {
+// Read trends from Edge Config
+async function readTrendsFromEdgeConfig() {
   try {
-    console.log('📁 Reading trends from Vercel KV...');
-    const data = await kv.get('trends-latest');
+    console.log('📁 Reading trends from Vercel Edge Config...');
+    const data = await get('trends-latest');
     
     if (data) {
-      console.log('📖 Read trends from KV:', data.trends?.length || 0);
+      console.log('📖 Read trends from Edge Config:', data.trends?.length || 0);
       return data;
     } else {
-      console.log('📁 No trends data in KV');
+      console.log('📁 No trends data in Edge Config');
     }
   } catch (error) {
-    console.error('❌ Error reading trends from KV:', error);
+    console.error('❌ Error reading trends from Edge Config:', error);
   }
   return null;
 }
 
-// Write trends to KV
-async function writeTrendsToKV(data) {
+// Write trends to Edge Config
+async function writeTrendsToEdgeConfig(data) {
   try {
-    console.log('📁 Writing trends to Vercel KV...');
+    console.log('📁 Writing trends to Vercel Edge Config...');
     
     // Add metadata
     const dataWithMetadata = {
       ...data,
       lastUpdated: new Date().toISOString(),
-      storageType: 'vercel-kv',
+      storageType: 'vercel-edge-config',
       version: '1.0'
     };
     
-    await kv.set('trends-latest', dataWithMetadata);
-    console.log('💾 Successfully wrote trends to KV:', data.trends?.length || 0);
+    await set('trends-latest', dataWithMetadata);
+    console.log('💾 Successfully wrote trends to Edge Config:', data.trends?.length || 0);
     return true;
   } catch (error) {
-    console.error('❌ Error writing trends to KV:', error);
+    console.error('❌ Error writing trends to Edge Config:', error);
     return false;
   }
 }
@@ -258,7 +258,7 @@ export default async function handler(req, res) {
       }
       
       // Check if we should overwrite existing data
-      const existingData = await readTrendsFromKV();
+      const existingData = await readTrendsFromEdgeConfig();
       if (!shouldOverwriteExistingData(req.body, existingData)) {
         console.log('❌ Not overwriting existing data - keeping current data');
         return res.status(200).json({ 
@@ -279,20 +279,20 @@ export default async function handler(req, res) {
         ...req.body,
         trends: processedTrends,
         processedAt: new Date().toISOString(),
-        storageType: 'vercel-kv-blob'
+        storageType: 'vercel-edge-config-blob'
       };
       
-      // Save to KV
-      const writeSuccess = await writeTrendsToKV(updatedData);
+      // Save to Edge Config
+      const writeSuccess = await writeTrendsToEdgeConfig(updatedData);
       if (!writeSuccess) {
-        console.log('❌ Failed to write to KV');
+        console.log('❌ Failed to write to Edge Config');
         return res.status(500).json({ 
-          error: 'Failed to save trends data to KV',
-          details: 'KV write operation failed'
+          error: 'Failed to save trends data to Edge Config',
+          details: 'Edge Config write operation failed'
         });
       }
       
-      console.log('✅ Trends data updated and saved to KV with blob images');
+      console.log('✅ Trends data updated and saved to Edge Config with blob images');
       
       return res.status(200).json({ 
         success: true, 
@@ -313,25 +313,25 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     // Dashboard fetches trends data here
     try {
-      // Read from KV
-      const trendsData = await readTrendsFromKV();
-      
-      console.log('🔍 GET request - trendsData exists:', !!trendsData);
-      console.log('🔍 Trends count:', trendsData?.trends?.length || 0);
-      
-      if (!trendsData) {
-        console.log('❌ No trends data available in KV');
-        return res.status(404).json({ 
-          error: 'No trends data available',
-          debug: {
-            hasData: false,
-            dataType: typeof trendsData,
-            storageType: 'vercel-kv'
-          }
-        });
-      }
-      
-      console.log('✅ Returning trends data from KV');
+          // Read from Edge Config
+    const trendsData = await readTrendsFromEdgeConfig();
+    
+    console.log('🔍 GET request - trendsData exists:', !!trendsData);
+    console.log('🔍 Trends count:', trendsData?.trends?.length || 0);
+    
+    if (!trendsData) {
+      console.log('❌ No trends data available in Edge Config');
+      return res.status(404).json({ 
+        error: 'No trends data available',
+        debug: {
+          hasData: false,
+          dataType: typeof trendsData,
+          storageType: 'vercel-edge-config'
+        }
+      });
+    }
+    
+    console.log('✅ Returning trends data from Edge Config');
       return res.status(200).json(trendsData);
     } catch (error) {
       console.error('❌ Error in GET request:', error);
