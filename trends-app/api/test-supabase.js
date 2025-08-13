@@ -57,9 +57,9 @@ export default async function handler(req, res) {
       console.log('📝 Testing insert...');
       const testData = {
         trends: [{ id: 'test', title: 'Test Trend' }],
-        generatedAt: new Date().toISOString(),
-        lastUpdated: new Date().toISOString(),
-        storageType: 'test',
+        generatedat: new Date().toISOString(),
+        lastupdated: new Date().toISOString(),
+        storagetype: 'test',
         version: '1.0'
       };
       
