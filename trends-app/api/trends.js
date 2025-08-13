@@ -4,8 +4,10 @@ import path from 'path';
 // File path for persistent storage
 const TRENDS_FILE_PATH = path.join(process.cwd(), 'public', 'trends', 'latest.json');
 
-// Validation function to ensure data quality
+// Enhanced validation function to ensure data quality
 function validateTrendsData(data) {
+  console.log('🔍 Starting data validation...');
+  
   if (!data || typeof data !== 'object') {
     console.log('❌ Invalid data: not an object');
     return false;
@@ -21,15 +23,76 @@ function validateTrendsData(data) {
     return false;
   }
   
-  // Check first trend has required fields
-  const firstTrend = data.trends[0];
-  if (!firstTrend || !firstTrend.title || !firstTrend.category || !firstTrend.scores) {
-    console.log('❌ Invalid data: first trend missing required fields');
-    return false;
+  // Check each trend has required fields
+  for (let i = 0; i < data.trends.length; i++) {
+    const trend = data.trends[i];
+    
+    // Required fields
+    if (!trend.id || !trend.title || !trend.category || !trend.summary) {
+      console.log(`❌ Invalid data: trend ${i} missing required fields (id, title, category, summary)`);
+      return false;
+    }
+    
+    // Check scores structure
+    if (!trend.scores || typeof trend.scores.total !== 'number') {
+      console.log(`❌ Invalid data: trend ${i} missing valid scores`);
+      return false;
+    }
+    
+    // Check creative structure
+    if (!trend.creative || !trend.creative.imagePrompt) {
+      console.log(`❌ Invalid data: trend ${i} missing creative.imagePrompt`);
+      return false;
+    }
+    
+    // Check viz structure
+    if (!trend.viz || typeof trend.viz.size !== 'number') {
+      console.log(`❌ Invalid data: trend ${i} missing valid viz data`);
+      return false;
+    }
   }
   
   console.log('✅ Data validation passed');
   return true;
+}
+
+// Enhanced validation to prevent overwriting with empty data
+function shouldOverwriteExistingData(newData, existingData) {
+  console.log('🔍 Checking if we should overwrite existing data...');
+  
+  // If no existing data, always accept new data
+  if (!existingData) {
+    console.log('✅ No existing data - accepting new data');
+    return true;
+  }
+  
+  // If new data is clearly better (has imageUrl fields), accept it
+  const newDataHasImages = newData.trends.some(trend => trend.creative?.imageUrl);
+  const existingDataHasImages = existingData.trends.some(trend => trend.creative?.imageUrl);
+  
+  if (newDataHasImages && !existingDataHasImages) {
+    console.log('✅ New data has images, existing data doesn\'t - accepting new data');
+    return true;
+  }
+  
+  // If new data is more recent (within last 24 hours), accept it
+  const newGeneratedAt = new Date(newData.generatedAt);
+  const existingGeneratedAt = new Date(existingData.generatedAt);
+  const hoursDiff = (newGeneratedAt - existingGeneratedAt) / (1000 * 60 * 60);
+  
+  if (hoursDiff > 0 && hoursDiff < 24) {
+    console.log(`✅ New data is ${hoursDiff.toFixed(1)} hours newer - accepting new data`);
+    return true;
+  }
+  
+  // If new data has more trends, accept it
+  if (newData.trends.length > existingData.trends.length) {
+    console.log(`✅ New data has more trends (${newData.trends.length} vs ${existingData.trends.length}) - accepting new data`);
+    return true;
+  }
+  
+  console.log('❌ New data doesn\'t meet overwrite criteria - keeping existing data');
+  return false;
 }
 
 // Read trends from file
@@ -88,6 +151,19 @@ export default function handler(req, res) {
         return res.status(400).json({ 
           error: 'Invalid trends data - validation failed',
           receivedTrends: req.body?.trends?.length || 0
+        });
+      }
+      
+      // Check if we should overwrite existing data
+      const existingData = readTrendsFromFile();
+      if (!shouldOverwriteExistingData(req.body, existingData)) {
+        console.log('❌ Not overwriting existing data - keeping current data');
+        return res.status(200).json({ 
+          success: true, 
+          message: 'Data not updated - existing data is better or more recent',
+          existingTrends: existingData?.trends?.length || 0,
+          newTrends: req.body.trends.length,
+          timestamp: new Date().toISOString()
         });
       }
       
