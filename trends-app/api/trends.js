@@ -1,10 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 
-// File path for persistent storage - use /tmp for Vercel serverless functions
-const TRENDS_FILE_PATH = process.env.VERCEL 
-  ? path.join('/tmp', 'trends-latest.json')
-  : path.join(process.cwd(), 'public', 'trends', 'latest.json');
+// File path for persistent storage - use public directory for Vercel
+const TRENDS_FILE_PATH = path.join(process.cwd(), 'public', 'trends', 'latest.json');
 
 // Enhanced validation function to ensure data quality
 function validateTrendsData(data) {
