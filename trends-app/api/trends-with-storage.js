@@ -204,7 +204,7 @@ async function readTrendsFromSupabase() {
     const { data, error } = await supabase
       .from('trends')
       .select('*')
-      .order('created_at', { ascending: false })
+      .order('lastUpdated', { ascending: false })
       .limit(1);
     
     if (error) {
