@@ -195,8 +195,16 @@ async function processTrendsWithImages(trends) {
 async function readTrendsFromFile() {
   try {
     console.log('📁 Reading trends from file...');
-    // For now, return null to indicate no existing data
-    return null;
+    const filePath = path.join(process.cwd(), 'public', 'trends', 'latest.json');
+    
+    if (fs.existsSync(filePath)) {
+      const fileContent = fs.readFileSync(filePath, 'utf8');
+      const data = JSON.parse(fileContent);
+      console.log('📖 Read trends from file:', data.trends?.length || 0);
+      return data;
+    } else {
+      console.log('📁 File does not exist:', filePath);
+    }
   } catch (error) {
     console.error('❌ Error reading trends from file:', error);
   }
@@ -216,7 +224,17 @@ async function writeTrendsToFile(data) {
       version: '1.0'
     };
     
-    console.log('💾 Data prepared for storage:', data.trends?.length || 0);
+    // Ensure directory exists
+    const filePath = path.join(process.cwd(), 'public', 'trends', 'latest.json');
+    const dir = path.dirname(filePath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    
+    // Write to file
+    const jsonData = JSON.stringify(dataWithMetadata, null, 2);
+    fs.writeFileSync(filePath, jsonData);
+    console.log('💾 Successfully wrote trends to file:', data.trends?.length || 0);
     return true;
   } catch (error) {
     console.error('❌ Error writing trends to file:', error);
