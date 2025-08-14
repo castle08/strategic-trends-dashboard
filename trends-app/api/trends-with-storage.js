@@ -117,9 +117,27 @@ function shouldOverwriteExistingData(newData, existingData, forceOverride = fals
 async function downloadAndUploadImage(imageUrl, trendId, trendTitle) {
   try {
     console.log(`🖼️ Downloading image for trend: ${trendTitle}`);
+    console.log(`🖼️ Image URL: ${imageUrl}`);
     
-    // Fetch the image from OpenAI
-    const response = await fetch(imageUrl);
+    // Add n8n authentication headers
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (compatible; n8n-image-downloader/1.0)',
+      'Accept': 'image/png,image/jpeg,image/*,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.5',
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache',
+      'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzYmRmMGI3Ny02N2IxLTRkMmMtYWFjNS1kOTc1MTM3NTAyMjUiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzU0NzQwOTI3LCJleHAiOjE3NTcyODYwMDB9.6J9LecqWNIw-Qd0rqHofjhZhDY382ZaHR-RLbKo6F_A'
+    };
+    
+    // Fetch the image from n8n with authentication
+    const response = await fetch(imageUrl, {
+      method: 'GET',
+      headers: headers,
+      timeout: 30000 // 30 second timeout
+    });
+    
+    console.log(`📊 Response status: ${response.status}`);
+    console.log(`📊 Response headers:`, Object.fromEntries(response.headers.entries()));
     
     if (!response.ok) {
       throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
