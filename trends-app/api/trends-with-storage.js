@@ -70,7 +70,7 @@ async function readTrendsFromSupabase() {
     const { data, error } = await supabase
       .from('trends')
       .select('*')
-      .order('created_at', { ascending: false })
+      .order('lastupdated', { ascending: false })
       .limit(1)
       .single();
 
@@ -80,7 +80,12 @@ async function readTrendsFromSupabase() {
     }
 
     console.log('✅ Successfully read trends from Supabase');
-    return data?.trends_data || null;
+    return data ? {
+      trends: data.trends,
+      generatedAt: data.generatedat,
+      storageType: data.storagetype,
+      version: data.version
+    } : null;
   } catch (error) {
     console.error('❌ Exception reading from Supabase:', error);
     return null;
@@ -95,12 +100,17 @@ async function writeTrendsToSupabase(trendsData) {
     const { error } = await supabase
       .from('trends')
       .upsert({
-        trends_data: trendsData,
-        created_at: new Date().toISOString()
+        trends: trendsData.trends,
+        generatedat: trendsData.generatedAt || new Date().toISOString(),
+        lastupdated: new Date().toISOString(),
+        storagetype: trendsData.storageType || 'supabase-blob',
+        version: '1.0'
       });
 
     if (error) {
       console.log('❌ Error writing to Supabase:', error.message);
+      console.log('❌ Error details:', error.details);
+      console.log('❌ Error code:', error.code);
       return false;
     }
 
