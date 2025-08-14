@@ -183,6 +183,44 @@ function shouldOverwriteExistingData(newData, existingData) {
   return false;
 }
 
+// Upload image binary data to Vercel Blob
+async function uploadImageBinary(imageBinary, trendId, trendTitle) {
+  try {
+    console.log(`🖼️ Uploading image binary for trend ${trendId}: ${trendTitle}`);
+    
+    // Convert base64 to buffer
+    const buffer = Buffer.from(imageBinary, 'base64');
+    console.log(`📊 Image buffer size: ${buffer.length} bytes`);
+    
+    // Create filename
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const safeTitle = trendTitle.replace(/[^a-zA-Z0-9]/g, '-').substring(0, 50);
+    const filename = `trend-${trendId}-${safeTitle}-${timestamp}.png`;
+    
+    console.log(`📁 Uploading to filename: ${filename}`);
+    
+    // Upload to Vercel Blob
+    const blob = await put(filename, buffer, {
+      access: 'public',
+      contentType: 'image/png'
+    });
+    
+    console.log(`✅ Successfully uploaded image: ${blob.url}`);
+    
+    return {
+      success: true,
+      blobUrl: blob.url,
+      filename: filename
+    };
+  } catch (error) {
+    console.error(`❌ Error uploading image binary:`, error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
 // Download and upload image to Vercel Blob
 async function downloadAndUploadImage(imageUrl, trendId, trendTitle) {
   try {
@@ -243,8 +281,30 @@ async function processTrendsWithImages(trends) {
     const trend = trends[i];
     console.log(`📋 Processing trend ${i + 1}/${trends.length}: ${trend.title}`);
     
-    // If trend has an image URL, download and upload it
-    if (trend.creative?.imageUrl) {
+    // If trend has imageBinary data, upload it to blob storage
+    if (trend.imageBinary) {
+      console.log(`🖼️ Processing imageBinary for "${trend.title}" (${trend.imageBinary.length} chars)`);
+      
+      const imageResult = await uploadImageBinary(
+        trend.imageBinary,
+        trend.id,
+        trend.title
+      );
+      
+      if (imageResult.success) {
+        // Add the permanent blob URL to the trend
+        trend.creative.imageUrl = imageResult.blobUrl;
+        trend.creative.blobFilename = imageResult.filename;
+        console.log(`✅ Uploaded image for "${trend.title}": ${imageResult.blobUrl}`);
+      } else {
+        console.log(`❌ Failed to upload image for "${trend.title}": ${imageResult.error}`);
+        trend.creative.imageProcessingFailed = true;
+      }
+      
+      // Remove the large binary data to save space
+      delete trend.imageBinary;
+    } else if (trend.creative?.imageUrl) {
+      // Handle existing image URLs (legacy support)
       const imageResult = await downloadAndUploadImage(
         trend.creative.imageUrl,
         trend.id,
@@ -262,7 +322,7 @@ async function processTrendsWithImages(trends) {
         trend.creative.imageProcessingFailed = true;
       }
     } else {
-      console.log(`ℹ️ No image URL for "${trend.title}"`);
+      console.log(`ℹ️ No image data for "${trend.title}"`);
     }
     
     processedTrends.push(trend);
