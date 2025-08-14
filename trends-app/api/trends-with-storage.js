@@ -119,6 +119,19 @@ async function downloadAndUploadImage(imageUrl, trendId, trendTitle) {
     console.log(`🖼️ Downloading image for trend: ${trendTitle}`);
     console.log(`🖼️ Image URL: ${imageUrl}`);
     
+    // Try to convert n8n binary data URL to API endpoint
+    let apiUrl = imageUrl;
+    if (imageUrl.includes('n8n.cloud') && imageUrl.includes('binary-data')) {
+      // Extract the binary data ID from the URL
+      const urlMatch = imageUrl.match(/id=([^&]+)/);
+      if (urlMatch) {
+        const binaryDataId = decodeURIComponent(urlMatch[1]);
+        // Try the n8n API endpoint instead
+        apiUrl = `https://t-and-p-innovation.app.n8n.cloud/api/v1/binary-data/${binaryDataId}`;
+        console.log(`🔄 Converted to API URL: ${apiUrl}`);
+      }
+    }
+    
     // Add n8n authentication headers
     const headers = {
       'User-Agent': 'Mozilla/5.0 (compatible; n8n-image-downloader/1.0)',
@@ -130,7 +143,7 @@ async function downloadAndUploadImage(imageUrl, trendId, trendTitle) {
     };
     
     // Fetch the image from n8n with authentication
-    const response = await fetch(imageUrl, {
+    const response = await fetch(apiUrl, {
       method: 'GET',
       headers: headers,
       timeout: 30000 // 30 second timeout
