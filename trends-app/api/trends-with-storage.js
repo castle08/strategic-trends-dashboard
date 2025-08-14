@@ -23,10 +23,23 @@ function validateTrendsData(data) {
   // Check each trend has required fields
   for (let i = 0; i < data.trends.length; i++) {
     const trend = data.trends[i];
+    console.log(`🔍 Validating trend ${i}:`, Object.keys(trend));
+    console.log(`🔍 Trend ${i} values:`, {
+      id: trend.id,
+      title: trend.title,
+      category: trend.category,
+      summary: trend.summary
+    });
     
     // Required fields
     if (!trend.id || !trend.title || !trend.category || !trend.summary) {
       console.log(`❌ Invalid data: trend ${i} missing required fields (id, title, category, summary)`);
+      console.log(`❌ Missing fields:`, {
+        id: !trend.id,
+        title: !trend.title,
+        category: !trend.category,
+        summary: !trend.summary
+      });
       return false;
     }
     
@@ -283,6 +296,8 @@ export default async function handler(req, res) {
       if (Array.isArray(req.body)) {
         console.log('🔄 Processing Merge node format...');
         console.log('📊 Merge items count:', req.body.length);
+        console.log('🔍 First item keys:', Object.keys(req.body[0] || {}));
+        console.log('🔍 First item trend keys:', Object.keys(req.body[0]?.trend || {}));
         
         // Transform Merge format to expected format
         processedData = {
@@ -296,6 +311,8 @@ export default async function handler(req, res) {
         
         console.log('✅ Transformed Merge data to standard format');
         console.log('📊 Processed trends count:', processedData.trends.length);
+        console.log('🔍 First processed trend keys:', Object.keys(processedData.trends[0] || {}));
+        console.log('🔍 First processed trend sample:', JSON.stringify(processedData.trends[0], null, 2));
       } else {
         // Handle old format (object with trends array)
         console.log('📊 Processing old format (object with trends array)');
