@@ -299,6 +299,7 @@ export default async function handler(req, res) {
         console.log('🔍 First item keys:', Object.keys(req.body[0] || {}));
         console.log('🔍 First item json keys:', Object.keys(req.body[0]?.json || {}));
         console.log('🔍 First item trend keys:', Object.keys(req.body[0]?.json?.trend || {}));
+        console.log('🔍 RAW FIRST ITEM:', JSON.stringify(req.body[0], null, 2));
         
         // Transform Merge format to expected format
         processedData = {
