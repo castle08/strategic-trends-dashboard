@@ -62,8 +62,8 @@ function validateMergeData(data) {
     return false;
   }
   
-  if (data.length < 2) {
-    console.log('❌ Invalid Merge data: too few items (minimum 2)');
+  if (data.length < 1) {
+    console.log('❌ Invalid Merge data: no items');
     return false;
   }
   
@@ -78,25 +78,25 @@ function validateMergeData(data) {
     
     const trend = item.trend;
     
-    // Required fields
+    // Required fields - be more lenient
     if (!trend.id || !trend.title || !trend.category || !trend.summary) {
       console.log(`❌ Invalid Merge data: trend ${i} missing required fields (id, title, category, summary)`);
       return false;
     }
     
-    // Check scores structure
+    // Check scores structure - be more lenient
     if (!trend.scores || typeof trend.scores.total !== 'number') {
       console.log(`❌ Invalid Merge data: trend ${i} missing valid scores`);
       return false;
     }
     
-    // Check creative structure
-    if (!trend.creative || !trend.creative.imagePrompt) {
-      console.log(`❌ Invalid Merge data: trend ${i} missing creative.imagePrompt`);
+    // Check creative structure - be more lenient
+    if (!trend.creative) {
+      console.log(`❌ Invalid Merge data: trend ${i} missing creative object`);
       return false;
     }
     
-    // Check viz structure
+    // Check viz structure - be more lenient
     if (!trend.viz || typeof trend.viz.size !== 'number') {
       console.log(`❌ Invalid Merge data: trend ${i} missing valid viz data`);
       return false;
