@@ -297,13 +297,14 @@ export default async function handler(req, res) {
         console.log('🔄 Processing Merge node format...');
         console.log('📊 Merge items count:', req.body.length);
         console.log('🔍 First item keys:', Object.keys(req.body[0] || {}));
-        console.log('🔍 First item trend keys:', Object.keys(req.body[0]?.trend || {}));
+        console.log('🔍 First item json keys:', Object.keys(req.body[0]?.json || {}));
+        console.log('🔍 First item trend keys:', Object.keys(req.body[0]?.json?.trend || {}));
         
         // Transform Merge format to expected format
         processedData = {
           trends: req.body.map(item => ({
-            ...item.trend,
-            imageBinary: item.imageBinary
+            ...item.json.trend,
+            imageBinary: item.json.imageBinary
           })),
           generatedAt: new Date().toISOString(),
           source: 'n8n-merge'
