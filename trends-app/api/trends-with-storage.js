@@ -119,20 +119,52 @@ async function downloadAndUploadImage(imageUrl, trendId, trendTitle) {
     console.log(`🖼️ Downloading image for trend: ${trendTitle}`);
     console.log(`🖼️ Image URL: ${imageUrl}`);
     
-    // For now, skip n8n URL processing and use proxy approach
-    // The n8n API endpoints are unreliable, so we'll use the proxy endpoint
-    if (imageUrl.includes('n8n.cloud') && imageUrl.includes('binary-data')) {
-      console.log(`🔄 Converting n8n URL to proxy URL for: ${trendTitle}`);
-      // Convert to proxy URL instead of trying to download
-      const proxyUrl = `https://trends-dashboard-six.vercel.app/api/proxy-n8n-image?url=${encodeURIComponent(imageUrl)}`;
-      console.log(`✅ Using proxy URL: ${proxyUrl}`);
+    // Handle base64 image data from n8n (raw base64 or data URL)
+    if (imageUrl && (imageUrl.startsWith('data:image/') || imageUrl.startsWith('iVBORw0KGgo'))) {
+      console.log(`🔄 Processing base64 image data for: ${trendTitle}`);
       
-      return {
-        success: true,
-        blobUrl: proxyUrl, // Use proxy URL as the "permanent" URL
-        filename: `${trendId}-proxy.png`,
-        originalUrl: imageUrl
-      };
+      try {
+        let base64Data;
+        
+        if (imageUrl.startsWith('data:image/')) {
+          // Extract base64 data from data URL
+          base64Data = imageUrl.split(',')[1];
+        } else {
+          // Raw base64 data (starts with iVBORw0KGgo...)
+          base64Data = imageUrl;
+        }
+        
+        const imageBuffer = Buffer.from(base64Data, 'base64');
+        
+        // Create unique filename
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const filename = `${trendId}-${timestamp}.png`;
+        
+        console.log(`📤 Uploading base64 image to Vercel Blob: ${filename}`);
+        
+        // Upload to Vercel Blob
+        const blob = await put(filename, imageBuffer, {
+          access: 'public',
+          contentType: 'image/png'
+        });
+        
+        console.log(`✅ Base64 image uploaded successfully: ${blob.url}`);
+        
+        return {
+          success: true,
+          blobUrl: blob.url,
+          filename: filename,
+          originalUrl: 'base64-data'
+        };
+        
+      } catch (error) {
+        console.error('❌ Error processing base64 image:', error);
+        return {
+          success: false,
+          error: error.message,
+          originalUrl: 'base64-data'
+        };
+      }
     }
     
     // Add n8n authentication headers
