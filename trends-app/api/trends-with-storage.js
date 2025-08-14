@@ -32,10 +32,10 @@ function validateTrendsData(data) {
     });
     
     // Required fields
-    if (!trend.id || !trend.title || !trend.category || !trend.summary) {
+    if (trend.id === undefined || trend.id === null || !trend.title || !trend.category || !trend.summary) {
       console.log(`❌ Invalid data: trend ${i} missing required fields (id, title, category, summary)`);
       console.log(`❌ Missing fields:`, {
-        id: !trend.id,
+        id: trend.id === undefined || trend.id === null,
         title: !trend.title,
         category: !trend.category,
         summary: !trend.summary
