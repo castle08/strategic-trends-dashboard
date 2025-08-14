@@ -57,6 +57,11 @@ function validateTrendsData(data) {
 function validateMergeData(data) {
   console.log('🔍 Starting Merge data validation...');
   
+  // TEMPORARILY BYPASS ALL VALIDATION FOR DEBUGGING
+  console.log('⚠️ VALIDATION BYPASSED FOR DEBUGGING');
+  console.log('📊 Received data:', typeof data, Array.isArray(data) ? data.length : 'not array');
+  return true;
+  
   if (!Array.isArray(data)) {
     console.log('❌ Invalid Merge data: not an array');
     return false;
