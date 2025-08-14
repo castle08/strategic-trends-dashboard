@@ -126,9 +126,34 @@ async function downloadAndUploadImage(imageUrl, trendId, trendTitle) {
       const urlMatch = imageUrl.match(/id=([^&]+)/);
       if (urlMatch) {
         const binaryDataId = decodeURIComponent(urlMatch[1]);
-        // Try the n8n API endpoint instead
-        apiUrl = `https://t-and-p-innovation.app.n8n.cloud/api/v1/binary-data/${binaryDataId}`;
-        console.log(`🔄 Converted to API URL: ${apiUrl}`);
+        // Try different n8n API endpoints
+        const possibleEndpoints = [
+          `https://t-and-p-innovation.app.n8n.cloud/api/v1/binary-data/${binaryDataId}`,
+          `https://t-and-p-innovation.app.n8n.cloud/api/v1/executions/binary-data/${binaryDataId}`,
+          `https://t-and-p-innovation.app.n8n.cloud/api/v1/binary-data/download/${binaryDataId}`,
+          imageUrl // Fallback to original URL
+        ];
+        
+        // Try each endpoint until one works
+        for (const endpoint of possibleEndpoints) {
+          try {
+            console.log(`🔄 Trying endpoint: ${endpoint}`);
+            const testResponse = await fetch(endpoint, {
+              method: 'HEAD',
+              headers: {
+                'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzYmRmMGI3Ny02N2IxLTRkMmMtYWFjNS1kOTc1MTM3NTAyMjUiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzU0NzQwOTI3LCJleHAiOjE3NTcyODYwMDB9.6J9LecqWNIw-Qd0rqHofjhZhDY382ZaHR-RLbKo6F_A'
+              }
+            });
+            
+            if (testResponse.ok) {
+              apiUrl = endpoint;
+              console.log(`✅ Found working endpoint: ${apiUrl}`);
+              break;
+            }
+          } catch (error) {
+            console.log(`❌ Endpoint failed: ${endpoint}`);
+          }
+        }
       }
     }
     
