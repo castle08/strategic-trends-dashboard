@@ -265,37 +265,62 @@ export default async function handler(req, res) {
     // N8N posts trends data here
     try {
       console.log('📥 Received POST data keys:', Object.keys(req.body || {}));
-      console.log('📊 Trends count:', req.body?.trends?.length || 0);
+      console.log('📊 Data type:', Array.isArray(req.body) ? 'Array (Merge format)' : 'Object (Old format)');
       
-      // Validate the incoming data
-      if (!validateTrendsData(req.body)) {
+      let processedData;
+      
+      // Handle Merge node format (array of objects with trend and imageBinary)
+      if (Array.isArray(req.body)) {
+        console.log('🔄 Processing Merge node format...');
+        console.log('📊 Merge items count:', req.body.length);
+        
+        // Transform Merge format to expected format
+        processedData = {
+          trends: req.body.map(item => ({
+            ...item.trend,
+            imageBinary: item.imageBinary
+          })),
+          generatedAt: new Date().toISOString(),
+          source: 'n8n-merge'
+        };
+        
+        console.log('✅ Transformed Merge data to standard format');
+        console.log('📊 Processed trends count:', processedData.trends.length);
+      } else {
+        // Handle old format (object with trends array)
+        console.log('📊 Processing old format (object with trends array)');
+        processedData = req.body;
+      }
+      
+      // Validate the processed data
+      if (!validateTrendsData(processedData)) {
         console.log('❌ Data validation failed - not saving');
         return res.status(400).json({ 
           error: 'Invalid trends data - validation failed',
-          receivedTrends: req.body?.trends?.length || 0
+          receivedTrends: processedData?.trends?.length || 0
         });
       }
       
       // Check if we should overwrite existing data
       const existingData = await readTrendsFromSupabase();
-      if (!shouldOverwriteExistingData(req.body, existingData)) {
+      if (!shouldOverwriteExistingData(processedData, existingData)) {
         console.log('❌ Not overwriting existing data - keeping current data');
         return res.status(200).json({ 
           success: true, 
           message: 'Data not updated - existing data is better or more recent',
           existingTrends: existingData?.trends?.length || 0,
-          newTrends: req.body.trends.length,
+          newTrends: processedData.trends.length,
           timestamp: new Date().toISOString()
         });
       }
       
       // Process trends and upload images to Vercel Blob
       console.log('🖼️ Processing trends and uploading images...');
-      const processedTrends = await processTrendsWithImages(req.body.trends);
+      const processedTrends = await processTrendsWithImages(processedData.trends);
       
       // Create updated data with processed trends
       const updatedData = {
-        ...req.body,
+        ...processedData,
         trends: processedTrends,
         processedAt: new Date().toISOString(),
         storageType: 'supabase-blob'
@@ -316,7 +341,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ 
         success: true, 
         message: 'Trends updated and saved with permanent image storage',
-        receivedTrends: req.body.trends.length,
+        receivedTrends: processedData.trends.length,
         processedTrends: processedTrends.length,
         timestamp: new Date().toISOString()
       });
