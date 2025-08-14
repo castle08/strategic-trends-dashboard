@@ -119,42 +119,20 @@ async function downloadAndUploadImage(imageUrl, trendId, trendTitle) {
     console.log(`🖼️ Downloading image for trend: ${trendTitle}`);
     console.log(`🖼️ Image URL: ${imageUrl}`);
     
-    // Try to convert n8n binary data URL to API endpoint
-    let apiUrl = imageUrl;
+    // For now, skip n8n URL processing and use proxy approach
+    // The n8n API endpoints are unreliable, so we'll use the proxy endpoint
     if (imageUrl.includes('n8n.cloud') && imageUrl.includes('binary-data')) {
-      // Extract the binary data ID from the URL
-      const urlMatch = imageUrl.match(/id=([^&]+)/);
-      if (urlMatch) {
-        const binaryDataId = decodeURIComponent(urlMatch[1]);
-        // Try different n8n API endpoints
-        const possibleEndpoints = [
-          `https://t-and-p-innovation.app.n8n.cloud/api/v1/binary-data/${binaryDataId}`,
-          `https://t-and-p-innovation.app.n8n.cloud/api/v1/executions/binary-data/${binaryDataId}`,
-          `https://t-and-p-innovation.app.n8n.cloud/api/v1/binary-data/download/${binaryDataId}`,
-          imageUrl // Fallback to original URL
-        ];
-        
-        // Try each endpoint until one works
-        for (const endpoint of possibleEndpoints) {
-          try {
-            console.log(`🔄 Trying endpoint: ${endpoint}`);
-            const testResponse = await fetch(endpoint, {
-              method: 'HEAD',
-              headers: {
-                'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzYmRmMGI3Ny02N2IxLTRkMmMtYWFjNS1kOTc1MTM3NTAyMjUiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzU0NzQwOTI3LCJleHAiOjE3NTcyODYwMDB9.6J9LecqWNIw-Qd0rqHofjhZhDY382ZaHR-RLbKo6F_A'
-              }
-            });
-            
-            if (testResponse.ok) {
-              apiUrl = endpoint;
-              console.log(`✅ Found working endpoint: ${apiUrl}`);
-              break;
-            }
-          } catch (error) {
-            console.log(`❌ Endpoint failed: ${endpoint}`);
-          }
-        }
-      }
+      console.log(`🔄 Converting n8n URL to proxy URL for: ${trendTitle}`);
+      // Convert to proxy URL instead of trying to download
+      const proxyUrl = `https://trends-dashboard-six.vercel.app/api/proxy-n8n-image?url=${encodeURIComponent(imageUrl)}`;
+      console.log(`✅ Using proxy URL: ${proxyUrl}`);
+      
+      return {
+        success: true,
+        blobUrl: proxyUrl, // Use proxy URL as the "permanent" URL
+        filename: `${trendId}-proxy.png`,
+        originalUrl: imageUrl
+      };
     }
     
     // Add n8n authentication headers
