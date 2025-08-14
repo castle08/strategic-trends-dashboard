@@ -292,9 +292,9 @@ export default async function handler(req, res) {
       
       let processedData;
       
-      // Handle Merge node format (array of objects with trend and imageBinary)
+      // Handle different n8n data formats
       if (Array.isArray(req.body)) {
-        console.log('🔄 Processing Merge node format...');
+        console.log('🔄 Processing Merge node format (array)...');
         console.log('📊 Merge items count:', req.body.length);
         console.log('🔍 First item keys:', Object.keys(req.body[0] || {}));
         console.log('🔍 First item json keys:', Object.keys(req.body[0]?.json || {}));
@@ -312,6 +312,27 @@ export default async function handler(req, res) {
         };
         
         console.log('✅ Transformed Merge data to standard format');
+        console.log('📊 Processed trends count:', processedData.trends.length);
+        console.log('🔍 First processed trend keys:', Object.keys(processedData.trends[0] || {}));
+        console.log('🔍 First processed trend sample:', JSON.stringify(processedData.trends[0], null, 2));
+      } else if (req.body.trends && Array.isArray(req.body.trends)) {
+        // Handle object with trends array where each trend has trend/imageBinary structure
+        console.log('🔄 Processing object with trends array format...');
+        console.log('📊 Trends count:', req.body.trends.length);
+        console.log('🔍 First trend keys:', Object.keys(req.body.trends[0] || {}));
+        console.log('🔍 RAW FIRST TREND:', JSON.stringify(req.body.trends[0], null, 2));
+        
+        // Transform to expected format
+        processedData = {
+          trends: req.body.trends.map(item => ({
+            ...item.trend,
+            imageBinary: item.imageBinary
+          })),
+          generatedAt: new Date().toISOString(),
+          source: 'n8n-object-format'
+        };
+        
+        console.log('✅ Transformed object format to standard format');
         console.log('📊 Processed trends count:', processedData.trends.length);
         console.log('🔍 First processed trend keys:', Object.keys(processedData.trends[0] || {}));
         console.log('🔍 First processed trend sample:', JSON.stringify(processedData.trends[0], null, 2));
