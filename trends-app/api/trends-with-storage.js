@@ -62,8 +62,8 @@ function validateMergeData(data) {
     return false;
   }
   
-  if (data.length < 1) {
-    console.log('❌ Invalid Merge data: no items');
+  if (data.length < 2) {
+    console.log('❌ Invalid Merge data: too few items (minimum 2 for testing)');
     return false;
   }
   
