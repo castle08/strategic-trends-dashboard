@@ -1,7 +1,5 @@
-import { get, set } from '@vercel/edge-config';
 import { put } from '@vercel/blob';
-import fs from 'fs';
-import path from 'path';
+import { createClient } from '@supabase/supabase-js';
 
 // Enhanced validation function to ensure data quality
 function validateTrendsData(data) {
@@ -53,6 +51,65 @@ function validateTrendsData(data) {
   
   console.log('✅ Data validation passed');
   return true;
+}
+
+// Supabase client setup
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('❌ Missing Supabase environment variables');
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Read trends from Supabase
+async function readTrendsFromSupabase() {
+  try {
+    console.log('📖 Reading trends from Supabase...');
+    const { data, error } = await supabase
+      .from('trends')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error) {
+      console.log('❌ Error reading from Supabase:', error.message);
+      return null;
+    }
+
+    console.log('✅ Successfully read trends from Supabase');
+    return data?.trends_data || null;
+  } catch (error) {
+    console.error('❌ Exception reading from Supabase:', error);
+    return null;
+  }
+}
+
+// Write trends to Supabase
+async function writeTrendsToSupabase(trendsData) {
+  try {
+    console.log('💾 Writing trends to Supabase...');
+    
+    const { error } = await supabase
+      .from('trends')
+      .upsert({
+        trends_data: trendsData,
+        created_at: new Date().toISOString()
+      });
+
+    if (error) {
+      console.log('❌ Error writing to Supabase:', error.message);
+      return false;
+    }
+
+    console.log('✅ Successfully wrote trends to Supabase');
+    return true;
+  } catch (error) {
+    console.error('❌ Exception writing to Supabase:', error);
+    return false;
+  }
 }
 
 // Enhanced validation to prevent overwriting with empty data
@@ -192,45 +249,7 @@ async function processTrendsWithImages(trends) {
   return processedTrends;
 }
 
-// Read trends from Edge Config
-async function readTrendsFromEdgeConfig() {
-  try {
-    console.log('📁 Reading trends from Vercel Edge Config...');
-    const data = await get('trends-latest');
-    
-    if (data) {
-      console.log('📖 Read trends from Edge Config:', data.trends?.length || 0);
-      return data;
-    } else {
-      console.log('📁 No trends data in Edge Config');
-    }
-  } catch (error) {
-    console.error('❌ Error reading trends from Edge Config:', error);
-  }
-  return null;
-}
 
-// Write trends to Edge Config
-async function writeTrendsToEdgeConfig(data) {
-  try {
-    console.log('📁 Writing trends to Vercel Edge Config...');
-    
-    // Add metadata
-    const dataWithMetadata = {
-      ...data,
-      lastUpdated: new Date().toISOString(),
-      storageType: 'vercel-edge-config',
-      version: '1.0'
-    };
-    
-    await set('trends-latest', dataWithMetadata);
-    console.log('💾 Successfully wrote trends to Edge Config:', data.trends?.length || 0);
-    return true;
-  } catch (error) {
-    console.error('❌ Error writing trends to Edge Config:', error);
-    return false;
-  }
-}
 
 export default async function handler(req, res) {
   // Set CORS headers
@@ -258,7 +277,7 @@ export default async function handler(req, res) {
       }
       
       // Check if we should overwrite existing data
-      const existingData = await readTrendsFromEdgeConfig();
+      const existingData = await readTrendsFromSupabase();
       if (!shouldOverwriteExistingData(req.body, existingData)) {
         console.log('❌ Not overwriting existing data - keeping current data');
         return res.status(200).json({ 
@@ -279,20 +298,20 @@ export default async function handler(req, res) {
         ...req.body,
         trends: processedTrends,
         processedAt: new Date().toISOString(),
-        storageType: 'vercel-edge-config-blob'
+        storageType: 'supabase-blob'
       };
       
-      // Save to Edge Config
-      const writeSuccess = await writeTrendsToEdgeConfig(updatedData);
+      // Save to Supabase
+      const writeSuccess = await writeTrendsToSupabase(updatedData);
       if (!writeSuccess) {
-        console.log('❌ Failed to write to Edge Config');
+        console.log('❌ Failed to write to Supabase');
         return res.status(500).json({ 
-          error: 'Failed to save trends data to Edge Config',
-          details: 'Edge Config write operation failed'
+          error: 'Failed to save trends data to Supabase',
+          details: 'Supabase write operation failed'
         });
       }
       
-      console.log('✅ Trends data updated and saved to Edge Config with blob images');
+      console.log('✅ Trends data updated and saved to Supabase with blob images');
       
       return res.status(200).json({ 
         success: true, 
@@ -313,25 +332,25 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     // Dashboard fetches trends data here
     try {
-          // Read from Edge Config
-    const trendsData = await readTrendsFromEdgeConfig();
+          // Read from Supabase
+    const trendsData = await readTrendsFromSupabase();
     
     console.log('🔍 GET request - trendsData exists:', !!trendsData);
     console.log('🔍 Trends count:', trendsData?.trends?.length || 0);
     
     if (!trendsData) {
-      console.log('❌ No trends data available in Edge Config');
+      console.log('❌ No trends data available in Supabase');
       return res.status(404).json({ 
         error: 'No trends data available',
         debug: {
           hasData: false,
           dataType: typeof trendsData,
-          storageType: 'vercel-edge-config'
+          storageType: 'supabase-blob'
         }
       });
     }
     
-    console.log('✅ Returning trends data from Edge Config');
+    console.log('✅ Returning trends data from Supabase');
       return res.status(200).json(trendsData);
     } catch (error) {
       console.error('❌ Error in GET request:', error);
