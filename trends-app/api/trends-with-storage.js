@@ -70,6 +70,7 @@ function validateMergeData(data) {
   // Check each item has required fields
   for (let i = 0; i < data.length; i++) {
     const item = data[i];
+    console.log(`🔍 Validating item ${i}:`, Object.keys(item));
     
     if (!item.trend) {
       console.log(`❌ Invalid Merge data: item ${i} missing trend object`);
@@ -77,29 +78,27 @@ function validateMergeData(data) {
     }
     
     const trend = item.trend;
+    console.log(`🔍 Item ${i} trend keys:`, Object.keys(trend));
     
-    // Required fields - be more lenient
+    // Only check the most essential fields
     if (!trend.id || !trend.title || !trend.category || !trend.summary) {
       console.log(`❌ Invalid Merge data: trend ${i} missing required fields (id, title, category, summary)`);
       return false;
     }
     
-    // Check scores structure - be more lenient
-    if (!trend.scores || typeof trend.scores.total !== 'number') {
-      console.log(`❌ Invalid Merge data: trend ${i} missing valid scores`);
-      return false;
+    // Check scores structure - be very lenient
+    if (!trend.scores) {
+      console.log(`⚠️ Merge data: trend ${i} missing scores (will continue)`);
     }
     
-    // Check creative structure - be more lenient
+    // Check creative structure - be very lenient
     if (!trend.creative) {
-      console.log(`❌ Invalid Merge data: trend ${i} missing creative object`);
-      return false;
+      console.log(`⚠️ Merge data: trend ${i} missing creative object (will continue)`);
     }
     
-    // Check viz structure - be more lenient
-    if (!trend.viz || typeof trend.viz.size !== 'number') {
-      console.log(`❌ Invalid Merge data: trend ${i} missing valid viz data`);
-      return false;
+    // Check viz structure - be very lenient
+    if (!trend.viz) {
+      console.log(`⚠️ Merge data: trend ${i} missing viz object (will continue)`);
     }
     
     // Check for imageBinary (optional but expected)
