@@ -5,28 +5,176 @@
       "type": "rss",
       "url": "https://www.morningbrew.com/marketing/feed",
       "enabled": true,
-      "requiresAuth": false
+      "requiresAuth": false,
+      "performance": {
+        "lastChecked": null,
+        "successRate": 0.0,
+        "trendContribution": 0,
+        "avgArticleQuality": 0.0,
+        "lastSuccessfulFetch": null,
+        "failureCount": 0,
+        "totalFetches": 0
+      },
+      "metadata": {
+        "category": "Marketing",
+        "language": "en",
+        "updateFrequency": "daily",
+        "discoveredAt": "2024-01-01T00:00:00Z"
+      }
     },
     {
       "name": "Creative Review",
       "type": "rss", 
       "url": "https://www.creativereview.co.uk/feed/",
       "enabled": true,
-      "requiresAuth": false
+      "requiresAuth": false,
+      "performance": {
+        "lastChecked": null,
+        "successRate": 0.0,
+        "trendContribution": 0,
+        "avgArticleQuality": 0.0,
+        "lastSuccessfulFetch": null,
+        "failureCount": 0,
+        "totalFetches": 0
+      },
+      "metadata": {
+        "category": "Creative",
+        "language": "en",
+        "updateFrequency": "daily",
+        "discoveredAt": "2024-01-01T00:00:00Z"
+      }
     },
     {
       "name": "Adweek",
       "type": "rss",
       "url": "https://www.adweek.com/feed/",
       "enabled": true,
-      "requiresAuth": false
+      "requiresAuth": false,
+      "performance": {
+        "lastChecked": null,
+        "successRate": 0.0,
+        "trendContribution": 0,
+        "avgArticleQuality": 0.0,
+        "lastSuccessfulFetch": null,
+        "failureCount": 0,
+        "totalFetches": 0
+      },
+      "metadata": {
+        "category": "Advertising",
+        "language": "en",
+        "updateFrequency": "daily",
+        "discoveredAt": "2024-01-01T00:00:00Z"
+      }
     },
     {
       "name": "Campaign Live",
       "type": "rss",
       "url": "https://www.campaignlive.co.uk/feed",
       "enabled": true,
-      "requiresAuth": false
+      "requiresAuth": false,
+      "performance": {
+        "lastChecked": null,
+        "successRate": 0.0,
+        "trendContribution": 0,
+        "avgArticleQuality": 0.0,
+        "lastSuccessfulFetch": null,
+        "failureCount": 0,
+        "totalFetches": 0
+      },
+      "metadata": {
+        "category": "Advertising",
+        "language": "en",
+        "updateFrequency": "daily",
+        "discoveredAt": "2024-01-01T00:00:00Z"
+      }
+    },
+    {
+      "name": "TechCrunch",
+      "type": "rss",
+      "url": "https://techcrunch.com/feed/",
+      "enabled": true,
+      "requiresAuth": false,
+      "performance": {
+        "lastChecked": null,
+        "successRate": 0.0,
+        "trendContribution": 0,
+        "avgArticleQuality": 0.0,
+        "lastSuccessfulFetch": null,
+        "failureCount": 0,
+        "totalFetches": 0
+      },
+      "metadata": {
+        "category": "Technology",
+        "language": "en",
+        "updateFrequency": "daily",
+        "discoveredAt": "2025-08-15T00:00:00Z"
+      }
+    },
+    {
+      "name": "The Verge",
+      "type": "rss",
+      "url": "https://www.theverge.com/rss/index.xml",
+      "enabled": true,
+      "requiresAuth": false,
+      "performance": {
+        "lastChecked": null,
+        "successRate": 0.0,
+        "trendContribution": 0,
+        "avgArticleQuality": 0.0,
+        "lastSuccessfulFetch": null,
+        "failureCount": 0,
+        "totalFetches": 0
+      },
+      "metadata": {
+        "category": "Technology",
+        "language": "en",
+        "updateFrequency": "daily",
+        "discoveredAt": "2025-08-15T00:00:00Z"
+      }
+    },
+    {
+      "name": "Forbes Business",
+      "type": "rss",
+      "url": "https://www.forbes.com/business/feed/",
+      "enabled": true,
+      "requiresAuth": false,
+      "performance": {
+        "lastChecked": null,
+        "successRate": 0.0,
+        "trendContribution": 0,
+        "avgArticleQuality": 0.0,
+        "lastSuccessfulFetch": null,
+        "failureCount": 0,
+        "totalFetches": 0
+      },
+      "metadata": {
+        "category": "Business",
+        "language": "en",
+        "updateFrequency": "daily",
+        "discoveredAt": "2025-08-15T00:00:00Z"
+      }
+    },
+    {
+      "name": "BBC Technology",
+      "type": "rss",
+      "url": "https://www.bbc.com/news/technology/rss.xml",
+      "enabled": true,
+      "requiresAuth": false,
+      "performance": {
+        "lastChecked": null,
+        "successRate": 0.0,
+        "trendContribution": 0,
+        "avgArticleQuality": 0.0,
+        "lastSuccessfulFetch": null,
+        "failureCount": 0,
+        "totalFetches": 0
+      },
+      "metadata": {
+        "category": "Technology",
+        "language": "en",
+        "updateFrequency": "daily",
+        "discoveredAt": "2025-08-15T00:00:00Z"
+      }
     },
     {
       "name": "Google Trends",
@@ -34,7 +182,22 @@
       "url": "https://trends.google.com/trends/api",
       "enabled": false,
       "requiresAuth": true,
-      "authKey": "GOOGLE_TRENDS_API_KEY"
+      "authKey": "GOOGLE_TRENDS_API_KEY",
+      "performance": {
+        "lastChecked": null,
+        "successRate": 0.0,
+        "trendContribution": 0,
+        "avgArticleQuality": 0.0,
+        "lastSuccessfulFetch": null,
+        "failureCount": 0,
+        "totalFetches": 0
+      },
+      "metadata": {
+        "category": "Trends",
+        "language": "en",
+        "updateFrequency": "hourly",
+        "discoveredAt": "2024-01-01T00:00:00Z"
+      }
     },
     {
       "name": "Reddit Tech",
@@ -42,7 +205,22 @@
       "url": "https://www.reddit.com/r/technology/hot.json",
       "enabled": false,
       "requiresAuth": true,
-      "authKey": "REDDIT_CLIENT_ID"
+      "authKey": "REDDIT_CLIENT_ID",
+      "performance": {
+        "lastChecked": null,
+        "successRate": 0.0,
+        "trendContribution": 0,
+        "avgArticleQuality": 0.0,
+        "lastSuccessfulFetch": null,
+        "failureCount": 0,
+        "totalFetches": 0
+      },
+      "metadata": {
+        "category": "Technology",
+        "language": "en",
+        "updateFrequency": "hourly",
+        "discoveredAt": "2024-01-01T00:00:00Z"
+      }
     },
     {
       "name": "Twitter Trends",
@@ -50,7 +228,62 @@
       "url": "https://api.twitter.com/2/trends/by/woeid/1",
       "enabled": false,
       "requiresAuth": true,
-      "authKey": "TWITTER_BEARER_TOKEN"
+      "authKey": "TWITTER_BEARER_TOKEN",
+      "performance": {
+        "lastChecked": null,
+        "successRate": 0.0,
+        "trendContribution": 0,
+        "avgArticleQuality": 0.0,
+        "lastSuccessfulFetch": null,
+        "failureCount": 0,
+        "totalFetches": 0
+      },
+      "metadata": {
+        "category": "Social Media",
+        "language": "en",
+        "updateFrequency": "hourly",
+        "discoveredAt": "2024-01-01T00:00:00Z"
+      }
     }
-  ]
+  ],
+  "adaptiveDiscovery": {
+    "enabled": true,
+    "lastDiscoveryRun": null,
+    "discoveryFrequency": "weekly",
+    "maxFeedsPerCategory": 5,
+    "minSuccessRate": 0.7,
+    "minTrendContribution": 2,
+    "searchKeywords": [
+      "marketing trends RSS",
+      "advertising news RSS", 
+      "tech trends RSS",
+      "business innovation RSS",
+      "consumer behavior RSS",
+      "digital marketing RSS",
+      "startup news RSS",
+      "AI trends RSS",
+      "sustainability business RSS",
+      "healthcare innovation RSS",
+      "fintech news RSS",
+      "retail trends RSS",
+      "automotive innovation RSS",
+      "gaming industry RSS",
+      "wearable tech RSS"
+    ],
+    "excludedDomains": [
+      "facebook.com",
+      "twitter.com", 
+      "instagram.com",
+      "linkedin.com",
+      "youtube.com",
+      "tiktok.com"
+    ]
+  },
+  "performanceThresholds": {
+    "autoDisableAfterFailures": 5,
+    "minSuccessRateToKeep": 0.6,
+    "minTrendContributionToKeep": 1,
+    "maxFeedsPerCategory": 8,
+    "qualityScoreThreshold": 0.5
+  }
 }
