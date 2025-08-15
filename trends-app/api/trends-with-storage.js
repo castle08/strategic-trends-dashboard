@@ -32,10 +32,9 @@ function validateTrendsData(data) {
     });
     
     // Required fields
-    if (trend.id === undefined || trend.id === null || !trend.title || !trend.category || !trend.summary) {
-      console.log(`❌ Invalid data: trend ${i} missing required fields (id, title, category, summary)`);
+    if (!trend.title || !trend.category || !trend.summary) {
+      console.log(`❌ Invalid data: trend ${i} missing required fields (title, category, summary)`);
       console.log(`❌ Missing fields:`, {
-        id: trend.id === undefined || trend.id === null,
         title: !trend.title,
         category: !trend.category,
         summary: !trend.summary
@@ -111,7 +110,6 @@ async function writeTrendsToSupabase(trendsData) {
     console.log('💾 Writing individual trends to Supabase...');
     
     const trendsToInsert = trendsData.trends.map(trend => ({
-      trend_id: trend.id,
       title: trend.title,
       summary: trend.summary,
       category: trend.category,
@@ -139,9 +137,13 @@ async function writeTrendsToSupabase(trendsData) {
       version: '2.0'
     }));
     
+    // Use upsert to handle potential duplicate trend_ids gracefully
     const { error } = await supabase
       .from('trends_individual')
-      .insert(trendsToInsert);
+      .upsert(trendsToInsert, { 
+        onConflict: 'trend_id',
+        ignoreDuplicates: false 
+      });
 
     if (error) {
       console.log('❌ Error writing to Supabase:', error.message);

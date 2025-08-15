@@ -165,8 +165,8 @@ function App() {
       setLoading(true);
       setError(null);
       try {
-        // Use the live API endpoint for development
-        const apiUrl = 'https://trends-dashboard-six.vercel.app/api/trends-with-storage';
+        // Use the new individual trends API endpoint
+        const apiUrl = 'https://trends-dashboard-six.vercel.app/api/trends-individual';
         console.log('🔄 Fetching trends from:', apiUrl);
         
         const response = await fetch(apiUrl);

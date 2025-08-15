@@ -5,83 +5,60 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   
   try {
-    console.log('🔍 Testing trends API logic...');
+    console.log('🔍 Testing Edge Config and Blob functionality...');
     
     const results = {
       timestamp: new Date().toISOString(),
       tests: {}
     };
     
-    // Test 1: Read from Edge Config (like readTrendsFromEdgeConfig)
+    // Test 1: Edge Config Read
     try {
-      console.log('📖 Testing Edge Config read (trends-latest)...');
-      const trendsData = await get('trends-latest');
-      results.tests.readTrends = {
+      console.log('📖 Testing Edge Config read...');
+      const testData = await get('test-key');
+      results.tests.edgeConfigRead = {
         success: true,
-        hasData: !!trendsData,
-        dataType: typeof trendsData,
+        data: testData,
         message: 'Edge Config read successful'
       };
     } catch (error) {
       console.error('❌ Edge Config read failed:', error);
-      results.tests.readTrends = {
+      results.tests.edgeConfigRead = {
         success: false,
         error: error.message,
         message: 'Edge Config read failed'
       };
     }
     
-    // Test 2: Write to Edge Config (like writeTrendsToEdgeConfig)
+    // Test 2: Edge Config Write
     try {
       console.log('📝 Testing Edge Config write...');
-      const testData = {
-        trends: [
-          {
-            id: 'TEST001',
-            title: 'Test Trend',
-            category: 'test',
-            summary: 'Test summary',
-            scores: { total: 100 },
-            creative: { imagePrompt: 'test prompt' },
-            viz: { size: 1 }
-          }
-        ],
-        generatedAt: new Date().toISOString(),
-        lastUpdated: new Date().toISOString(),
-        storageType: 'vercel-edge-config',
-        version: '1.0'
-      };
-      
-      await set('trends-latest', testData);
-      results.tests.writeTrends = {
+      const testValue = { test: 'data', timestamp: new Date().toISOString() };
+      await set('test-key', testValue);
+      results.tests.edgeConfigWrite = {
         success: true,
         message: 'Edge Config write successful'
       };
     } catch (error) {
       console.error('❌ Edge Config write failed:', error);
-      results.tests.writeTrends = {
+      results.tests.edgeConfigWrite = {
         success: false,
         error: error.message,
         message: 'Edge Config write failed'
       };
     }
     
-    // Test 3: Blob upload (like downloadAndUploadImage)
+    // Test 3: Blob Upload (with a simple test image)
     try {
       console.log('📤 Testing Blob upload...');
       const testImageData = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64');
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const filename = `TEST001-${timestamp}.png`;
-      
-      const blob = await put(filename, testImageData, {
+      const blob = await put('test-image.png', testImageData, {
         access: 'public',
         contentType: 'image/png'
       });
-      
       results.tests.blobUpload = {
         success: true,
         url: blob.url,
-        filename: filename,
         message: 'Blob upload successful'
       };
     } catch (error) {
@@ -93,13 +70,13 @@ export default async function handler(req, res) {
       };
     }
     
-    console.log('📊 Trends logic test results:', results);
+    console.log('📊 Storage test results:', results);
     
     return res.status(200).json(results);
   } catch (error) {
-    console.error('❌ Error in trends logic test:', error);
+    console.error('❌ Error in storage test:', error);
     return res.status(500).json({ 
-      error: 'Failed to test trends logic',
+      error: 'Failed to test storage functionality',
       details: error.message,
       stack: error.stack
     });

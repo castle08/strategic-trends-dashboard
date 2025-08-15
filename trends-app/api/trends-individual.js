@@ -54,7 +54,7 @@ export default async function handler(req, res) {
     
     // Transform to frontend format
     const transformedTrends = trends.map(trend => ({
-      id: trend.trend_id,
+      id: trend.id, // Use database auto-incrementing ID
       title: trend.title,
       summary: trend.summary,
       category: trend.category,
