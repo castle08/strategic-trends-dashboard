@@ -15,8 +15,8 @@ function validateTrendsData(data) {
     return false;
   }
   
-  if (data.trends.length < 2) {
-    console.log('❌ Invalid data: too few trends (minimum 2 for testing)');
+  if (data.trends.length < 1) {
+    console.log('❌ Invalid data: no trends provided');
     return false;
   }
   
