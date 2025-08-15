@@ -105,20 +105,43 @@ async function readTrendsFromSupabase() {
   }
 }
 
-// Write trends to Supabase
+// Write individual trends to Supabase
 async function writeTrendsToSupabase(trendsData) {
   try {
-    console.log('💾 Writing trends to Supabase...');
+    console.log('💾 Writing individual trends to Supabase...');
+    
+    const trendsToInsert = trendsData.trends.map(trend => ({
+      trend_id: trend.id,
+      title: trend.title,
+      summary: trend.summary,
+      category: trend.category,
+      tags: trend.tags || [],
+      scores: trend.scores || {},
+      why_it_matters: trend.whyItMatters,
+      brand_angles: trend.brandAngles || [],
+      example_use_cases: trend.exampleUseCases || [],
+      
+      // Visual properties
+      viz_size: trend.viz?.size,
+      viz_color_hint: trend.viz?.colorHint,
+      viz_intensity: trend.viz?.intensity,
+      
+      // Creative assets
+      image_url: trend.creative?.imageUrl,
+      image_prompt: trend.creative?.imagePrompt,
+      alt_text: trend.creative?.altText,
+      short_card_copy: trend.creative?.shortCardCopy,
+      podcast_snippet: trend.creative?.podcastSnippet,
+      blob_filename: trend.creative?.blobFilename,
+      
+      // Metadata
+      source: 'n8n-workflow',
+      version: '2.0'
+    }));
     
     const { error } = await supabase
-      .from('trends')
-      .upsert({
-        trends: trendsData.trends,
-        generatedat: trendsData.generatedAt || new Date().toISOString(),
-        lastupdated: new Date().toISOString(),
-        storagetype: trendsData.storageType || 'supabase-blob',
-        version: '1.0'
-      });
+      .from('trends_individual')
+      .insert(trendsToInsert);
 
     if (error) {
       console.log('❌ Error writing to Supabase:', error.message);
@@ -127,7 +150,7 @@ async function writeTrendsToSupabase(trendsData) {
       return false;
     }
 
-    console.log('✅ Successfully wrote trends to Supabase');
+    console.log(`✅ Successfully wrote ${trendsToInsert.length} individual trends to Supabase`);
     return true;
   } catch (error) {
     console.error('❌ Exception writing to Supabase:', error);
