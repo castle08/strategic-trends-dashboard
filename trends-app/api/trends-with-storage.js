@@ -376,16 +376,16 @@ export default async function handler(req, res) {
         console.log('🔍 First processed trend keys:', Object.keys(processedData.trends[0] || {}));
         console.log('🔍 First processed trend sample:', JSON.stringify(processedData.trends[0], null, 2));
       } else if (req.body.trends && Array.isArray(req.body.trends)) {
-        // Handle object with trends array where each trend has trend/imageBinary structure
+        // Handle object with trends array where each item IS the trend
         console.log('🔄 Processing object with trends array format...');
         console.log('📊 Trends count:', req.body.trends.length);
         console.log('🔍 First trend keys:', Object.keys(req.body.trends[0] || {}));
         console.log('🔍 RAW FIRST TREND:', JSON.stringify(req.body.trends[0], null, 2));
         
-        // Transform to expected format
+        // Transform to expected format - each item IS the trend
         processedData = {
           trends: req.body.trends.map(item => ({
-            ...item.trend,
+            ...item,  // ✅ CORRECT - item IS the trend
             imageBinary: item.imageBinary
           })),
           generatedAt: new Date().toISOString(),
