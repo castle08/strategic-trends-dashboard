@@ -137,13 +137,10 @@ async function writeTrendsToSupabase(trendsData) {
       version: '2.0'
     }));
     
-    // Use upsert to handle potential duplicate trend_ids gracefully
+    // Insert new trends (no upsert needed since we don't have trend_id conflicts)
     const { error } = await supabase
       .from('trends_individual')
-      .upsert(trendsToInsert, { 
-        onConflict: 'trend_id',
-        ignoreDuplicates: false 
-      });
+      .insert(trendsToInsert);
 
     if (error) {
       console.log('❌ Error writing to Supabase:', error.message);
