@@ -178,6 +178,7 @@ function App() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isLiveData, setIsLiveData] = useState(false);
 
   const urlParams = new URLSearchParams(window.location.search);
   const isDemoMode = urlParams.has('demo');
@@ -189,10 +190,8 @@ function App() {
       setLoading(true);
       setError(null);
       try {
-        // Use local API endpoint during development, external in production
-        const apiUrl = process.env.NODE_ENV === 'development' 
-          ? '/api/trends-individual'
-          : 'https://trends-dashboard-six.vercel.app/api/trends-individual';
+        // Always use the live API endpoint since CORS is now fixed
+        const apiUrl = 'https://trends-dashboard-six.vercel.app/api/trends-individual';
         console.log('🔄 Fetching trends from:', apiUrl);
         
         const response = await fetch(apiUrl);
@@ -226,11 +225,13 @@ function App() {
         }
         
         setTrendsData(data);
+        setIsLiveData(true);
       } catch (err) {
         console.error('❌ Error fetching trends:', err);
         console.log('🔄 Falling back to demo data');
         setError('not-live'); // Use a simple flag instead of error message
         setTrendsData(DEMO_DATA);
+        setIsLiveData(false);
       } finally {
         setLoading(false);
       }
@@ -318,6 +319,9 @@ function App() {
           path="/dash" 
           element={
             <div className="min-h-screen bg-white">
+              <div className={`fixed top-4 right-4 z-50 px-3 py-1 rounded-full text-sm font-medium ${isLiveData ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                {isLiveData ? '🟢 LIVE DATA' : '🔴 DEMO DATA'}
+              </div>
               <Dashboard trends={transformTrendsForDashboard(trendsData.trends)} isLoading={loading} />
             </div>
           } 
@@ -328,6 +332,9 @@ function App() {
           path="/dash-v2" 
           element={
             <div className="min-h-screen bg-white">
+              <div className={`fixed top-4 right-4 z-50 px-3 py-1 rounded-full text-sm font-medium ${isLiveData ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                {isLiveData ? '🟢 LIVE DATA' : '🔴 DEMO DATA'}
+              </div>
               <TrendsWallV2 />
             </div>
           } 
