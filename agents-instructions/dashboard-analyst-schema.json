@@ -1,0 +1,141 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "stateOfWorld": {
+      "type": "object",
+      "properties": {
+        "thesis": {
+          "type": "string",
+          "description": "A concise thesis statement capturing the current macro trend landscape"
+        },
+        "velocity": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 8,
+          "maxItems": 8,
+          "description": "8 weeks of trend velocity data (weighted signals per week)"
+        },
+        "movers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string",
+                "description": "Category or trend name"
+              },
+              "strength": {
+                "type": "string",
+                "description": "Growth percentage or strength indicator"
+              }
+            },
+            "required": ["label", "strength"]
+          },
+          "description": "Top performing categories or movements"
+        }
+      },
+      "required": ["thesis", "velocity", "movers"]
+    },
+    "aiInsight": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Headline insight about the current trend landscape"
+        },
+        "bullets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 3,
+          "maxItems": 5,
+          "description": "Key strategic insights derived from trend analysis"
+        }
+      },
+      "required": ["title", "bullets"]
+    },
+    "liveSignals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 3,
+      "maxItems": 8,
+      "description": "Recent signals and breaking news from trend analysis"
+    },
+    "opportunities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Opportunity name and description"
+          },
+          "level": {
+            "type": "string",
+            "enum": ["High", "Medium", "Low"],
+            "description": "Priority level"
+          },
+          "whyNow": {
+            "type": "string",
+            "description": "Why this opportunity is relevant now"
+          },
+          "signals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Supporting signals and data points"
+          },
+          "play": {
+            "type": "string",
+            "description": "Recommended action or strategy"
+          }
+        },
+        "required": ["title", "level", "whyNow", "signals", "play"]
+      },
+      "minItems": 2,
+      "maxItems": 4,
+      "description": "Strategic opportunities identified from trend analysis"
+    },
+    "threats": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "brand": {
+            "type": "string",
+            "description": "Competitor or brand name"
+          },
+          "move": {
+            "type": "string",
+            "description": "What they did or are doing"
+          },
+          "urgency": {
+            "type": "string",
+            "enum": ["High", "Medium", "Low"],
+            "description": "Urgency level"
+          },
+          "seen": {
+            "type": "string",
+            "description": "When this was observed (e.g., '6 days ago')"
+          },
+          "action": {
+            "type": "string",
+            "description": "Recommended response action"
+          }
+        },
+        "required": ["brand", "move", "urgency", "seen", "action"]
+      },
+      "minItems": 2,
+      "maxItems": 4,
+      "description": "Competitive threats and market movements"
+    }
+  },
+  "required": ["stateOfWorld", "aiInsight", "liveSignals", "opportunities", "threats"]
+}

@@ -164,12 +164,18 @@ Agents should **first read this outline**, then fetch the additional files below
 - ✅ **API endpoints** configured
 - ✅ **Workspace organized** and cleaned up
 - ✅ **Processing pipeline** connected to brain
-- ✅ **V2 Dashboard** implemented with sidebar layout and filter popup
-- ✅ **UI Components** created (Panel, Chip, Badge, Meter, Sparkline, Modal)
-- ✅ **Auto-cycling carousels** for threats and opportunities
+- ✅ **V2 Dashboard** fully implemented with comprehensive layout and live data integration
+- ✅ **Dashboard Analyst Agent** created with schema, system prompt, and user prompt (clean text format)
+- ✅ **API endpoint** (`/api/dashboard-data.js`) created for dashboard data storage and retrieval
+- ✅ **Frontend updated** to fetch and display live dashboard data with fallback to demo data
+- ✅ **Color coding system** implemented (green for live data, red for demo data)
+- ✅ **All dashboard cards** have proper IDs and classes for easier targeting
+- ✅ **Layout issues fixed** - removed duplicate sections, positioned live signals strip correctly
+- ✅ **Live data sections**: State of World, AI Insights, Live Signals, Brand Opportunities, Competitive Threats
+- ✅ **Trend Spotlights and Trend Radar** continue using existing live trend data
 - ⏳ **Brain workflow** - configured but not tested
 - ⏳ **Processing pipeline** - configured but not tested
-- ⏳ **Live data integration** - ready to implement
+- ⏳ **Dashboard Analyst workflow** - ready to implement in n8n
 - ⏳ **Workflow activation** pending
 - ⏳ **Production deployment** pending
 
@@ -178,12 +184,16 @@ Agents should **first read this outline**, then fetch the additional files below
 ## 📋 Next Steps
 
 ### **Immediate (This Week)**
-1. **Integrate live data** - Connect V2 dashboard to `/api/trends-individual` endpoint
-2. **Implement data transformations** - Convert raw trend data to dashboard components
-3. **Test brain workflow** - Validate trend generation and quality
-4. **Test processing pipeline** - Verify image generation and API flow
-5. **Fix color mapping** - Implement category-to-color mapping system
-6. **Update image prompts** - Ensure colors are properly applied
+1. **Implement Dashboard Analyst workflow** in n8n:
+   - Create workflow with webhook trigger
+   - Add Supabase node to get recent trends
+   - Add OpenAI node with Dashboard Analyst prompts
+   - Add HTTP Request node to store data via `/api/dashboard-data`
+2. **Test brain workflow** - Validate trend generation and quality
+3. **Test processing pipeline** - Verify image generation and API flow
+4. **Fix color mapping** - Implement category-to-color mapping system
+5. **Update image prompts** - Ensure colors are properly applied
+6. **Test complete dashboard** - Verify all sections show live data when available
 
 ### **Critical TODOs**
 1. **Color System Fix**:
@@ -205,6 +215,10 @@ Agents should **first read this outline**, then fetch the additional files below
    - Update Trend Agent to use Supabase nodes directly instead of API endpoint
    - Use "service_role secret" key for n8n workflows
    - Implement direct database queries for checking existing trends and storing new ones
+5. **Dashboard Data Storage**:
+   - Create `dashboard_data` table in Supabase
+   - Ensure `/api/dashboard-data` handles both GET (retrieve) and POST (store) requests
+   - Test webhook integration between main trend flow and dashboard analysis flow
 
 ### **Short Term (Next 2 Weeks)**
 1. **Deploy to production** environment
