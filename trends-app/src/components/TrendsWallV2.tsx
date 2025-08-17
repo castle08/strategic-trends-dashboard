@@ -247,35 +247,46 @@ export default function TrendsWallV2() {
   
   // Live data states
   const [trendsData, setTrendsData] = useState<TrendsData | null>(null);
+  const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isLiveData, setIsLiveData] = useState(false);
 
   // Fetch live data
   useEffect(() => {
-    const fetchTrends = async () => {
+    const fetchData = async () => {
       setLoading(true);
       setError(null);
       try {
-        const apiUrl = 'https://trends-dashboard-six.vercel.app/api/trends-individual';
-        
-        const response = await fetch(apiUrl);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        // Fetch trends data
+        const trendsApiUrl = 'https://trends-dashboard-six.vercel.app/api/trends-individual';
+        const trendsResponse = await fetch(trendsApiUrl);
+        if (!trendsResponse.ok) {
+          throw new Error(`HTTP error! status: ${trendsResponse.status}`);
         }
-                            const data = await response.json();
-                    setTrendsData(data);
-                    setIsLiveData(true);
-                        } catch (err) {
-                    console.error('❌ Error fetching trends:', err);
-                    setError('Failed to load live data');
-                    setIsLiveData(false);
-                  } finally {
-                    setLoading(false);
-                  }
+        const trendsData = await trendsResponse.json();
+        setTrendsData(trendsData);
+        
+        // Fetch dashboard data
+        const dashboardApiUrl = 'https://trends-dashboard-six.vercel.app/api/dashboard-data';
+        const dashboardResponse = await fetch(dashboardApiUrl);
+        if (dashboardResponse.ok) {
+          const dashboardData = await dashboardResponse.json();
+          setDashboardData(dashboardData);
+          setIsLiveData(true); // Set to true if we get any live data
+        } else {
+          console.warn('Dashboard data not available yet, using demo data');
+          setIsLiveData(false);
+        }
+      } catch (err) {
+        console.error('❌ Error fetching data:', err);
+        setError('Failed to load live data');
+        setIsLiveData(false); // Set to false on error
+      } finally {
+        setLoading(false);
+      }
     };
-
-    fetchTrends();
+    fetchData();
   }, []);
 
   // Transform live trends to dashboard format
@@ -517,19 +528,19 @@ export default function TrendsWallV2() {
           <Panel accent="blue" className="col-span-8">
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="font-semibold text-base mb-0.5">State of the World <span className="text-red-600 text-sm">(DEMO)</span></h3>
-                <p className="text-red-600 text-sm">{dashboardMock.stateOfWorld.thesis}</p>
+                <h3 className="font-semibold text-base mb-0.5">State of the World <span className={isLiveData ? 'text-green-600' : 'text-red-600'} className="text-sm">{isLiveData ? '(LIVE)' : '(DEMO)'}</span></h3>
+                <p className={isLiveData ? 'text-green-700' : 'text-red-600'} className="text-sm">{dashboardData?.stateOfWorld?.thesis || dashboardMock.stateOfWorld.thesis}</p>
               </div>
               <div className="text-right">
                 <div className="text-xs text-slate-500 mb-0.5">Trend Velocity (8 weeks)</div>
-                <div className="w-90 h-20"><Sparkline data={dashboardMock.stateOfWorld.velocity} /></div>
+                <div className="w-90 h-20"><Sparkline data={dashboardData?.stateOfWorld?.velocity || dashboardMock.stateOfWorld.velocity} /></div>
               </div>
             </div>
             <div className="mt-1">
               <div className="text-xs text-slate-500 mb-0.5">Top Movers</div>
               <div className="flex flex-wrap gap-1">
-                {dashboardMock.stateOfWorld.movers.map(m=>(
-                  <span key={m.label} className="px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-700">
+                {(dashboardData?.stateOfWorld?.movers || dashboardMock.stateOfWorld.movers).map((m: any, i: number)=>(
+                  <span key={i} className="px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-700">
                     {m.label} <span className="text-emerald-600">▲{m.strength}</span>
                   </span>
                 ))}
@@ -539,18 +550,18 @@ export default function TrendsWallV2() {
 
           {/* AI Insight */}
           <Panel id="ai-insight-card" accent="purple" className="col-span-4 ai-insight-card">
-            <h3 className="font-semibold text-base mb-0.5">AI Insight <span className="text-red-600 text-sm">(DEMO)</span></h3>
-            <div className="font-medium text-red-700 text-sm">{dashboardMock.aiInsight.title}</div>
-            <ul className="mt-1 space-y-0.5 text-red-600 text-sm list-disc pl-4">
-              {dashboardMock.aiInsight.bullets.map(b=><li key={b}>{b}</li>)}
+            <h3 className="font-semibold text-base mb-0.5">AI Insight <span className={isLiveData ? 'text-green-600' : 'text-red-600'} className="text-sm">{isLiveData ? '(LIVE)' : '(DEMO)'}</span></h3>
+            <div className={`font-medium text-sm ${isLiveData ? 'text-green-700' : 'text-red-700'}`}>{dashboardData?.aiInsight?.title || dashboardMock.aiInsight.title}</div>
+            <ul className={`mt-1 space-y-0.5 text-sm list-disc pl-4 ${isLiveData ? 'text-green-600' : 'text-red-600'}`}>
+              {(dashboardData?.aiInsight?.bullets || dashboardMock.aiInsight.bullets).map((b: string, i: number)=><li key={i}>{b}</li>)}
             </ul>
           </Panel>
 
           {/* Live Signals Strip */}
-          <div id="live-signals-strip" className="col-span-12 overflow-hidden relative h-8 bg-gradient-to-r from-red-50 to-red-100 rounded-lg border border-red-200">
-            <div className="absolute whitespace-nowrap animate-[marquee_20s_linear_infinite] text-red-700 text-sm py-2">
-              {dashboardMock.liveSignals.map((s,i)=>(
-                <span key={i} className="mr-8">• {s} (DEMO)</span>
+          <div id="live-signals-strip" className={`col-span-12 overflow-hidden relative h-8 rounded-lg border ${isLiveData ? 'bg-gradient-to-r from-green-50 to-green-100 border-green-200' : 'bg-gradient-to-r from-red-50 to-red-100 border-red-200'}`}>
+            <div className={`absolute whitespace-nowrap animate-[marquee_20s_linear_infinite] text-sm py-2 ${isLiveData ? 'text-green-700' : 'text-red-700'}`}>
+              {(dashboardData?.liveSignals || dashboardMock.liveSignals).map((s: string, i: number)=>(
+                <span key={i} className="mr-8">• {s} {isLiveData ? '(LIVE)' : '(DEMO)'}</span>
               ))}
             </div>
           </div>
@@ -559,19 +570,19 @@ export default function TrendsWallV2() {
           <div id="opportunities-threats-container" className="col-span-6 space-y-2">
             {/* Opportunities */}
             <Panel id="brand-opportunities-card" accent="green" className="opportunities-card">
-              <h3 className="font-semibold text-base mb-1">Brand Opportunities <span className="text-red-600 text-sm">(DEMO)</span></h3>
+              <h3 className="font-semibold text-base mb-1">Brand Opportunities <span className={isLiveData ? 'text-green-600' : 'text-red-600'} className="text-sm">{isLiveData ? '(LIVE)' : '(DEMO)'}</span></h3>
               <div className="rounded-lg border border-slate-200 p-2">
                 <div className="flex items-start justify-between">
-                  <div className="font-medium">{dashboardMock.opportunities[currentOpportunityIndex].title}</div>
-                  <Badge tone={dashboardMock.opportunities[currentOpportunityIndex].level as any} />
+                  <div className="font-medium">{(dashboardData?.opportunities || dashboardMock.opportunities)[currentOpportunityIndex]?.title}</div>
+                  <Badge tone={(dashboardData?.opportunities || dashboardMock.opportunities)[currentOpportunityIndex]?.level as any} />
                 </div>
-                <div className="text-sm text-slate-700 mt-1"><span className="font-semibold">Why now:</span> {dashboardMock.opportunities[currentOpportunityIndex].whyNow}</div>
-                <div className="text-sm text-slate-700 mt-1"><span className="font-semibold">Signals:</span> {dashboardMock.opportunities[currentOpportunityIndex].signals.join(" • ")}</div>
-                <div className="text-sm text-slate-700 mt-1"><span className="font-semibold">Play:</span> {dashboardMock.opportunities[currentOpportunityIndex].play}</div>
+                <div className="text-sm text-slate-700 mt-1"><span className="font-semibold">Why now:</span> {(dashboardData?.opportunities || dashboardMock.opportunities)[currentOpportunityIndex]?.whyNow}</div>
+                <div className="text-sm text-slate-700 mt-1"><span className="font-semibold">Signals:</span> {(dashboardData?.opportunities || dashboardMock.opportunities)[currentOpportunityIndex]?.signals?.join(" • ")}</div>
+                <div className="text-sm text-slate-700 mt-1"><span className="font-semibold">Play:</span> {(dashboardData?.opportunities || dashboardMock.opportunities)[currentOpportunityIndex]?.play}</div>
               </div>
               {/* Navigation dots */}
               <div className="flex justify-center mt-2 space-x-1">
-                {dashboardMock.opportunities.map((_, idx) => (
+                {(dashboardData?.opportunities || dashboardMock.opportunities).map((_, idx) => (
                   <button
                     key={idx}
                     onClick={() => setCurrentOpportunityIndex(idx)}
@@ -587,20 +598,20 @@ export default function TrendsWallV2() {
 
             {/* Threats */}
             <Panel id="competitive-threats-card" accent="red" className="threats-card">
-              <h3 className="font-semibold text-base mb-1">Competitive Threats <span className="text-red-600 text-sm">(DEMO)</span></h3>
+              <h3 className="font-semibold text-base mb-1">Competitive Threats <span className={isLiveData ? 'text-green-600' : 'text-red-600'} className="text-sm">{isLiveData ? '(LIVE)' : '(DEMO)'}</span></h3>
               <div className="rounded-lg border border-slate-200 p-2">
                 <div className="flex items-start justify-between">
                   <div>
-                    <div className="font-medium">{dashboardMock.threats[currentThreatIndex].brand} → <span className="text-slate-700">{dashboardMock.threats[currentThreatIndex].move}</span></div>
-                    <div className="text-xs text-slate-500 mt-1">Seen: {dashboardMock.threats[currentThreatIndex].seen}</div>
+                    <div className="font-medium">{(dashboardData?.threats || dashboardMock.threats)[currentThreatIndex]?.brand} → <span className="text-slate-700">{(dashboardData?.threats || dashboardMock.threats)[currentThreatIndex]?.move}</span></div>
+                    <div className="text-xs text-slate-500 mt-1">Seen: {(dashboardData?.threats || dashboardMock.threats)[currentThreatIndex]?.seen}</div>
                   </div>
-                  <Badge tone={dashboardMock.threats[currentThreatIndex].urgency as any} />
+                  <Badge tone={(dashboardData?.threats || dashboardMock.threats)[currentThreatIndex]?.urgency as any} />
                 </div>
-                <div className="text-sm text-slate-700 mt-1"><span className="font-semibold">Action:</span> {dashboardMock.threats[currentThreatIndex].action}</div>
+                <div className="text-sm text-slate-700 mt-1"><span className="font-semibold">Action:</span> {(dashboardData?.threats || dashboardMock.threats)[currentThreatIndex]?.action}</div>
               </div>
               {/* Navigation dots */}
               <div className="flex justify-center mt-2 space-x-1">
-                {dashboardMock.threats.map((_, idx) => (
+                {(dashboardData?.threats || dashboardMock.threats).map((_, idx) => (
                   <button
                     key={idx}
                     onClick={() => setCurrentThreatIndex(idx)}
