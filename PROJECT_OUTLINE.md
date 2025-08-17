@@ -109,6 +109,29 @@ Agents should **first read this outline**, then fetch the additional files below
 - **Color-coded categories** with 10-color palette system
 - **Multiple view modes**: demo, screens, test
 
+## 📊 Analytics Dashboard
+- **New route**: `/dash` for analytics and data insights
+- **Design**: Tailwind Plus components for WPP Open integration
+- **Theme**: Dark mode toggle with system preference detection
+- **Purpose**: Data analysis, trend performance, and system health monitoring
+
+### **Dashboard Sections**
+1. **Executive Summary**: Key metrics (total trends, confidence scores, signal freshness)
+2. **Latest Trends Grid**: Current trends with status indicators
+3. **Trend Analytics**: Charts for velocity, category distribution, confidence trends
+4. **Signal Health Monitor**: RSS feed status, Perplexity performance, system health
+
+### **Key Metrics Tracked**
+- **Trend Quality**: Average confidence scores, signal freshness ratios
+- **System Performance**: Workflow success rates, agent memory utilization
+- **Business Impact**: Category diversity, velocity acceleration, engagement scores
+
+### **Technical Implementation**
+- **Database Extensions**: Analytics tables for trend performance tracking
+- **New Agent**: "Trend Analyst" for pattern analysis and insights generation
+- **Components**: Tailwind Plus Application UI and Marketing packages
+- **Responsive Design**: Optimized for iFrame integration with WPP Open
+
 ---
 
 ## 🔐 Access & Permissions
@@ -179,8 +202,9 @@ Agents should **first read this outline**, then fetch the additional files below
 ### **Medium Term (Next Month)**
 1. **Scale to 10 trends** (currently set to 2)
 2. **Add image generation** integration
-3. **Implement trend analytics** dashboard
-4. **Set up weekly digest** automation
+3. **Implement analytics dashboard** with trend performance metrics
+4. **Deploy Trend Analyst agent** for pattern analysis and insights
+5. **Set up weekly digest** automation
 
 ### **Long Term (Next Quarter)**
 1. **Add more RSS sources** for broader coverage
