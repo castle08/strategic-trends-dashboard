@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trends Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .bg-sunset {
+            background-image: linear-gradient(27deg, #cc353e, #ea8d69 50%, #ffb2b5);
+        }
+        .bg-lavender-bath {
+            background-image: linear-gradient(27deg, #803bff, #ab81fa 50%, #8ec2ef);
+        }
+        .bg-dingy-pond {
+            background-image: linear-gradient(27deg, #5b90d4, #4eccc9 50%, #bde4ff);
+        }
+        .bg-sweets {
+            background-image: linear-gradient(207deg, #ffb2b5, #d46a97 50%, #ab81fa);
+        }
+        .bg-forest-mist {
+            background-image: linear-gradient(27deg, #4eccc9, #5fd9a8 50%, #a8e6cf);
+        }
+        .bg-amber-glow {
+            background-image: linear-gradient(27deg, #f59e0b, #fbbf24 50%, #fde047);
+        }
+        .bg-crimson-blaze {
+            background-image: linear-gradient(27deg, #dc2626, #ef4444 50%, #f87171);
+        }
+        .bg-emerald-wave {
+            background-image: linear-gradient(27deg, #059669, #10b981 50%, #6ee7b7);
+        }
+        .bg-sapphire-depths {
+            background-image: linear-gradient(27deg, #1e40af, #3b82f6 50%, #93c5fd);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .pulse-glow {
+            animation: pulse-glow 2s infinite;
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(139, 92, 246, 0.6); }
+        }
+        
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+        
+        @keyframes floating {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .trend-card {
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .trend-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .metric-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white overflow-x-hidden">
+    <!-- Animated Background Elements -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-20 left-10 w-72 h-72 bg-sunset rounded-full opacity-20 floating"></div>
+        <div class="absolute top-40 right-20 w-96 h-96 bg-lavender-bath rounded-full opacity-15 floating" style="animation-delay: -1s;"></div>
+        <div class="absolute bottom-20 left-1/4 w-64 h-64 bg-dingy-pond rounded-full opacity-25 floating" style="animation-delay: -2s;"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="relative z-10 bg-black/20 backdrop-blur-md border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-6">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-sapphire-depths rounded-xl flex items-center justify-center pulse-glow">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold gradient-text">Trends Dashboard</h1>
+                        <p class="text-white/60 text-sm">Real-time consumer intelligence</p>
+                    </div>
+                </div>
+                
+                <!-- Command Palette -->
+                <div class="flex-1 max-w-md ml-8">
+                    <div class="relative">
+                        <input
+                            type="text"
+                            id="commandInput"
+                            placeholder="Type /search, /discover, /audience, /compare..."
+                            class="w-full px-4 py-3 pl-12 text-sm bg-white/10 backdrop-blur-md border border-white/20 rounded-xl text-white placeholder-white/50 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+                        />
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <span class="text-purple-400 text-lg">/</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2 bg-emerald-wave rounded-full px-4 py-2">
+                        <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                        <span class="text-sm font-medium">Live</span>
+                    </div>
+                    <button id="darkModeToggle" class="p-2 bg-white/10 backdrop-blur-md rounded-lg hover:bg-white/20 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="relative z-10 bg-black/20 backdrop-blur-md border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex space-x-8">
+                <button class="tab-btn active py-4 px-1 border-b-2 border-purple-400 text-purple-400 font-medium text-sm transition-all duration-300" data-tab="summary">
+                    Executive Summary
+                </button>
+                <button class="tab-btn py-4 px-1 border-b-2 border-transparent text-white/60 hover:text-white font-medium text-sm transition-all duration-300" data-tab="momentum">
+                    Trend Momentum
+                </button>
+                <button class="tab-btn py-4 px-1 border-b-2 border-transparent text-white/60 hover:text-white font-medium text-sm transition-all duration-300" data-tab="industry">
+                    Industry Analysis
+                </button>
+                <button class="tab-btn py-4 px-1 border-b-2 border-transparent text-white/60 hover:text-white font-medium text-sm transition-all duration-300" data-tab="audience">
+                    Audience Impact
+                </button>
+                <button class="tab-btn py-4 px-1 border-b-2 border-transparent text-white/60 hover:text-white font-medium text-sm transition-all duration-300" data-tab="insights">
+                    Strategic Insights
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Executive Summary Tab -->
+        <div id="summary" class="tab-content space-y-8">
+            <!-- Hero Section -->
+            <div class="bg-gradient-to-r from-purple-900/50 to-blue-900/50 backdrop-blur-md rounded-2xl p-8 border border-white/10">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-2">
+                        <h2 class="text-2xl font-bold mb-4 gradient-text">Trend Intelligence Overview</h2>
+                        <p class="text-white/80 text-lg leading-relaxed">
+                            <span class="text-purple-400">Auto-generated narrative:</span> Sustainability is shifting from virtue to value in CPG + Grocery, led by repair/refill defaults; strongest with Gen Z; 2 live signals this fortnight.
+                        </p>
+                    </div>
+                    <div class="flex items-center justify-center">
+                        <div class="w-32 h-32 bg-sweets rounded-full flex items-center justify-center floating">
+                            <div class="text-center">
+                                <div class="text-3xl font-bold">4</div>
+                                <div class="text-sm opacity-80">Active Trends</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Accelerators -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/10">
+                    <h3 class="text-xl font-bold mb-6 gradient-text">🚀 Top Accelerators</h3>
+                    <div class="space-y-4">
+                        <div class="trend-card bg-gradient-to-r from-emerald-wave to-forest-mist rounded-xl p-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex-1">
+                                    <h4 class="font-semibold text-white">AI-Driven Grocery Revolution</h4>
+                                    <p class="text-white/80 text-sm">Last signal: 2024-08-15</p>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-2xl font-bold text-white">85▲</div>
+                                    <div class="text-xs text-white/60">Momentum</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="trend-card bg-gradient-to-r from-amber-glow to-crimson-blaze rounded-xl p-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex-1">
+                                    <h4 class="font-semibold text-white">Gen Z's Ethical Shopping Shift</h4>
+                                    <p class="text-white/80 text-sm">Last signal: 2024-08-14</p>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-2xl font-bold text-white">78▲</div>
+                                    <div class="text-xs text-white/60">Momentum</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="trend-card bg-gradient-to-r from-sapphire-depths to-dingy-pond rounded-xl p-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex-1">
+                                    <h4 class="font-semibold text-white">Immersive Consumer Engagement</h4>
+                                    <p class="text-white/80 text-sm">Last signal: 2024-08-13</p>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-2xl font-bold text-white">72▲</div>
+                                    <div class="text-xs text-white/60">Momentum</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Industry Impact Chart -->
+                <div class="bg-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/10">
+                    <h3 class="text-xl font-bold mb-6 gradient-text">🏭 Industry Impact</h3>
+                    <canvas id="industryChart" width="400" height="300"></canvas>
+                </div>
+            </div>
+
+            <!-- Key Metrics Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="metric-card rounded-2xl p-6 text-center">
+                    <div class="w-16 h-16 bg-sunset rounded-full mx-auto mb-4 flex items-center justify-center">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                    <div class="text-3xl font-bold text-white mb-2">4</div>
+                    <div class="text-white/60 text-sm">Total Trends</div>
+                    <div class="text-xs text-white/40 mt-1">This week</div>
+                </div>
+
+                <div class="metric-card rounded-2xl p-6 text-center">
+                    <div class="w-16 h-16 bg-lavender-bath rounded-full mx-auto mb-4 flex items-center justify-center">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="text-3xl font-bold text-white mb-2">76%</div>
+                    <div class="text-white/60 text-sm">Avg Confidence</div>
+                    <div class="text-xs text-white/40 mt-1">Signal quality</div>
+                </div>
+
+                <div class="metric-card rounded-2xl p-6 text-center">
+                    <div class="w-16 h-16 bg-forest-mist rounded-full mx-auto mb-4 flex items-center justify-center">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="text-3xl font-bold text-white mb-2">89%</div>
+                    <div class="text-white/60 text-sm">Signal Freshness</div>
+                    <div class="text-xs text-red-400 mt-1">Missing: Signal tracking</div>
+                </div>
+
+                <div class="metric-card rounded-2xl p-6 text-center">
+                    <div class="w-16 h-16 bg-amber-glow rounded-full mx-auto mb-4 flex items-center justify-center">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                        </svg>
+                    </div>
+                    <div class="text-3xl font-bold text-white mb-2">3.2</div>
+                    <div class="text-white/60 text-sm">Coverage Depth</div>
+                    <div class="text-xs text-red-400 mt-1">Missing: Signals per trend</div>
+                </div>
+            </div>
+
+            <!-- Audience Impact Matrix -->
+            <div class="bg-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/10">
+                <h3 class="text-xl font-bold mb-6 gradient-text">👥 Audience Impact Matrix</h3>
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-sweets rounded-full mx-auto mb-2 flex items-center justify-center">
+                            <span class="text-2xl">🎯</span>
+                        </div>
+                        <div class="text-lg font-bold text-white">Gen Z</div>
+                        <div class="text-3xl font-bold text-purple-400">92</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-lavender-bath rounded-full mx-auto mb-2 flex items-center justify-center">
+                            <span class="text-2xl">💼</span>
+                        </div>
+                        <div class="text-lg font-bold text-white">Millennials</div>
+                        <div class="text-3xl font-bold text-blue-400">85</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-forest-mist rounded-full mx-auto mb-2 flex items-center justify-center">
+                            <span class="text-2xl">👨‍👩‍👧‍👦</span>
+                        </div>
+                        <div class="text-lg font-bold text-white">Parents</div>
+                        <div class="text-3xl font-bold text-green-400">78</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-dingy-pond rounded-full mx-auto mb-2 flex items-center justify-center">
+                            <span class="text-2xl">🏙️</span>
+                        </div>
+                        <div class="text-lg font-bold text-white">Urban</div>
+                        <div class="text-3xl font-bold text-cyan-400">81</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-amber-glow rounded-full mx-auto mb-2 flex items-center justify-center">
+                            <span class="text-2xl">💰</span>
+                        </div>
+                        <div class="text-lg font-bold text-white">Affluent</div>
+                        <div class="text-3xl font-bold text-yellow-400">76</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Other tab contents (hidden by default) -->
+        <div id="momentum" class="tab-content hidden">
+            <div class="bg-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/10">
+                <h3 class="text-xl font-bold mb-6 gradient-text">📈 Trend Momentum</h3>
+                <canvas id="momentumChart" width="800" height="400"></canvas>
+            </div>
+        </div>
+
+        <div id="industry" class="tab-content hidden">
+            <div class="bg-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/10">
+                <h3 class="text-xl font-bold mb-6 gradient-text">🏭 Industry Analysis</h3>
+                <canvas id="industryHeatmap" width="800" height="400"></canvas>
+            </div>
+        </div>
+
+        <div id="audience" class="tab-content hidden">
+            <div class="bg-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/10">
+                <h3 class="text-xl font-bold mb-6 gradient-text">👥 Audience Impact</h3>
+                <canvas id="audienceChart" width="800" height="400"></canvas>
+            </div>
+        </div>
+
+        <div id="insights" class="tab-content hidden">
+            <div class="bg-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/10">
+                <h3 class="text-xl font-bold mb-6 gradient-text">💡 Strategic Insights</h3>
+                <canvas id="insightsChart" width="800" height="400"></canvas>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Initialize charts
+        function initCharts() {
+            // Industry Impact Chart
+            const industryCtx = document.getElementById('industryChart');
+            if (industryCtx) {
+                new Chart(industryCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Retail', 'CPG', 'Technology', 'Finance', 'Healthcare'],
+                        datasets: [{
+                            data: [87, 82, 79, 74, 68],
+                            backgroundColor: [
+                                '#cc353e', '#ea8d69', '#ffb2b5',
+                                '#803bff', '#ab81fa', '#8ec2ef'
+                            ],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: 'white',
+                                    padding: 20
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Momentum Chart
+            const momentumCtx = document.getElementById('momentumChart');
+            if (momentumCtx) {
+                new Chart(momentumCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7', 'Week 8', 'Week 9', 'Week 10', 'Week 11', 'Week 12'],
+                        datasets: [{
+                            label: 'AI-Driven Grocery',
+                            data: [65, 70, 75, 80, 85, 88, 85, 82, 85, 87, 89, 85],
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4
+                        }, {
+                            label: 'Gen Z Ethics',
+                            data: [60, 65, 70, 75, 78, 80, 78, 75, 78, 80, 82, 78],
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            tension: 0.4
+                        }, {
+                            label: 'Immersive Engagement',
+                            data: [55, 60, 65, 70, 72, 75, 72, 70, 72, 74, 76, 72],
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: 'white'
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                ticks: {
+                                    color: 'white'
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    color: 'white'
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Tab switching functionality
+        document.querySelectorAll('.tab-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove active class from all tabs
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.classList.remove('active', 'border-purple-400', 'text-purple-400');
+                    btn.classList.add('border-transparent', 'text-white/60');
+                });
+                
+                // Add active class to clicked tab
+                button.classList.add('active', 'border-purple-400', 'text-purple-400');
+                button.classList.remove('border-transparent', 'text-white/60');
+                
+                // Hide all tab contents
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                
+                // Show selected tab content
+                const tabId = button.getAttribute('data-tab');
+                document.getElementById(tabId).classList.remove('hidden');
+                
+                // Initialize charts for the new tab
+                setTimeout(initCharts, 100);
+            });
+        });
+
+        // Dark mode toggle
+        document.getElementById('darkModeToggle').addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+        });
+
+        // Command input functionality
+        document.getElementById('commandInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const command = e.target.value;
+                console.log('Executing command:', command);
+                e.target.value = '';
+                // Here you would implement the actual command logic
+            }
+        });
+
+        // Initialize charts on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initCharts();
+        });
+    </script>
+</body>
+</html>

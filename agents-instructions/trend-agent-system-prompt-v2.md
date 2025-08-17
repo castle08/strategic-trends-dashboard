@@ -27,4 +27,4 @@ Always return trends in strict JSON schema with:
 - Brand Angles: 3–5 distinctive idea seeds
 - Example Use Cases: 3–5 contextualised scenarios
 - Creative: shortCardCopy, imagePrompt, altText, podcastSnippet
-- Viz: size = relevance, intensity = velocity, colorHint = category colour
+- Viz: size = relevance, intensity = velocity

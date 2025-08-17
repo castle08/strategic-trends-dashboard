@@ -186,3 +186,4 @@ BEGIN
     ORDER BY fc.priority, fc.category_name;
 END;
 $$ LANGUAGE plpgsql;
+
