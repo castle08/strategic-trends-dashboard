@@ -1,0 +1,240 @@
+{
+  "name": "trend_daily",
+  "active": true,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "cronExpression": "30 7 * * 1-7",
+              "timezone": "Europe/London"
+            }
+          ]
+        }
+      },
+      "id": "cron-trigger",
+      "name": "Daily 7:30 London",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://www.morningbrew.com/marketing/feed",
+        "options": {}
+      },
+      "id": "rss-marketing-brew",
+      "name": "Marketing Brew RSS",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [460, 200]
+    },
+    {
+      "parameters": {
+        "url": "https://www.creativereview.co.uk/feed/",
+        "options": {}
+      },
+      "id": "rss-creative-review", 
+      "name": "Creative Review RSS",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://www.adweek.com/feed/",
+        "options": {}
+      },
+      "id": "rss-adweek",
+      "name": "Adweek RSS", 
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [460, 400]
+    },
+    {
+      "parameters": {
+        "url": "https://www.campaignlive.co.uk/feed",
+        "options": {}
+      },
+      "id": "rss-campaign-live",
+      "name": "Campaign Live RSS",
+      "type": "n8n-nodes-base.rssFeedRead", 
+      "typeVersion": 1.2,
+      "position": [460, 500]
+    },
+    {
+      "parameters": {
+        "operation": "merge",
+        "include": "all"
+      },
+      "id": "merge-rss",
+      "name": "Merge RSS Feeds",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [680, 350]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normalize and dedupe RSS data\nconst items = [];\nconst seen = new Set();\n\nfor (const item of $input.all()) {\n  const title = item.json.title || '';\n  const url = item.json.link || item.json.url || '';\n  const source = item.json.source || 'RSS';\n  const published = item.json.pubDate || item.json.published || new Date().toISOString();\n  const summary = item.json.contentSnippet || item.json.description || item.json.content || '';\n  \n  // Create hash for deduplication\n  const hash = title + '|' + url;\n  if (seen.has(hash)) continue;\n  seen.add(hash);\n  \n  items.push({\n    json: {\n      title: title.trim(),\n      url: url.trim(),\n      source: source,\n      publishedAt: new Date(published).toISOString(),\n      summary: summary.replace(/<[^>]*>/g, '').trim().substring(0, 500)\n    }\n  });\n}\n\n// Sort by published date (newest first)\nitems.sort((a, b) => new Date(b.json.publishedAt) - new Date(a.json.publishedAt));\n\nreturn items;"
+      },
+      "id": "normalize-data",
+      "name": "Normalize & Dedupe",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 350]
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "operation": "complete",
+        "chatModel": "gpt-4",
+        "prompt": {
+          "messages": [
+            {
+              "role": "system",
+              "content": "You are TrendMaker, an AI that analyzes marketing and innovation trends. Return valid JSON with: category, tags (max 5), scores (novelty, velocity, relevance, confidence 0-100), whyItMatters (max 300 chars), brandAngles (max 5), exampleUseCases (max 5), creative (shortCardCopy max 100 chars, imagePrompt, altText, podcastSnippet max 500 chars). Return only JSON."
+            },
+            {
+              "role": "user", 
+              "content": "Analyze: {{ $json.title }} - {{ $json.summary }}"
+            }
+          ]
+        },
+        "simplifyOutput": true,
+        "options": {
+          "maxTokens": 1000
+        }
+      },
+      "id": "ai-analysis",
+      "name": "AI Trend Analysis", 
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1.1,
+      "position": [1120, 350]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process AI response and create final trend item\nconst rawData = $('Normalize & Dedupe').item().json;\nlet aiResult;\n\ntry {\n  const response = $json.message?.content || $json.message || $json;\n  aiResult = typeof response === 'string' ? JSON.parse(response) : response;\n} catch {\n  // Fallback\n  aiResult = {\n    category: 'Marketing',\n    tags: ['trend'],\n    scores: { novelty: 60, velocity: 50, relevance: 70, confidence: 70 },\n    whyItMatters: 'Significant development in the industry',\n    brandAngles: ['Brand awareness'],\n    exampleUseCases: ['Marketing campaigns'],\n    creative: {\n      shortCardCopy: rawData.title.substring(0, 80),\n      imagePrompt: 'Professional illustration',\n      altText: 'Trend visualization',\n      podcastSnippet: rawData.summary.substring(0, 400)\n    }\n  };\n}\n\n// Calculate scores\naiResult.scores.total = (aiResult.scores.novelty + aiResult.scores.velocity + aiResult.scores.relevance + aiResult.scores.confidence) / 4;\n\n// Generate viz properties\nconst size = Math.ceil((aiResult.scores.total / 100) * 10);\nconst intensity = 0.3 + (aiResult.scores.velocity / 100) * 1.7;\n\n// Generate color from category\nlet hash = 0;\nfor (let i = 0; i < aiResult.category.length; i++) {\n  hash = ((hash << 5) - hash) + aiResult.category.charCodeAt(i);\n  hash = hash & hash;\n}\nconst hue = Math.abs(hash) % 360;\nconst saturation = 60 + (Math.abs(hash >> 8) % 30);\nconst lightness = 45 + (Math.abs(hash >> 16) % 20);\n\nconst trendItem = {\n  id: Date.now().toString() + Math.random().toString(36).substr(2, 9),\n  title: rawData.title,\n  url: rawData.url,\n  source: rawData.source,\n  publishedAt: rawData.publishedAt,\n  summary: rawData.summary,\n  category: aiResult.category,\n  tags: aiResult.tags || [],\n  scores: aiResult.scores,\n  whyItMatters: aiResult.whyItMatters,\n  brandAngles: aiResult.brandAngles || [],\n  exampleUseCases: aiResult.exampleUseCases || [],\n  creative: aiResult.creative,\n  viz: {\n    size: Math.max(1, size),\n    intensity: Math.max(0.1, intensity),\n    colorHint: `hsl(${hue}, ${saturation}%, ${lightness}%)`\n  }\n};\n\nreturn [{ json: trendItem }];"
+      },
+      "id": "process-trend",
+      "name": "Process Trend",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 350]
+    }
+  ],
+  "connections": {
+    "Daily 7:30 London": {
+      "main": [
+        [
+          {
+            "node": "Marketing Brew RSS",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Creative Review RSS", 
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Adweek RSS",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Campaign Live RSS",
+            "type": "main", 
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marketing Brew RSS": {
+      "main": [
+        [
+          {
+            "node": "Merge RSS Feeds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Creative Review RSS": {
+      "main": [
+        [
+          {
+            "node": "Merge RSS Feeds",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Adweek RSS": {
+      "main": [
+        [
+          {
+            "node": "Merge RSS Feeds",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Campaign Live RSS": {
+      "main": [
+        [
+          {
+            "node": "Merge RSS Feeds",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Merge RSS Feeds": {
+      "main": [
+        [
+          {
+            "node": "Normalize & Dedupe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize & Dedupe": {
+      "main": [
+        [
+          {
+            "node": "AI Trend Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Trend Analysis": {
+      "main": [
+        [
+          {
+            "node": "Process Trend",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "tags": [
+    {
+      "createdAt": "2025-08-09T12:45:00.000Z",
+      "updatedAt": "2025-08-09T12:45:00.000Z", 
+      "id": "1",
+      "name": "env:dev"
+    }
+  ]
+}

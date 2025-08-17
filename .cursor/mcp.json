@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "n8n-mcp": {
+      "command": "npx",
+      "args": ["n8n-mcp"],
+      "env": {
+        "MCP_MODE": "stdio",
+        "LOG_LEVEL": "error",
+        "DISABLE_CONSOLE_OUTPUT": "true",
+        "N8N_API_URL": "https://t-and-p-innovation.app.n8n.cloud",
+        "N8N_API_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzYmRmMGI3Ny02N2IxLTRkMmMtYWFjNS1kOTc1MTM3NTAyMjUiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzU0NzQwOTI3LCJleHAiOjE3NTcyODYwMDB9.6J9LecqWNIw-Qd0rqHofjhZhDY382ZaHR-RLbKo6F_A"
+      }
+    }
+  }
+}

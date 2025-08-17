@@ -1,0 +1,139 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["trends", "generatedAt"],
+  "properties": {
+    "generatedAt": { 
+      "type": "string",
+      "description": "ISO timestamp when trends were generated"
+    },
+    "trends": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "description": "Array of strategic trends (2 for testing, 10 for production)",
+      "items": {
+        "type": "object",
+        "required": ["title", "summary", "category", "scores", "whyItMatters", "tags", "brandAngles", "exampleUseCases", "creative", "viz"],
+        "properties": {
+          "title": { 
+            "type": "string",
+            "description": "Strategic trend title",
+            "minLength": 10
+          },
+          "summary": { 
+            "type": "string",
+            "description": "Brief trend summary",
+            "minLength": 20
+          },
+          "category": { 
+            "type": "string",
+            "enum": ["Technology", "Media", "Culture", "Retail", "AI", "Consumer Behaviour", "Creativity", "Regulation", "Data & Privacy", "Sustainability"],
+            "description": "Trend category"
+          },
+          "tags": { 
+            "type": "array", 
+            "items": { "type": "string" },
+            "description": "Related tags"
+          },
+          "scores": {
+            "type": "object",
+            "required": ["novelty", "velocity", "relevance", "confidence", "total"],
+            "properties": {
+              "novelty": { 
+                "type": "integer", 
+                "minimum": 1, 
+                "maximum": 100,
+                "description": "How new is this trend"
+              },
+              "velocity": { 
+                "type": "integer", 
+                "minimum": 1, 
+                "maximum": 100,
+                "description": "How fast is this trend gaining momentum"
+              },
+              "relevance": { 
+                "type": "integer", 
+                "minimum": 1, 
+                "maximum": 100,
+                "description": "How much will this impact advertising agencies"
+              },
+              "confidence": { 
+                "type": "integer", 
+                "minimum": 1, 
+                "maximum": 100,
+                "description": "How certain are we this trend is real"
+              },
+              "total": { 
+                "type": "integer", 
+                "minimum": 1, 
+                "maximum": 100,
+                "description": "Weighted average score"
+              }
+            }
+          },
+          "whyItMatters": { 
+            "type": "string",
+            "description": "Why this trend matters for agencies",
+            "minLength": 20
+          },
+          "brandAngles": { 
+            "type": "array", 
+            "items": { "type": "string" },
+            "description": "Brand opportunities from this trend"
+          },
+          "exampleUseCases": { 
+            "type": "array", 
+            "items": { "type": "string" },
+            "description": "Example use cases for agencies"
+          },
+          "creative": {
+            "type": "object",
+            "required": ["shortCardCopy", "imagePrompt", "altText", "podcastSnippet"],
+            "properties": {
+              "shortCardCopy": { 
+                "type": "string", 
+                "maxLength": 140,
+                "description": "Short copy for cards"
+              },
+              "imagePrompt": { 
+                "type": "string",
+                "description": "Prompt for generating trend image"
+              },
+              "altText": { 
+                "type": "string",
+                "description": "Alt text for trend image"
+              },
+              "podcastSnippet": { 
+                "type": "string",
+                "description": "Snippet for podcast content"
+              }
+            }
+          },
+          "viz": {
+            "type": "object",
+            "required": ["size", "intensity", "colorHint"],
+            "properties": {
+              "size": { 
+                "type": "number",
+                "minimum": 1,
+                "maximum": 20,
+                "description": "Visual size for 3D rendering"
+              },
+              "intensity": { 
+                "type": "number",
+                "minimum": 0.5,
+                "maximum": 3.0,
+                "description": "Animation intensity"
+              },
+              "colorHint": { 
+                "type": "string",
+                "description": "CSS color hint for category"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

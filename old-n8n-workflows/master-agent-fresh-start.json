@@ -1,0 +1,279 @@
+{
+  "name": "Master Agent Fresh Start",
+  "nodes": [
+    {
+      "id": "cron-trigger",
+      "name": "Weekly Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "marketing-brew-rss",
+      "name": "Marketing Brew RSS",
+      "type": "n8n-nodes-base.rssRead",
+      "typeVersion": 1,
+      "position": [460, 200],
+      "parameters": {
+        "url": "https://www.morningbrew.com/marketing/feed",
+        "options": {
+          "limit": 10
+        }
+      }
+    },
+    {
+      "id": "techcrunch-rss",
+      "name": "TechCrunch RSS",
+      "type": "n8n-nodes-base.rssRead",
+      "typeVersion": 1,
+      "position": [460, 400],
+      "parameters": {
+        "url": "https://techcrunch.com/feed/",
+        "options": {
+          "limit": 10
+        }
+      }
+    },
+    {
+      "id": "merge-articles",
+      "name": "Merge Articles",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [680, 300],
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll"
+      }
+    },
+    {
+      "id": "prepare-articles-for-agent",
+      "name": "Prepare Articles for Agent",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300],
+      "parameters": {
+        "jsCode": "// Format articles for the agent\nconst articles = $input.all();\n\nconst formattedArticles = articles.map(item => {\n  const article = item.json;\n  return {\n    title: article.title || '',\n    description: article.description || '',\n    link: article.link || '',\n    pubDate: article.pubDate || '',\n    source: article.source || 'Unknown',\n    category: article.category || 'General'\n  };\n});\n\nconsole.log(`📰 Prepared ${formattedArticles.length} articles for agent analysis`);\n\nreturn [{\n  json: {\n    articles: formattedArticles,\n    totalCount: formattedArticles.length,\n    sources: [...new Set(formattedArticles.map(a => a.source))],\n    timestamp: new Date().toISOString()\n  }\n}];"
+      }
+    },
+          {
+        "id": "master-agent",
+        "name": "Master Strategic Agent",
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 2.2,
+        "position": [1120, 300],
+        "parameters": {
+          "promptType": "define",
+          "text": "You are a Master Strategic Agent specializing in trend analysis for advertising and marketing professionals.\n\n**Your Task:**\nAnalyze these {{ $json.articleCount }} articles and identify 5 emerging trends:\n\n{{ $json.articles }}\n\n**Generate 5 strategic trends** that are:\n- Strategic and forward-thinking\n- Relevant to advertising/marketing\n- Based on real data\n- Diverse across industries\n- Emerging rather than obvious\n\n**For each trend, provide:**\n- Strategic topic and direction\n- Industry relevance\n- Evidence from articles\n- Potential impact on advertising\n- Confidence level (1-10)\n\n**Use web search when needed** to validate trends or find additional context.",
+          "hasOutputParser": true,
+          "options": {
+            "systemMessage": "You are a Master Strategic Agent specializing in trend analysis for advertising and marketing professionals. Your role is to identify emerging trends across industries that are relevant to advertising and marketing."
+          }
+        }
+      },
+    {
+      "id": "web-search-tool",
+      "name": "Web Search Tool",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 500],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "gpt-4o-mini"
+            },
+            {
+              "name": "messages",
+              "value": "=[{\"role\": \"user\", \"content\": \"Search the web for: {{ $json.query }}\"}]"
+            },
+            {
+              "name": "tools",
+              "value": "[{\"type\": \"web_search\"}]"
+            },
+            {
+              "name": "tool_choice",
+              "value": "{\"type\": \"function\", \"function\": {\"name\": \"web_search\"}}"
+            }
+          ]
+        }
+      }
+    },
+          {
+        "id": "openai-chat-model",
+        "name": "OpenAI Chat Model",
+        "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+        "typeVersion": 1,
+        "position": [1120, 500],
+        "parameters": {
+          "model": "gpt-4o-mini",
+          "options": {}
+        }
+      },
+      {
+        "id": "structured-output-parser",
+        "name": "Structured Output Parser",
+        "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+        "typeVersion": 1,
+        "position": [1120, 700],
+        "parameters": {
+          "jsonSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"trends\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"topic\": {\n            \"type\": \"string\",\n            \"description\": \"Strategic trend topic\"\n          },\n          \"direction\": {\n            \"type\": \"string\",\n            \"description\": \"One or two line strategic direction\"\n          },\n          \"industry\": {\n            \"type\": \"string\",\n            \"description\": \"Primary industry (tech, healthcare, finance, etc.)\"\n          },\n          \"relevance\": {\n            \"type\": \"string\",\n            \"description\": \"Why this matters for advertising/marketing\"\n          },\n          \"confidence\": {\n            \"type\": \"number\",\n            \"minimum\": 1,\n            \"maximum\": 10,\n            \"description\": \"Confidence level (1-10)\"\n          },\n          \"impact\": {\n            \"type\": \"string\",\n            \"description\": \"Potential impact on advertising industry\"\n          }\n        },\n        \"required\": [\"topic\", \"direction\", \"industry\", \"relevance\", \"confidence\", \"impact\"]\n      }\n    },\n    \"analysis\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"totalArticles\": {\n          \"type\": \"number\",\n          \"description\": \"Number of articles analyzed\"\n        },\n        \"keyInsights\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"Key insights from analysis\"\n        }\n      }\n    }\n  },\n  \"required\": [\"trends\", \"analysis\"]\n}"
+        }
+      },
+      {
+        "id": "test-output",
+        "name": "Test Output",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [1340, 300],
+        "parameters": {
+          "jsCode": "// Test output to see what the agent produces\nconst agentOutput = $input.first().json;\n\nconsole.log('🤖 Master Agent Output:');\nconsole.log(JSON.stringify(agentOutput, null, 2));\n\nreturn [{\n  json: {\n    agentOutput: agentOutput,\n    timestamp: new Date().toISOString(),\n    test: true\n  }\n}];"
+        }
+      }
+  ],
+  "connections": {
+    "Weekly Trigger": {
+      "main": [
+        [
+          {
+            "node": "Marketing Brew RSS",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "TechCrunch RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marketing Brew RSS": {
+      "main": [
+        [
+          {
+            "node": "Merge Articles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TechCrunch RSS": {
+      "main": [
+        [
+          {
+            "node": "Merge Articles",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Articles": {
+      "main": [
+        [
+          {
+            "node": "Prepare Articles for Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Articles for Agent": {
+      "main": [
+        [
+          {
+            "node": "Master Strategic Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Master Strategic Agent": {
+      "main": [
+        [
+          {
+            "node": "Test Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Master Strategic Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Master Strategic Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Web Search Tool": {
+      "main": [
+        [
+          {
+            "node": "Master Strategic Agent",
+            "type": "tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "id": "fresh-start",
+      "name": "fresh-start"
+    }
+  ],
+  "triggerCount": 0,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

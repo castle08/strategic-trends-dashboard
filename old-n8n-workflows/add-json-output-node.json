@@ -1,0 +1,10 @@
+{
+  "parameters": {
+    "jsCode": "// Generate JSON file output\nconst data = $json;\n\n// Create clean JSON output for latest.json\nconst jsonOutput = {\n  filename: 'latest.json',\n  content: JSON.stringify(data, null, 2),\n  data: data\n};\n\nconsole.log(`📄 Generated JSON file with ${data.trends?.length || 0} trends`);\nconsole.log(`💾 Ready to save as latest.json`);\n\nreturn [{ json: jsonOutput }];"
+  },
+  "id": "generate-json",
+  "name": "Generate JSON File",
+  "type": "n8n-nodes-base.code",
+  "typeVersion": 2,
+  "position": [1780, 400]
+}

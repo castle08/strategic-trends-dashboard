@@ -1,0 +1,412 @@
+{
+  "name": "trends-dash-agentic",
+  "nodes": [
+    {
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "mode": "custom",
+              "cronExpression": "=0 8 * * 1"
+            }
+          ]
+        }
+      },
+      "id": "466add9e-014c-46fd-8e27-c55c44abe397",
+      "name": "Weekly Cron Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        -432,
+        344
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Configuration for RSS Data Sources\nconst RSS_SOURCES = [\n  {\n    name: \"campaignlive-news\",\n    url: \"https://www.campaignlive.co.uk/rss/news\",\n    category: \"Marketing News\"\n  },\n  {\n    name: \"campaignlive-latest\",\n    url: \"https://www.campaignlive.co.uk/rss/latest\",\n    category: \"Marketing News\"\n  },\n  {\n    name: \"adweek\",\n    url: \"https://www.adweek.com/feed/\",\n    category: \"Advertising News\"\n  },\n  {\n    name: \"reddit-advertising\",\n    url: \"https://www.reddit.com/r/advertising/.rss\",\n    category: \"Community Discussion\"\n  },\n  {\n    name: \"reddit-marketing\",\n    url: \"https://www.reddit.com/r/marketing/.rss\",\n    category: \"Community Discussion\"\n  }\n];\n\nconst SETTINGS = {\n  maxArticles: 100,\n  minTitleLength: 10,\n  minSummaryLength: 30,\n  lookbackDays: 7,\n  testingMode: false,\n  testingLimit: 10,\n  brandTags: ['retail', 'sportswear', 'energy drinks'],\n  region: 'UK'\n};\n\nconsole.log(`📊 Configured ${RSS_SOURCES.length} RSS sources`);\nconsole.log(`⚙️ Testing mode: ${SETTINGS.testingMode} (limit: ${SETTINGS.testingLimit} trends)`);\n\nreturn [{\n  json: {\n    rssSources: RSS_SOURCES,\n    settings: SETTINGS,\n    generatedAt: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "1726cf74-073c-4b3b-9377-80c1bccbeaba",
+      "name": "Data Sources Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -208,
+        344
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.rssSources[0].url }}",
+        "options": {}
+      },
+      "id": "f6788598-a509-48d3-bd12-acafb835d1e5",
+      "name": "campaignlive - news",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        16,
+        -64
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.rssSources[1].url }}",
+        "options": {}
+      },
+      "id": "8e15f929-c4f4-4724-bd2b-cd60a85b2554",
+      "name": "campaignlive - latest",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        16,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.rssSources[2].url }}",
+        "options": {}
+      },
+      "id": "c89b8f83-7df5-46bb-8319-9ecdec4f344c",
+      "name": "adweek",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        16,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.rssSources[3].url }}",
+        "options": {}
+      },
+      "id": "e449bd0f-e203-4904-82bc-87b957413469",
+      "name": "reddit - advertising",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        16,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.rssSources[4].url }}",
+        "options": {}
+      },
+      "id": "af722e9b-0a94-4386-af04-015f76adf56a",
+      "name": "reddit - marketing",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        16,
+        704
+      ]
+    },
+    {
+      "parameters": {
+        "numberInputs": 5
+      },
+      "id": "b3c556a3-ecd4-45e7-9825-5bc3c7a1f898",
+      "name": "Merge RSS Sources",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        240,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process Articles for Strategic Trend Analysis\n// Uses settings from config node\n\nconst settings = $('Data Sources Config').first().json.settings;\nconst { maxArticles, minTitleLength, minSummaryLength, lookbackDays, brandTags, region } = settings;\n\nfunction stripHtml(s='') {\n  return (s || '')\n    .replace(/<script[\\s\\S]*?<\\/script>/gi, '')\n    .replace(/<style[\\s\\S]*?<\\/style>/gi, '')\n    .replace(/<[^>]+>/g, '')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction hostFromUrl(u='') { \n  try { \n    return new URL(u).hostname.replace(/^www\\./,''); \n  } catch { \n    return ''; \n  } \n}\n\nfunction toISO(d) {\n  if (!d) return null;\n  const tryDates = Array.isArray(d) ? d : [d];\n  for (const raw of tryDates) {\n    const t = raw ? Date.parse(raw) : NaN;\n    if (!Number.isNaN(t)) return new Date(t).toISOString();\n  }\n  return null;\n}\n\nfunction withinLookback(iso) {\n  if (!iso) return false;\n  const now = new Date();\n  const then = new Date(now); \n  then.setDate(now.getDate() - lookbackDays);\n  return new Date(iso) >= then;\n}\n\nfunction normTitle(s='') { \n  return s.toLowerCase().replace(/\\s+/g,' ').trim(); \n}\n\nconst inputItems = $input.all();\n\n// Flatten RSS outputs\nlet raw = [];\nfor (const it of inputItems) {\n  if (Array.isArray(it.json?.items)) {\n    raw = raw.concat(it.json.items);\n  } else {\n    raw.push(it.json);\n  }\n}\n\n// Normalize articles for trend analysis\nconst normalised = [];\nfor (const r of raw) {\n  const title = (r.title || r.headline || '').trim();\n  const url = (r.link || r.url || r.guid || '').trim();\n  const summary = stripHtml(r.description || r.contentSnippet || r.summary || r.content || '');\n  const publishedAt = toISO([r.isoDate, r.pubDate, r.published, r.updated, r.date]) || new Date().toISOString();\n  \n  // Simplified source detection for trend context\n  let source = 'Market Intelligence';\n  const host = hostFromUrl(url);\n  if (host.includes('adweek')) source = 'Adweek';\n  else if (host.includes('campaignlive')) source = 'Campaign';\n  else if (host.includes('reddit.com')) source = 'Reddit';\n\n  if (title.length < minTitleLength) continue;\n  if (summary.length < minSummaryLength) continue;\n  if (!withinLookback(publishedAt)) continue;\n\n  normalised.push({ title, summary, source, publishedAt });\n}\n\n// Dedupe by title similarity\nconst seenTitles = new Set(); \nconst deduped = [];\nfor (const it of normalised) {\n  const key = normTitle(it.title);\n  if (seenTitles.has(key)) continue;\n  seenTitles.add(key);\n  deduped.push(it);\n}\n\n// Sort and limit\ndeduped.sort((a,b) => new Date(b.publishedAt) - new Date(a.publishedAt));\nconst items = deduped.slice(0, maxArticles);\n\nconsole.log(`📊 Processing ${items.length} articles for strategic trend extraction`);\nconsole.log(`🎯 Target: Extract strategic trends for advertising agencies`);\n\n// Create analysis summary for agent\nconst articleSummary = items.map(item => \n  `\"${item.title}\" - ${item.summary.substring(0, 200)}...`\n).join('\\n\\n');\n\nreturn [{\n  json: {\n    articleSummary,\n    articleCount: items.length,\n    sources: [...new Set(items.map(i => i.source))],\n    brand_tags: brandTags,\n    region: region,\n    settings: settings\n  }\n}];"
+      },
+      "id": "545555a0-c9e6-4661-a53a-48c62f3a0762",
+      "name": "Process Articles",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "You are a SUPER INTELLIGENT Strategic Trend Analyst with comprehensive memory, web search capabilities, and multi-agent consultation abilities.\n\n**YOUR CAPABILITIES:**\n- Access to historical trend database\n- Web search for trend validation and relevance\n- Memory of successful/failed patterns\n- Self-analysis and performance tracking\n- Multi-agent consultation for specialized insights\n- Comprehensive trend creation and refinement\n\n**INPUT DATA:**\n{{ $json.articleCount }} recent marketing articles:\n{{ $json.articleSummary }}\n\n**HISTORICAL TRENDS ANALYSIS:**\n{{ $('Historical Trends Analysis').first().json.analysis }}\n\n**WEB SEARCH VALIDATION:**\n{{ $('Web Search Validation').first().json.validation }}\n\n**PERFORMANCE MEMORY:**\n{{ $('Performance Memory').first().json.memory }}\n\n**MULTI-AGENT INSIGHTS:**\n{{ $('Multi-Agent Consultation').first().json.insights }}\n\n**YOUR MISSION:**\nCreate exactly 10 COMPREHENSIVE, FULLY DEVELOPED trends that are:\n- EMERGING and LESS OBVIOUS across ANY industry\n- Validated by current market research\n- Different from historical patterns\n- Optimized based on performance data\n- Enhanced by specialist agent insights\n- Ready for immediate use by advertising agencies\n\n**TREND CREATION PROCESS:**\n1. **ANALYZE** input articles for emerging patterns\n2. **VALIDATE** against web search for current relevance\n3. **COMPARE** with historical trends to avoid repetition\n4. **CONSULT** specialist agents for deep insights\n5. **CREATE** comprehensive trends with full details\n6. **REFINE** based on performance memory\n7. **SELF-ANALYZE** for continuous improvement\n\n**COMPREHENSIVE TREND SCOPE:**\n\n🚗 **Automotive & Mobility:**\n- Electric vehicle adoption patterns and charging behaviors\n- Autonomous driving and its impact on passenger attention\n- Mobility-as-a-service and urban transportation shifts\n- Connected car data and in-vehicle advertising opportunities\n- Car sharing and ownership model changes\n\n🏥 **Healthcare & Wellness:**\n- Telemedicine adoption and digital health behaviors\n- Wearable health tech and personal data collection\n- Mental health awareness and wellness trends\n- Preventive healthcare and lifestyle marketing\n- Healthcare personalization and direct-to-consumer models\n\n🏦 **Finance & Banking:**\n- Digital banking adoption and financial app behaviors\n- Cryptocurrency and blockchain consumer adoption\n- Fintech innovations and financial literacy trends\n- Investment democratization and retail trading\n- Financial wellness and budgeting app usage\n\n🛍️ **Retail & E-commerce:**\n- Social commerce and live shopping trends\n- AR/VR shopping experiences and virtual try-ons\n- Subscription economy and membership models\n- Local commerce and community-driven retail\n- Sustainable shopping and circular economy adoption\n\n🎮 **Gaming & Entertainment:**\n- Metaverse development and virtual world engagement\n- Esports growth and gaming audience expansion\n- Streaming platform evolution and content discovery\n- Interactive entertainment and participatory media\n- Gaming as social platform and community building\n\n🏠 **Smart Home & IoT:**\n- Connected home device adoption and usage patterns\n- Voice assistant integration and conversational commerce\n- Smart appliance data and predictive maintenance\n- Home automation and lifestyle convenience trends\n- Privacy concerns and data ownership in smart homes\n\n📱 **Wearables & Personal Tech:**\n- Smartwatch and fitness tracker adoption\n- Augmented reality glasses and spatial computing\n- Biometric authentication and personal security\n- Health monitoring and wellness tracking\n- Fashion tech and wearable aesthetics\n\n🌱 **Sustainability & Environment:**\n- Climate action consumer behaviors and preferences\n- Circular economy and sustainable consumption\n- Green technology adoption and eco-friendly choices\n- Carbon footprint awareness and offsetting\n- Environmental activism and brand responsibility\n\n🏢 **Work & Productivity:**\n- Remote work adoption and home office trends\n- Digital nomadism and location-independent work\n- Productivity tool adoption and workflow optimization\n- Work-life balance and mental health in professional life\n- Gig economy growth and freelance platform usage\n\n🎓 **Education & Learning:**\n- Online learning adoption and edtech innovation\n- Micro-credentialing and skill-based learning\n- Lifelong learning and continuous education\n- Educational gaming and gamified learning\n- Personalized learning and adaptive education\n\n**AVOID These Mainstream Topics:**\n- Basic AI content creation, personalization, influencer marketing\n- Standard social media strategies, omnichannel, programmatic\n- Common sustainability, mobile marketing, video content\n- Well-known e-commerce, digital transformation, customer experience\n\n**LOOK FOR:**\n- Cross-industry convergence and unexpected connections\n- Niche developments that could become mainstream\n- Emerging technologies with advertising applications\n- Cultural shifts that create new marketing opportunities\n- Regulatory changes that require strategic adaptation\n- Economic trends that reshape consumer behavior\n- Industry disruptions that change how people interact with brands\n\n**OUTPUT FORMAT:**\nCreate exactly 10 COMPREHENSIVE trends with full details:\n\nEach trend should include:\n- **title**: Compelling trend title\n- **summary**: 2-3 sentence strategic summary\n- **category**: Primary industry category\n- **tags**: Relevant tags for classification\n- **impact**: Advertising/marketing impact assessment\n- **opportunities**: Specific opportunities for agencies\n- **challenges**: Potential challenges or considerations\n- **examples**: Real-world examples or case studies\n- **forecast**: 6-12 month outlook\n- **score**: Confidence score (1-10)\n\n**Return ONLY a JSON array of 10 comprehensive trend objects.**\n\n**SELF-ANALYSIS:**\nAfter creating trends, provide:\n- **pattern_analysis**: What patterns did you identify?\n- **performance_insights**: What did you learn from memory?\n- **improvement_suggestions**: How can you improve next time?\n- **next_focus_areas**: What should you focus on next week?\n\nExample comprehensive trend format:\n[\n  {\n    \"title\": \"Wearable Health Data Monetization in Insurance\",\n    \"summary\": \"Insurance companies are leveraging wearable health data for personalized pricing, creating new marketing channels for health-focused brands and data-driven wellness campaigns.\",\n    \"category\": \"Healthcare & Insurance\",\n    \"tags\": [\"wearables\", \"health data\", \"insurance\", \"personalization\", \"wellness marketing\"],\n    \"impact\": \"High - Creates new data-driven marketing opportunities\",\n    \"opportunities\": \"Health brands can partner with insurers, create data-driven campaigns, develop wellness programs\",\n    \"challenges\": \"Privacy concerns, regulatory compliance, data accuracy\",\n    \"examples\": \"John Hancock Vitality program, Oscar Health app integration\",\n    \"forecast\": \"6-12 months: Rapid adoption in health insurance, 12+ months: Expansion to other insurance types\",\n    \"score\": 8\n  }\n]",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a Master Strategic Trend Analyst. Your job is to identify broader market movements from articles, NOT summarize individual articles.\n\n### CRITICAL: Create Strategic Topics, Not Article Summaries\n- Analyze patterns across ALL articles to identify strategic market movements\n- Create topic titles that capture broader transformations\n- Focus on what these articles collectively tell us about where the industry is heading\n- Generate insights that help agencies anticipate market changes\n\n### Requirements:\n- Generate EXACTLY 10 strategic trend topics\n- Each topic represents a strategic market movement, not an individual article\n- Topics should help agencies win business and serve clients better\n- Topics must be specific enough for expansion into detailed trends\n\n### Topic Examples:\n- \"AI-Powered Creative Automation\"\n- \"Privacy-First Marketing Strategies\"\n- \"Creator Economy Professionalization\"\n- \"Retail Media Network Evolution\"\n- \"Data-Driven Personalization at Scale\"\n\n### Categories to Consider:\nTechnology, Media, Culture, Retail, AI, Consumer Behaviour, Creativity, Regulation, Data & Privacy, Sustainability\n\nReturn ONLY valid JSON array of 10 topic strings."
+        }
+      },
+      "id": "master-strategic-agent",
+      "name": "Master Strategic Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        688,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {}
+      },
+      "id": "master-openai-model",
+      "name": "Master OpenAI Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        720,
+        544
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "EJ4bHf6JFSTiAvix",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchema": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"type\": \"object\",\n  \"required\": [\"trends\", \"selfAnalysis\", \"generatedAt\"],\n  \"properties\": {\n    \"trends\": {\n      \"type\": \"array\",\n      \"minItems\": 10,\n      \"maxItems\": 10,\n      \"description\": \"Array of 10 comprehensive trends\",\n      \"items\": {\n        \"type\": \"object\",\n        \"required\": [\"title\", \"summary\", \"category\", \"tags\", \"impact\", \"opportunities\", \"challenges\", \"examples\", \"forecast\", \"score\"],\n        \"properties\": {\n          \"title\": {\n            \"type\": \"string\",\n            \"minLength\": 5,\n            \"description\": \"Compelling trend title\"\n          },\n          \"summary\": {\n            \"type\": \"string\",\n            \"minLength\": 20,\n            \"description\": \"2-3 sentence strategic summary\"\n          },\n          \"category\": {\n            \"type\": \"string\",\n            \"description\": \"Primary industry category\"\n          },\n          \"tags\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"string\"\n            },\n            \"description\": \"Relevant tags for classification\"\n          },\n          \"impact\": {\n            \"type\": \"string\",\n            \"description\": \"Advertising/marketing impact assessment\"\n          },\n          \"opportunities\": {\n            \"type\": \"string\",\n            \"description\": \"Specific opportunities for agencies\"\n          },\n          \"challenges\": {\n            \"type\": \"string\",\n            \"description\": \"Potential challenges or considerations\"\n          },\n          \"examples\": {\n            \"type\": \"string\",\n            \"description\": \"Real-world examples or case studies\"\n          },\n          \"forecast\": {\n            \"type\": \"string\",\n            \"description\": \"6-12 month outlook\"\n          },\n          \"score\": {\n            \"type\": \"number\",\n            \"minimum\": 1,\n            \"maximum\": 10,\n            \"description\": \"Confidence score (1-10)\"\n          }\n        }\n      }\n    },\n    \"selfAnalysis\": {\n      \"type\": \"object\",\n      \"required\": [\"pattern_analysis\", \"performance_insights\", \"improvement_suggestions\", \"next_focus_areas\"],\n      \"properties\": {\n        \"pattern_analysis\": {\n          \"type\": \"string\",\n          \"description\": \"What patterns did you identify?\"\n        },\n        \"performance_insights\": {\n          \"type\": \"string\",\n          \"description\": \"What did you learn from memory?\"\n        },\n        \"improvement_suggestions\": {\n          \"type\": \"string\",\n          \"description\": \"How can you improve next time?\"\n        },\n        \"next_focus_areas\": {\n          \"type\": \"string\",\n          \"description\": \"What should you focus on next week?\"\n        }\n      }\n    },\n    \"generatedAt\": {\n      \"type\": \"string\",\n      \"description\": \"ISO timestamp when trends were generated\"\n    }\n  }\n}",
+      },
+      "id": "master-output-parser",
+      "name": "Master Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1,
+      "position": [
+        848,
+        552
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Test Output - Master Agent Results\n\nconst masterOutput = $json;\n\nconsole.log('🎯 MASTER AGENT TEST RESULTS:');\nconsole.log('==============================');\nconsole.log(`📊 Input Articles: ${$('Process Articles').first().json.articleCount}`);\nconsole.log(`📝 Strategic Topics Generated: ${masterOutput.strategicTopics?.length || 0}`);\nconsole.log(`⏰ Generated At: ${masterOutput.generatedAt}`);\n\nconsole.log('\\n📋 STRATEGIC TOPICS:');\nconsole.log('==================');\nmasterOutput.strategicTopics?.forEach((topic, index) => {\n  console.log(`${index + 1}. ${topic}`);\n});\n\nconsole.log('\\n📊 INPUT SUMMARY:');\nconsole.log('================');\nconst inputData = $('Process Articles').first().json;\nconsole.log(`- Total Articles: ${inputData.articleCount}`);\nconsole.log(`- Sources: ${inputData.sources.join(', ')}`);\nconsole.log(`- Brand Tags: ${inputData.brand_tags.join(', ')}`);\nconsole.log(`- Region: ${inputData.region}`);\n\nconsole.log('\\n✅ MASTER AGENT TEST COMPLETE');\nconsole.log('===========================');\n\nreturn [{\n  json: {\n    testResults: {\n      inputArticles: inputData.articleCount,\n      strategicTopics: masterOutput.strategicTopics?.length || 0,\n      topics: masterOutput.strategicTopics || [],\n      generatedAt: masterOutput.generatedAt,\n      sources: inputData.sources,\n      brandTags: inputData.brand_tags,\n      region: inputData.region\n    },\n    message: 'Master Agent test completed successfully!'\n  }\n}];"
+      },
+      "id": "master-agent-test",
+      "name": "Master Agent Test Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        912,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Historical Trends Analysis\n// Analyzes trends from our database to avoid repetition and learn patterns\n\nconst articles = $('Process Articles').first().json;\n\n// In a real implementation, this would query our Supabase database\n// For now, we'll simulate historical analysis\nconst historicalAnalysis = {\n  totalTrends: 45, // Simulated count\n  dateRange: 'Last 8 weeks',\n  \n  // Industry distribution\n  industryBreakdown: {\n    'Healthcare & Wellness': 8,\n    'Technology & Digital': 12,\n    'Retail & E-commerce': 6,\n    'Finance & Banking': 5,\n    'Automotive & Mobility': 4,\n    'Gaming & Entertainment': 3,\n    'Smart Home & IoT': 3,\n    'Sustainability & Environment': 2,\n    'Work & Productivity': 1,\n    'Education & Learning': 1\n  },\n  \n  // Recurring themes to avoid\n  recurringThemes: [\n    'AI personalization in marketing',\n    'Social media platform changes',\n    'E-commerce optimization',\n    'Data privacy regulations',\n    'Mobile app engagement'\n  ],\n  \n  // High-performing categories\n  highPerformers: [\n    'Cross-industry convergence',\n    'Emerging technology applications',\n    'Regulatory-driven opportunities',\n    'Behavioral psychology insights'\n  ],\n  \n  // Recent trend titles (to avoid repetition)\n  recentTitles: [\n    'AI-Powered Creative Automation',\n    'Privacy-First Marketing Strategies',\n    'Creator Economy Professionalization',\n    'Retail Media Network Evolution',\n    'Data-Driven Personalization at Scale'\n  ],\n  \n  // Performance insights\n  performanceInsights: {\n    avgScore: 7.2,\n    topScoringCategory: 'Technology & Digital',\n    underperformingCategory: 'Education & Learning',\n    emergingOpportunity: 'Healthcare & Insurance convergence'\n  }\n};\n\nconsole.log('📊 HISTORICAL TRENDS ANALYSIS:');\nconsole.log(`📈 Total trends analyzed: ${historicalAnalysis.totalTrends}`);\nconsole.log(`🎯 Top performing category: ${historicalAnalysis.performanceInsights.topScoringCategory}`);\nconsole.log(`⚠️ Recurring themes to avoid: ${historicalAnalysis.recurringThemes.length}`);\nconsole.log(`💡 Emerging opportunity: ${historicalAnalysis.performanceInsights.emergingOpportunity}`);\n\nreturn [{\n  json: {\n    analysis: historicalAnalysis,\n    generatedAt: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "historical-trends-analysis",
+      "name": "Historical Trends Analysis",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Web Search Validation\n// Validates trend relevance and current market status\n\nconst articles = $('Process Articles').first().json;\n\n// In a real implementation, this would use web search APIs\n// For now, we'll simulate web validation\nconst webValidation = {\n  searchQueries: [\n    'wearable health data insurance marketing',\n    'autonomous vehicle advertising opportunities',\n    'smart home energy management marketing',\n    'metaverse real estate brand experiences',\n    'biometric payment retail marketing'\n  ],\n  \n  validationResults: {\n    'wearable health data insurance marketing': {\n      relevance: 'high',\n      searchVolume: 'increasing',\n      recentNews: 15,\n      marketMomentum: 'strong',\n      validation: 'Confirmed - Major insurers actively pursuing this'\n    },\n    'autonomous vehicle advertising opportunities': {\n      relevance: 'medium',\n      searchVolume: 'stable',\n      recentNews: 8,\n      marketMomentum: 'emerging',\n      validation: 'Partially confirmed - Early stage but growing interest'\n    },\n    'smart home energy management marketing': {\n      relevance: 'high',\n      searchVolume: 'increasing',\n      recentNews: 12,\n      marketMomentum: 'strong',\n      validation: 'Confirmed - Utility companies actively marketing'\n    },\n    'metaverse real estate brand experiences': {\n      relevance: 'low',\n      searchVolume: 'declining',\n      recentNews: 3,\n      marketMomentum: 'weak',\n      validation: 'Not recommended - Market interest declining'\n    },\n    'biometric payment retail marketing': {\n      relevance: 'high',\n      searchVolume: 'increasing',\n      recentNews: 20,\n      marketMomentum: 'strong',\n      validation: 'Confirmed - Major retailers implementing'\n    }\n  },\n  \n  marketInsights: {\n    trendingTopics: [\n      'Health data monetization',\n      'Biometric authentication',\n      'Energy management marketing',\n      'Privacy-first solutions'\n    ],\n    decliningTopics: [\n      'Metaverse marketing',\n      'NFT brand experiences',\n      'Cryptocurrency advertising'\n    ],\n    emergingOpportunities: [\n      'Quantum computing marketing',\n      'Brain-computer interface applications',\n      'Synthetic media ethics'\n    ]\n  }\n};\n\nconsole.log('🔍 WEB SEARCH VALIDATION:');\nconsole.log(`📊 Validated ${Object.keys(webValidation.validationResults).length} trend concepts`);\nconsole.log(`📈 Trending topics: ${webValidation.marketInsights.trendingTopics.length}`);\nconsole.log(`📉 Declining topics: ${webValidation.marketInsights.decliningTopics.length}`);\nconsole.log(`🚀 Emerging opportunities: ${webValidation.marketInsights.emergingOpportunities.length}`);\n\nreturn [{\n  json: {\n    validation: webValidation,\n    generatedAt: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "web-search-validation",
+      "name": "Web Search Validation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Performance Memory\n// Stores and analyzes performance patterns for continuous improvement\n\nconst articles = $('Process Articles').first().json;\n\n// In a real implementation, this would access a memory database\n// For now, we'll simulate performance memory\nconst performanceMemory = {\n  lastRunDate: '2025-01-13',\n  totalRuns: 8,\n  \n  // Performance patterns\n  patterns: {\n    highScoringTrends: [\n      {\n        title: 'Neuro-Marketing Integration in Creative Testing',\n        score: 9,\n        category: 'Technology & Psychology',\n        reason: 'Cross-industry convergence, emerging technology'\n      },\n      {\n        title: 'Biometric Authentication in Customer Journeys',\n        score: 8,\n        category: 'Technology & Retail',\n        reason: 'Practical application, clear marketing opportunities'\n      }\n    ],\n    \n    lowScoringTrends: [\n      {\n        title: 'Metaverse Brand Experiences',\n        score: 4,\n        category: 'Gaming & Entertainment',\n        reason: 'Market interest declining, unclear ROI'\n      },\n      {\n        title: 'Cryptocurrency Marketing Strategies',\n        score: 3,\n        category: 'Finance & Technology',\n        reason: 'Regulatory uncertainty, market volatility'\n      }\n    ],\n    \n    successfulPatterns: [\n      'Cross-industry convergence trends score 30% higher',\n      'Technology + traditional industry combinations perform well',\n      'Privacy and security themes are consistently relevant',\n      'Healthcare + technology convergence shows strong potential'\n    ],\n    \n    patternsToAvoid: [\n      'Pure technology trends without clear marketing application',\n      'Overly futuristic concepts without current market validation',\n      'Single-industry trends without cross-sector implications',\n      'Trends heavily dependent on regulatory changes'\n    ]\n  },\n  \n  // Learning insights\n  insights: {\n    categoryPerformance: {\n      'Healthcare & Wellness': 7.8,\n      'Technology & Digital': 7.5,\n      'Finance & Banking': 7.2,\n      'Retail & E-commerce': 6.9,\n      'Automotive & Mobility': 6.7\n    },\n    \n    improvementAreas: [\n      'Focus more on cross-industry convergence',\n      'Increase healthcare and insurance trends',\n      'Reduce pure technology trends',\n      'Add more regulatory-driven opportunities'\n    ],\n    \n    nextWeekFocus: {\n      primary: 'Healthcare & Insurance convergence',\n      secondary: 'Regulatory-driven marketing opportunities',\n      avoid: 'Pure metaverse and cryptocurrency trends'\n    }\n  }\n};\n\nconsole.log('🧠 PERFORMANCE MEMORY:');\nconsole.log(`📊 Total runs analyzed: ${performanceMemory.totalRuns}`);\nconsole.log(`📈 High-scoring patterns: ${performanceMemory.patterns.highScoringTrends.length}`);\nconsole.log(`📉 Patterns to avoid: ${performanceMemory.patterns.patternsToAvoid.length}`);\nconsole.log(`🎯 Next week focus: ${performanceMemory.insights.nextWeekFocus.primary}`);\n\nreturn [{\n  json: {\n    memory: performanceMemory,\n    generatedAt: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "performance-memory",
+      "name": "Performance Memory",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        800
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Multi-Agent Consultation\n// Simulates consultation with specialist agents for deep insights\n\nconst articles = $('Process Articles').first().json;\n\n// In a real implementation, this would call specialist AI agents\n// For now, we'll simulate multi-agent consultation\nconst multiAgentInsights = {\n  consultationDate: new Date().toISOString(),\n  \n  // Industry Expert Agent insights\n  industryExpert: {\n    healthcare: {\n      emergingTrends: [\n        'Mental health tech integration in workplace wellness',\n        'Preventive healthcare marketing through wearables',\n        'Direct-to-consumer genetic testing marketing'\n      ],\n      opportunities: 'Healthcare brands can leverage data for personalized marketing',\n      challenges: 'Regulatory compliance and privacy concerns'\n    },\n    \n    automotive: {\n      emergingTrends: [\n        'In-vehicle commerce and payment systems',\n        'Autonomous vehicle entertainment marketing',\n        'Electric vehicle charging network advertising'\n      ],\n      opportunities: 'New captive audience in autonomous vehicles',\n      challenges: 'Safety regulations and user experience'\n    },\n    \n    finance: {\n      emergingTrends: [\n        'Embedded finance in retail experiences',\n        'Financial wellness app marketing',\n        'Cryptocurrency wallet integration in traditional banking'\n      ],\n      opportunities: 'Seamless financial integration in customer journeys',\n      challenges: 'Regulatory uncertainty and security concerns'\n    }\n  },\n  \n  // Creative Agent insights\n  creativeAgent: {\n    innovativeAngles: [\n      'Emotional storytelling in data-driven marketing',\n      'Sensory marketing through biometric feedback',\n      'Community-driven brand experiences'\n    ],\n    storytellingOpportunities: [\n      'Human-centric technology narratives',\n      'Sustainability as competitive advantage',\n      'Privacy as brand differentiator'\n    ]\n  },\n  \n  // Validation Agent insights\n  validationAgent: {\n    factChecks: {\n      'Wearable health data': 'Confirmed - Major insurers actively pursuing',\n      'Autonomous vehicle advertising': 'Partially confirmed - Early stage',\n      'Smart home energy': 'Confirmed - Utility companies implementing'\n    },\n    marketValidation: {\n      strongSignals: ['Health data monetization', 'Biometric payments', 'Energy management'],\n      weakSignals: ['Metaverse marketing', 'NFT experiences'],\n      emergingSignals: ['Quantum computing applications', 'Brain-computer interfaces']\n    }\n  },\n  \n  // Critic Agent insights\n  criticAgent: {\n    challenges: [\n      'Many trends focus too heavily on technology',\n      'Need more cultural and social trend analysis',\n      'Overemphasis on individual industries rather than convergence'\n    ],\n    gaps: [\n      'Lack of regulatory-driven marketing opportunities',\n      'Missing economic trend implications',\n      'Insufficient focus on behavioral psychology'\n    ],\n    suggestions: [\n      'Include more cross-cultural trend analysis',\n      'Focus on regulatory changes creating marketing opportunities',\n      'Explore economic uncertainty impact on consumer behavior'\n    ]\n  }\n};\n\nconsole.log('🤖 MULTI-AGENT CONSULTATION:');\nconsole.log(`🏥 Healthcare insights: ${multiAgentInsights.industryExpert.healthcare.emergingTrends.length} trends`);\nconsole.log(`🚗 Automotive insights: ${multiAgentInsights.industryExpert.automotive.emergingTrends.length} trends`);\nconsole.log(`🏦 Finance insights: ${multiAgentInsights.industryExpert.finance.emergingTrends.length} trends`);\nconsole.log(`🎨 Creative angles: ${multiAgentInsights.creativeAgent.innovativeAngles.length} ideas`);\nconsole.log(`⚠️ Critic challenges: ${multiAgentInsights.criticAgent.challenges.length} issues`);\n\nreturn [{\n  json: {\n    insights: multiAgentInsights,\n    generatedAt: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "multi-agent-consultation",
+      "name": "Multi-Agent Consultation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        960
+      ]
+    }
+  ],
+  "connections": {
+    "Weekly Cron Trigger": {
+      "main": [
+        [
+          {
+            "node": "Data Sources Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Sources Config": {
+      "main": [
+        [
+          {
+            "node": "campaignlive - news",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "campaignlive - latest",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "adweek",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "reddit - advertising",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "reddit - marketing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "campaignlive - news": {
+      "main": [
+        [
+          {
+            "node": "Merge RSS Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "campaignlive - latest": {
+      "main": [
+        [
+          {
+            "node": "Merge RSS Sources",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "adweek": {
+      "main": [
+        [
+          {
+            "node": "Merge RSS Sources",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "reddit - advertising": {
+      "main": [
+        [
+          {
+            "node": "Merge RSS Sources",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "reddit - marketing": {
+      "main": [
+        [
+          {
+            "node": "Merge RSS Sources",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Merge RSS Sources": {
+      "main": [
+        [
+          {
+            "node": "Process Articles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Articles": {
+      "main": [
+        [
+          {
+            "node": "Master Strategic Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Master OpenAI Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Master Strategic Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Master Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Master Strategic Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Master Strategic Agent": {
+      "main": [
+        [
+          {
+            "node": "Master Agent Test Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "047e9eef-4c8c-4684-b29b-e4cf1013db94",
+  "triggerCount": 0
+}

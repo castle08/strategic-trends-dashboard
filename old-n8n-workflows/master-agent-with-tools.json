@@ -1,0 +1,288 @@
+{
+  "name": "Master Agent with Tools",
+  "nodes": [
+    {
+      "id": "cron-trigger",
+      "name": "Weekly Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rss-feeds",
+      "name": "RSS Feeds",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "parameters": {
+        "jsCode": "// Load RSS feeds from config\nconst fs = require('fs');\nconst path = require('path');\n\nconst configPath = path.join(__dirname, '../config/sources.json');\nconst config = JSON.parse(fs.readFileSync(configPath, 'utf8'));\n\nconst enabledFeeds = config.sources.filter(source => \n  source.enabled && source.type === 'rss'\n);\n\nconsole.log(`📡 Loading ${enabledFeeds.length} enabled RSS feeds`);\n\nreturn enabledFeeds.map(feed => ({\n  json: {\n    feedName: feed.name,\n    feedUrl: feed.url,\n    category: feed.metadata?.category || 'General',\n    performance: feed.performance || {}\n  }\n}));"
+      }
+    },
+    {
+      "id": "fetch-articles",
+      "name": "Fetch Articles",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 300],
+      "parameters": {
+        "url": "={{ $json.feedUrl }}",
+        "options": {
+          "timeout": 10000
+        }
+      }
+    },
+    {
+      "id": "process-articles",
+      "name": "Process Articles",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300],
+      "parameters": {
+        "jsCode": "// Parse RSS and extract articles\nconst xml2js = require('xml2js');\nconst parser = new xml2js.Parser();\n\nconst rssData = $input.first().json;\nconst feedInfo = $('RSS Feeds').first().json;\n\nlet articles = [];\n\ntry {\n  const result = await parser.parseStringPromise(rssData);\n  \n  if (result.rss && result.rss.channel && result.rss.channel[0]) {\n    const channel = result.rss.channel[0];\n    const items = channel.item || [];\n    \n    articles = items.slice(0, 10).map(item => ({\n      title: item.title ? item.title[0] : '',\n      description: item.description ? item.description[0] : '',\n      link: item.link ? item.link[0] : '',\n      pubDate: item.pubDate ? item.pubDate[0] : '',\n      category: item.category ? item.category[0] : '',\n      source: feedInfo.feedName,\n      sourceCategory: feedInfo.category\n    }));\n  }\n} catch (error) {\n  console.error(`Error parsing RSS from ${feedInfo.feedName}:`, error.message);\n}\n\nconsole.log(`📰 Processed ${articles.length} articles from ${feedInfo.feedName}`);\n\nreturn articles.map(article => ({\n  json: {\n    ...article,\n    feedName: feedInfo.feedName,\n    feedUrl: feedInfo.feedUrl\n  }\n}));"
+      }
+    },
+    {
+      "id": "merge-all-articles",
+      "name": "Merge All Articles",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [1120, 300],
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll"
+      }
+    },
+    {
+      "id": "master-agent",
+      "name": "Master Strategic Agent",
+      "type": "n8n-nodes-langchain.agent",
+      "typeVersion": 1,
+      "position": [1340, 300],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list"
+        },
+        "options": {
+          "temperature": 0.7,
+          "maxTokens": 4000
+        },
+        "systemMessage": "You are a Master Strategic Agent specializing in trend analysis for advertising and marketing professionals. Your role is to:\n\n1. **Analyze all provided articles** to identify emerging trends across industries\n2. **Use web search** to validate trends and find additional context\n3. **Access database** to review historical trends and performance\n4. **Use memory** to learn from previous analyses\n5. **Generate 10 comprehensive trends** that are:\n   - Strategic and forward-thinking\n   - Relevant to advertising/marketing\n   - Based on real data and validation\n   - Diverse across industries (tech, healthcare, finance, retail, etc.)\n   - Emerging rather than obvious\n\nFor each trend, provide:\n- Strategic topic and direction\n- Industry relevance\n- Evidence from articles and web search\n- Potential impact on advertising\n- Confidence level\n- Recommended follow-up actions\n\nYou have access to tools for web search, database access, and memory. Use them strategically to enhance your analysis."
+      }
+    },
+    {
+      "id": "web-search-tool",
+      "name": "Web Search Tool",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 500],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "gpt-4o-mini"
+            },
+            {
+              "name": "messages",
+              "value": "=[{\"role\": \"user\", \"content\": \"Search the web for: {{ $json.query }}\"}]"
+            },
+            {
+              "name": "tools",
+              "value": "[{\"type\": \"web_search\"}]"
+            },
+            {
+              "name": "tool_choice",
+              "value": "{\"type\": \"function\", \"function\": {\"name\": \"web_search\"}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "database-tool",
+      "name": "Database Tool",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 700],
+      "parameters": {
+        "method": "POST",
+        "url": "https://trends-dashboard-six.vercel.app/api/trends-individual",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{ $json.query }}"
+            },
+            {
+              "name": "limit",
+              "value": "={{ $json.limit || 10 }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "memory-tool",
+      "name": "Memory Tool",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 900],
+      "parameters": {
+        "jsCode": "// Simple in-memory storage (in production, use Redis or database)\nconst memoryKey = $json.key || 'default';\nconst action = $json.action || 'get';\nconst data = $json.data;\n\n// This is a simplified memory implementation\n// In production, you'd use a proper memory store\n\nif (action === 'store') {\n  console.log(`💾 Storing memory for key: ${memoryKey}`);\n  return [{\n    json: {\n      success: true,\n      key: memoryKey,\n      stored: true,\n      timestamp: new Date().toISOString()\n    }\n  }];\n} else if (action === 'get') {\n  console.log(`🧠 Retrieving memory for key: ${memoryKey}`);\n  return [{\n    json: {\n      success: true,\n      key: memoryKey,\n      data: 'Previous analysis data would be here',\n      timestamp: new Date().toISOString()\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    success: false,\n    error: 'Invalid action'\n  }\n}];"
+      }
+    },
+    {
+      "id": "output-parser",
+      "name": "Master Output Parser",
+      "type": "n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1,
+      "position": [1560, 300],
+      "parameters": {
+        "schema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"trends\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"topic\": {\n            \"type\": \"string\",\n            \"description\": \"Strategic trend topic\"\n          },\n          \"direction\": {\n            \"type\": \"string\",\n            \"description\": \"One or two line strategic direction\"\n          },\n          \"industry\": {\n            \"type\": \"string\",\n            \"description\": \"Primary industry (tech, healthcare, finance, etc.)\"\n          },\n          \"relevance\": {\n            \"type\": \"string\",\n            \"description\": \"Why this matters for advertising/marketing\"\n          },\n          \"evidence\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"string\"\n            },\n            \"description\": \"Key evidence from articles and web search\"\n          },\n          \"confidence\": {\n            \"type\": \"number\",\n            \"minimum\": 1,\n            \"maximum\": 10,\n            \"description\": \"Confidence level (1-10)\"\n          },\n          \"impact\": {\n            \"type\": \"string\",\n            \"description\": \"Potential impact on advertising industry\"\n          },\n          \"nextSteps\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"string\"\n            },\n            \"description\": \"Recommended follow-up actions\"\n          }\n        },\n        \"required\": [\"topic\", \"direction\", \"industry\", \"relevance\", \"confidence\", \"impact\"]\n      }\n    },\n    \"analysis\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"totalArticles\": {\n          \"type\": \"number\",\n          \"description\": \"Number of articles analyzed\"\n        },\n        \"keyInsights\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"Key insights from analysis\"\n        },\n        \"webSearches\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"Web searches performed\"\n        },\n        \"databaseQueries\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"description\": \"Database queries performed\"\n        },\n        \"learning\": {\n          \"type\": \"string\",\n          \"description\": \"What the agent learned from this analysis\"\n        }\n      }\n    }\n  },\n  \"required\": [\"trends\", \"analysis\"]\n}"
+      }
+    }
+  ],
+  "connections": {
+    "Weekly Trigger": {
+      "main": [
+        [
+          {
+            "node": "RSS Feeds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Feeds": {
+      "main": [
+        [
+          {
+            "node": "Fetch Articles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Articles": {
+      "main": [
+        [
+          {
+            "node": "Process Articles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Articles": {
+      "main": [
+        [
+          {
+            "node": "Merge All Articles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge All Articles": {
+      "main": [
+        [
+          {
+            "node": "Master Strategic Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Master Strategic Agent": {
+      "main": [
+        [
+          {
+            "node": "Master Output Parser",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Web Search Tool": {
+      "main": [
+        [
+          {
+            "node": "Master Strategic Agent",
+            "type": "tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Database Tool": {
+      "main": [
+        [
+          {
+            "node": "Master Strategic Agent",
+            "type": "tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memory Tool": {
+      "main": [
+        [
+          {
+            "node": "Master Strategic Agent",
+            "type": "tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "id": "agent-tools",
+      "name": "agent-tools"
+    }
+  ],
+  "triggerCount": 0,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

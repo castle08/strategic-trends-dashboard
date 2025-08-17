@@ -1,0 +1,495 @@
+{
+  "name": "Optimized Trends Dashboard - Weekly Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "cronExpression": "0 8 * * 1"
+            }
+          ]
+        }
+      },
+      "id": "weekly-cron-trigger",
+      "name": "Weekly Cron Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Configuration for RSS Data Sources\n// Easy to update: just modify this array\nconst RSS_SOURCES = [\n  {\n    name: \"campaignlive-news\",\n    url: \"https://www.campaignlive.co.uk/rss/news\",\n    category: \"Marketing News\"\n  },\n  {\n    name: \"campaignlive-latest\",\n    url: \"https://www.campaignlive.co.uk/rss/latest\",\n    category: \"Marketing News\"\n  },\n  {\n    name: \"adweek\",\n    url: \"https://www.adweek.com/feed/\",\n    category: \"Advertising News\"\n  },\n  {\n    name: \"reddit-advertising\",\n    url: \"https://www.reddit.com/r/advertising/.rss\",\n    category: \"Community Discussion\"\n  },\n  {\n    name: \"reddit-marketing\",\n    url: \"https://www.reddit.com/r/marketing/.rss\",\n    category: \"Community Discussion\"\n  }\n];\n\n// Workflow settings\nconst SETTINGS = {\n  maxArticles: 100,\n  minTitleLength: 10,\n  minSummaryLength: 30,\n  lookbackDays: 7,\n  testingMode: false, // Set to false for production\n  testingLimit: 10,   // Number of trends to process in production\n  brandTags: ['retail', 'sportswear', 'energy drinks'],\n  region: 'UK'\n};\n\nconsole.log(`📊 Configured ${RSS_SOURCES.length} RSS sources`);\nconsole.log(`⚙️ Testing mode: ${SETTINGS.testingMode} (limit: ${SETTINGS.testingLimit} trends)`);\n\nreturn [{\n  json: {\n    rssSources: RSS_SOURCES,\n    settings: SETTINGS,\n    generatedAt: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "data-sources-config",
+      "name": "Data Sources Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.rssSources[0].url }}",
+        "options": {}
+      },
+      "id": "rss-campaignlive-news",
+      "name": "campaignlive - news",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [960, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.rssSources[1].url }}",
+        "options": {}
+      },
+      "id": "rss-campaignlive-latest",
+      "name": "campaignlive - latest",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [960, 320]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.rssSources[2].url }}",
+        "options": {}
+      },
+      "id": "rss-adweek",
+      "name": "adweek",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [960, 440]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.rssSources[3].url }}",
+        "options": {}
+      },
+      "id": "rss-reddit-advertising",
+      "name": "reddit - advertising",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [960, 560]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.rssSources[4].url }}",
+        "options": {}
+      },
+      "id": "rss-reddit-marketing",
+      "name": "reddit - marketing",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [960, 680]
+    },
+    {
+      "parameters": {
+        "numberInputs": 5
+      },
+      "id": "merge-rss-sources",
+      "name": "Merge RSS Sources",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [1200, 440]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process Articles for Strategic Trend Analysis\n// Uses settings from config node\n\nconst settings = $('Data Sources Config').first().json.settings;\nconst { maxArticles, minTitleLength, minSummaryLength, lookbackDays, brandTags, region } = settings;\n\nfunction stripHtml(s='') {\n  return (s || '')\n    .replace(/<script[\\s\\S]*?<\\/script>/gi, '')\n    .replace(/<style[\\s\\S]*?<\\/style>/gi, '')\n    .replace(/<[^>]+>/g, '')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction hostFromUrl(u='') { \n  try { \n    return new URL(u).hostname.replace(/^www\\./,''); \n  } catch { \n    return ''; \n  } \n}\n\nfunction toISO(d) {\n  if (!d) return null;\n  const tryDates = Array.isArray(d) ? d : [d];\n  for (const raw of tryDates) {\n    const t = raw ? Date.parse(raw) : NaN;\n    if (!Number.isNaN(t)) return new Date(t).toISOString();\n  }\n  return null;\n}\n\nfunction withinLookback(iso) {\n  if (!iso) return false;\n  const now = new Date();\n  const then = new Date(now); \n  then.setDate(now.getDate() - lookbackDays);\n  return new Date(iso) >= then;\n}\n\nfunction normTitle(s='') { \n  return s.toLowerCase().replace(/\\s+/g,' ').trim(); \n}\n\nconst inputItems = $input.all();\n\n// Flatten RSS outputs\nlet raw = [];\nfor (const it of inputItems) {\n  if (Array.isArray(it.json?.items)) {\n    raw = raw.concat(it.json.items);\n  } else {\n    raw.push(it.json);\n  }\n}\n\n// Normalize articles for trend analysis\nconst normalised = [];\nfor (const r of raw) {\n  const title = (r.title || r.headline || '').trim();\n  const url = (r.link || r.url || r.guid || '').trim();\n  const summary = stripHtml(r.description || r.contentSnippet || r.summary || r.content || '');\n  const publishedAt = toISO([r.isoDate, r.pubDate, r.published, r.updated, r.date]) || new Date().toISOString();\n  \n  // Simplified source detection for trend context\n  let source = 'Market Intelligence';\n  const host = hostFromUrl(url);\n  if (host.includes('adweek')) source = 'Adweek';\n  else if (host.includes('campaignlive')) source = 'Campaign';\n  else if (host.includes('reddit.com')) source = 'Reddit';\n\n  if (title.length < minTitleLength) continue;\n  if (summary.length < minSummaryLength) continue;\n  if (!withinLookback(publishedAt)) continue;\n\n  normalised.push({ title, summary, source, publishedAt });\n}\n\n// Dedupe by title similarity\nconst seenTitles = new Set(); \nconst deduped = [];\nfor (const it of normalised) {\n  const key = normTitle(it.title);\n  if (seenTitles.has(key)) continue;\n  seenTitles.add(key);\n  deduped.push(it);\n}\n\n// Sort and limit\ndeduped.sort((a,b) => new Date(b.publishedAt) - new Date(a.publishedAt));\nconst items = deduped.slice(0, maxArticles);\n\nconsole.log(`📊 Processing ${items.length} articles for strategic trend extraction`);\nconsole.log(`🎯 Target: Extract strategic trends for advertising agencies`);\n\n// Create analysis summary for agent\nconst articleSummary = items.map(item => \n  `\"${item.title}\" - ${item.summary.substring(0, 200)}...`\n).join('\\n\\n');\n\nreturn [{\n  json: {\n    articleSummary,\n    articleCount: items.length,\n    sources: [...new Set(items.map(i => i.source))],\n    brand_tags: brandTags,\n    region: region,\n    settings: settings\n  }\n}];"
+      },
+      "id": "process-articles",
+      "name": "Process Articles",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1440, 440]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Split articles into individual items for trend generation\n// This enables individual trend processing\n\nconst inputData = $json;\nconst articles = inputData.articleSummary.split('\\n\\n');\nconst settings = inputData.settings;\n\nconsole.log(`🔄 Splitting ${articles.length} articles into individual trend generation items...`);\n\n// Apply testing limit if enabled\nconst articlesToProcess = settings.testingMode \n  ? articles.slice(0, settings.testingLimit) \n  : articles;\n\nconsole.log(`📊 Processing ${articlesToProcess.length} articles ${settings.testingMode ? '(TESTING MODE)' : '(FULL PRODUCTION)'}`);\n\n// Create individual items for trend generation\nconst individualItems = articlesToProcess.map((article, index) => ({\n  json: {\n    articleSummary: article,\n    articleCount: 1,\n    sources: inputData.sources,\n    brand_tags: inputData.brand_tags,\n    region: inputData.region,\n    settings: settings,\n    trendIndex: index\n  }\n}));\n\nconsole.log(`✅ Created ${individualItems.length} individual trend generation items`);\n\nreturn individualItems;"
+      },
+      "id": "split-for-trend-generation",
+      "name": "Split for Trend Generation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1680, 440]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "loop-over-trends",
+      "name": "Loop Over Trends",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [1920, 440]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process single trend and prepare for image generation\n\nconst inputData = $json;\nconst trendData = inputData.choices?.[0]?.message?.content || inputData;\n\n// Try to parse JSON if it's a string\nlet trend;\ntry {\n  if (typeof trendData === 'string') {\n    // Extract JSON from markdown code blocks if present\n    const jsonMatch = trendData.match(/```json\\s*([\\s\\S]*?)\\s*```/);\n    if (jsonMatch) {\n      trend = JSON.parse(jsonMatch[1]);\n    } else {\n      trend = JSON.parse(trendData);\n    }\n  } else {\n    trend = trendData;\n  }\n} catch (error) {\n  console.error('❌ Failed to parse trend JSON:', error);\n  console.error('Raw trend data:', trendData);\n  throw new Error(`Failed to parse trend: ${error.message}`);\n}\n\n// Extract the single trend\nconst singleTrend = Array.isArray(trend.trends) ? trend.trends[0] : trend;\n\nif (!singleTrend) {\n  throw new Error('No trend found in response');\n}\n\n// Add unique ID if missing\nif (!singleTrend.id) {\n  singleTrend.id = $('Loop Over Trends').context.currentRunIndex || 0;\n}\n\n// Calculate viz properties\nconst totalScore = singleTrend.scores?.total || 50;\nconst velocity = singleTrend.scores?.velocity || 50;\nconst novelty = singleTrend.scores?.novelty || 50;\nsingleTrend.viz = singleTrend.viz || {};\nsingleTrend.viz.size = Math.max(10, Math.min(20, Math.round(10 + (totalScore / 100) * 10)));\n\nconst intensityScore = (velocity + novelty) / 2;\nsingleTrend.viz.intensity = Number((1.2 + (intensityScore / 100) * 1.8).toFixed(2));\n\n// Strategic category colors\nconst cat = (singleTrend.category || 'Technology').toLowerCase();\nlet hue;\nswitch(cat) {\n  case 'technology': case 'ai': hue = 240; break; // Blue\n  case 'media': case 'culture': hue = 300; break; // Purple  \n  case 'retail': case 'consumer behaviour': hue = 120; break; // Green\n  case 'creativity': hue = 60; break; // Yellow\n  case 'regulation': case 'data & privacy': hue = 0; break; // Red\n  case 'sustainability': hue = 150; break; // Teal\n  default: hue = 210; // Default blue\n}\nsingleTrend.viz.colorHint = `hsl(${hue}, 80%, 50%)`;\n\nconsole.log(`✅ Generated trend: \"${singleTrend.title}\" (${singleTrend.category}) - Score: ${totalScore}`);\n\nreturn [{\n  json: {\n    trend: singleTrend,\n    generatedAt: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "process-single-trend",
+      "name": "Process Single Trend",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2880, 440]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Generate image prompt for single trend\n\nconst trend = $json.trend;\n\n// Use the existing imagePrompt as the base, or create one from the title\nconst basePrompt = trend.creative?.imagePrompt || `a 3D wireframe floating island`;\n\n// Create the detailed prompt\nconst imagePrompt = `Create a hyper-detailed, high quality render of ${basePrompt} representing \"${trend.title}\" in the ${trend.category} category.\n\nStyle:\n• Clean 3D wireframe with thin, glowing lines and geometric shapes\n• Symbolism: Include visual elements symbolizing the trend theme \"${trend.title}\" and its significance in ${trend.category}\n• Materials: Transparent surfaces with visible wireframe edges\n• Primary color tone: Use ${trend.viz.colorHint} prominently in lighting, accents, and key elements\n• Lighting: Subtle glow along the wireframe lines with ${trend.viz.colorHint} color\n• Background: Transparent PNG with alpha channel (no sky or scenery)\n• Format: 1024x1024 PNG with transparent background`;\n\nconsole.log(`📝 Generated image prompt for \"${trend.title}\": ${imagePrompt.substring(0, 100)}...`);\n\nreturn [{\n  json: {\n    trend: trend,\n    imagePrompt: imagePrompt,\n    generatedAt: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "generate-image-prompt",
+      "name": "Generate Image Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3120, 440]
+    },
+    {
+      "parameters": {
+        "operation": "binaryToPropery",
+        "destinationKey": "base64Image",
+        "options": {}
+      },
+      "id": "extract-image",
+      "name": "Extract Image",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [3600, 440]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare API data for single trend\n\nconst trend = $json.trend;\nconst imageBinary = $json.base64Image;\n\nconsole.log(`📤 Preparing API data for trend: \"${trend.title}\"`);\n\n// Create API payload\nconst apiData = {\n  trends: [{\n    ...trend,\n    imageBinary: imageBinary\n  }]\n};\n\nconsole.log(`✅ Prepared API data with ${apiData.trends.length} trend(s)`);\n\nreturn [{\n  json: {\n    apiData: apiData,\n    trendTitle: trend.title,\n    generatedAt: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "prepare-api-data",
+      "name": "Prepare API Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3840, 440]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://trends-dashboard-six.vercel.app/api/trends-with-storage",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.apiData }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "send-to-api",
+      "name": "Send to API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [4080, 440]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process API response and prepare for loop continuation\n\nconst apiResponse = $json;\nconst trendTitle = $('Prepare API Data').first().json.trendTitle;\n\nconsole.log(`📊 API Response for \"${trendTitle}\":`, apiResponse);\n\n// Check if API call was successful\nif (apiResponse.status === 200 || apiResponse.statusCode === 200) {\n  console.log(`✅ Successfully sent \"${trendTitle}\" to API`);\n} else {\n  console.log(`❌ Failed to send \"${trendTitle}\" to API:`, apiResponse);\n}\n\n// Return data for loop continuation\nreturn [{\n  json: {\n    success: true,\n    trendTitle: trendTitle,\n    apiResponse: apiResponse,\n    processedAt: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "process-api-response",
+      "name": "Process API Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [4320, 440]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Final summary when all trends are processed\n\nconst inputItems = $input.all();\nconst settings = $('Data Sources Config').first().json.settings;\n\nconsole.log(`🎉 Workflow completed! Processed ${inputItems.length} trends`);\n\n// Collect results\nconst results = inputItems.map(item => ({\n  trendTitle: item.json.trendTitle,\n  success: item.json.success,\n  processedAt: item.json.processedAt\n}));\n\nconst successfulTrends = results.filter(r => r.success).length;\nconst failedTrends = results.filter(r => !r.success).length;\n\nconsole.log(`📊 Summary:`);\nconsole.log(`  ✅ Successful: ${successfulTrends}`);\nconsole.log(`  ❌ Failed: ${failedTrends}`);\nconsole.log(`  📝 Total: ${results.length}`);\n\n// Log individual results\nresults.forEach((result, index) => {\n  const status = result.success ? '✅' : '❌';\n  console.log(`  ${index + 1}. ${status} ${result.trendTitle}`);\n});\n\nreturn [{\n  json: {\n    summary: {\n      totalTrends: results.length,\n      successfulTrends: successfulTrends,\n      failedTrends: failedTrends,\n      settings: settings,\n      completedAt: new Date().toISOString()\n    },\n    results: results\n  }\n}];"
+      },
+      "id": "final-summary",
+      "name": "Final Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [4560, 440]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "You are TrendMaker, a strategic trend analyst for advertising agencies. \n\nAnalyze these {{ $json.articleCount }} recent marketing articles and extract strategic trends:\n\n{{ $json.articleSummary }}\n\nYour job is to identify strategic market trends that will help advertising agencies win business and serve clients better. \n\n**Generate exactly 1 strategic trend** - not article summaries, but broader market movements and transformations.\n\nEach trend should:\n- Have a strategic trend title (e.g., \"AI-Powered Creative Automation Reaches Mass Adoption\")\n- Focus on industry transformations, not individual company news\n- Help agencies understand where the market is heading\n- Be scored 1-100 on novelty, velocity, relevance, and confidence",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are TrendMaker, a strategic trend analyst. Your job is to identify broader market trends from articles, NOT summarize individual articles.\n\n### CRITICAL: Create Strategic Trends, Not Article Summaries\n- Analyze patterns across articles to identify strategic market movements\n- Create trend titles that capture broader transformations (e.g. \"Privacy-First Marketing Becomes Competitive Advantage\")\n- Focus on what these articles collectively tell us about where the industry is heading\n- Generate insights that help agencies anticipate market changes\n\n### Requirements:\n- Generate EXACTLY 1 strategic trend\n- All scores must be integers 1-100\n- Each trend represents a strategic market movement, not an individual article\n- Trends should help agencies win business and serve clients better\n- No URLs needed - these are strategic insights, not article links\n\n### Scoring (1-100):\n- novelty: How new is this trend vs established practice\n- velocity: How fast is this trend gaining momentum  \n- relevance: How much will this impact advertising agencies\n- confidence: How certain are we this trend is real\n- total: weighted average\n\n### Categories: \nTechnology, Media, Culture, Retail, AI, Consumer Behaviour, Creativity, Regulation, Data & Privacy, Sustainability\n\n### Trend Examples:\n- \"Retail Media Networks Challenge Traditional Display Advertising\"\n- \"Creator Economy Professionalizes Into Enterprise Marketing Channel\"\n- \"AI Content Generation Forces Creative Industry Restructuring\"\n\nReturn ONLY valid JSON matching the schema."
+        }
+      },
+      "id": "strategic-trend-analyzer-unconnected",
+      "name": "Strategic Trend Analyzer (Unconnected)",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [2160, 800]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {}
+      },
+      "id": "openai-chat-model-unconnected",
+      "name": "OpenAI Chat Model (Unconnected)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [2400, 800],
+      "credentials": {
+        "openAiApi": {
+          "id": "EJ4bHf6JFSTiAvix",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchema": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"type\": \"object\",\n  \"required\": [\"trends\", \"generatedAt\"],\n  \"properties\": {\n    \"generatedAt\": { \n      \"type\": \"string\",\n      \"description\": \"ISO timestamp when trends were generated\"\n    },\n    \"trends\": {\n      \"type\": \"array\",\n      \"minItems\": 1,\n      \"maxItems\": 1,\n      \"description\": \"Array of strategic trends\",\n      \"items\": {\n        \"type\": \"object\",\n        \"required\": [\"id\", \"title\", \"summary\", \"category\", \"scores\", \"whyItMatters\", \"tags\", \"brandAngles\", \"exampleUseCases\", \"creative\", \"viz\"],\n        \"properties\": {\n          \"id\": { \n            \"type\": \"string\",\n            \"description\": \"Unique trend identifier\"\n          },\n          \"title\": { \n            \"type\": \"string\",\n            \"description\": \"Strategic trend title\",\n            \"minLength\": 10\n          },\n          \"summary\": { \n            \"type\": \"string\",\n            \"description\": \"Brief trend summary\",\n            \"minLength\": 20\n          },\n          \"category\": { \n            \"type\": \"string\",\n            \"enum\": [\"Technology\", \"Media\", \"Culture\", \"Retail\", \"AI\", \"Consumer Behaviour\", \"Creativity\", \"Regulation\", \"Data & Privacy\", \"Sustainability\"],\n            \"description\": \"Trend category\"\n          },\n          \"tags\": { \n            \"type\": \"array\", \n            \"items\": { \"type\": \"string\" },\n            \"description\": \"Related tags\"\n          },\n          \"scores\": {\n            \"type\": \"object\",\n            \"required\": [\"novelty\", \"velocity\", \"relevance\", \"confidence\", \"total\"],\n            \"properties\": {\n              \"novelty\": { \n                \"type\": \"integer\", \n                \"minimum\": 1, \n                \"maximum\": 100,\n                \"description\": \"How new is this trend\"\n              },\n              \"velocity\": { \n                \"type\": \"integer\", \n                \"minimum\": 1, \n                \"maximum\": 100,\n                \"description\": \"How fast is this trend gaining momentum\"\n              },\n              \"relevance\": { \n                \"type\": \"integer\", \n                \"minimum\": 1, \n                \"maximum\": 100,\n                \"description\": \"How much will this impact advertising agencies\"\n              },\n              \"confidence\": { \n                \"type\": \"integer\", \n                \"minimum\": 1, \n                \"maximum\": 100,\n                \"description\": \"How certain are we this trend is real\"\n              },\n              \"total\": { \n                \"type\": \"integer\", \n                \"minimum\": 1, \n                \"maximum\": 100,\n                \"description\": \"Weighted average score\"\n              }\n            }\n          },\n          \"whyItMatters\": { \n            \"type\": \"string\",\n            \"description\": \"Why this trend matters for agencies\",\n            \"minLength\": 20\n          },\n          \"brandAngles\": { \n            \"type\": \"array\", \n            \"items\": { \"type\": \"string\" },\n            \"description\": \"Brand opportunities from this trend\"\n          },\n          \"exampleUseCases\": { \n            \"type\": \"array\", \n            \"items\": { \"type\": \"string\" },\n            \"description\": \"Example use cases for agencies\"\n          },\n          \"creative\": {\n            \"type\": \"object\",\n            \"required\": [\"shortCardCopy\", \"imagePrompt\", \"altText\", \"podcastSnippet\"],\n            \"properties\": {\n              \"shortCardCopy\": { \n                \"type\": \"string\", \n                \"maxLength\": 140,\n                \"description\": \"Short copy for cards\"\n              },\n              \"imagePrompt\": { \n                \"type\": \"string\",\n                \"description\": \"Prompt for generating trend image\"\n              },\n              \"altText\": { \n                \"type\": \"string\",\n                \"description\": \"Alt text for trend image\"\n              },\n              \"podcastSnippet\": { \n                \"type\": \"string\",\n                \"description\": \"Snippet for podcast content\"\n              }\n            }\n          },\n          \"viz\": {\n            \"type\": \"object\",\n            \"required\": [\"size\", \"intensity\", \"colorHint\"],\n            \"properties\": {\n              \"size\": { \n                \"type\": \"number\",\n                \"minimum\": 1,\n                \"maximum\": 20,\n                \"description\": \"Visual size for 3D rendering\"\n              },\n              \"intensity\": { \n                \"type\": \"number\",\n                \"minimum\": 0.5,\n                \"maximum\": 3.0,\n                \"description\": \"Animation intensity\"\n              },\n              \"colorHint\": { \n                \"type\": \"string\",\n                \"description\": \"CSS color hint for category\"\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n}"
+      },
+      "id": "structured-output-parser-unconnected",
+      "name": "Structured Output Parser (Unconnected)",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1,
+      "position": [2640, 800]
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "model": "gpt-image-1",
+        "prompt": "={{ $json.imagePrompt }}",
+        "options": {}
+      },
+      "id": "generate-image-unconnected",
+      "name": "Generate Image (Unconnected)",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [3360, 800],
+      "credentials": {
+        "openAiApi": {
+          "id": "EJ4bHf6JFSTiAvix",
+          "name": "OpenAi account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Weekly Cron Trigger": {
+      "main": [
+        [
+          {
+            "node": "Data Sources Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Sources Config": {
+      "main": [
+        [
+          {
+            "node": "campaignlive - news",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "campaignlive - latest",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "adweek",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "reddit - advertising",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "reddit - marketing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "campaignlive - news": {
+      "main": [
+        [
+          {
+            "node": "Merge RSS Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "campaignlive - latest": {
+      "main": [
+        [
+          {
+            "node": "Merge RSS Sources",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "adweek": {
+      "main": [
+        [
+          {
+            "node": "Merge RSS Sources",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "reddit - advertising": {
+      "main": [
+        [
+          {
+            "node": "Merge RSS Sources",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "reddit - marketing": {
+      "main": [
+        [
+          {
+            "node": "Merge RSS Sources",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Merge RSS Sources": {
+      "main": [
+        [
+          {
+            "node": "Process Articles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Articles": {
+      "main": [
+        [
+          {
+            "node": "Split for Trend Generation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split for Trend Generation": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Trends",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Trends": {
+      "main": [
+        [],
+        []
+      ]
+    },
+    "Process Single Trend": {
+      "main": [
+        [
+          {
+            "node": "Generate Image Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Image Prompt": {
+      "main": [
+        []
+      ]
+    },
+    "Extract Image": {
+      "main": [
+        [
+          {
+            "node": "Prepare API Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare API Data": {
+      "main": [
+        [
+          {
+            "node": "Send to API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send to API": {
+      "main": [
+        [
+          {
+            "node": "Process API Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process API Response": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Trends",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Trends": {
+      "main": [
+        [
+          {
+            "node": "Final Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "optimized-v1"
+}

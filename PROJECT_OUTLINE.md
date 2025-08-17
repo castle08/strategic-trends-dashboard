@@ -1,151 +1,218 @@
-# Strategic Trends Dashboard - Project Outline
+# Trends Dashboard Project – Technical & Strategic Outline
 
-## Overview
-A visual trend dashboard pipeline that generates 3D-style images for trends using OpenAI's image API and displays them in an interactive 3D dashboard.
+## 🎯 Project Goal
+An automated system that generates **2 fresh, high-quality marketing & culture trends each week** (scaling to 10).  
+Trends should be **consumer-centric, culturally grounded, and behaviour-focused**.  
+The final output is a **strict JSON schema** that can be visualised on a dashboard and reused in weekly digests.
 
-## System Architecture
+---
 
-### 1. Data Pipeline (n8n Workflow)
-**Purpose**: Scrape RSS feeds, process trends, generate images, and send to API
+## 🏗️ System Architecture
 
-#### Key Nodes:
-- **RSS Feed Nodes**: Scrape multiple marketing/advertising RSS feeds
-- **Merge RSS Sources**: Combine all RSS data
-- **Process Articles**: Extract and analyze trend data
-- **Strategic Trend Analyzer**: AI-powered trend analysis
-- **Finalize Trends**: Create structured trend objects with viz properties
-- **Split Trends for Image Generation**: Split trends into individual items for processing
-- **Generate Image Prompts**: Create detailed prompts for image generation
-- **OpenAI Image Generation**: Generate 3D wireframe images using GPT-4 Vision
-- **Extract from File**: Convert binary image data to base64
-- **Code2**: Add imageId for matching (avoiding reserved n8n keys)
-- **Merge1**: Match trends with their corresponding images by ID
-- **HTTP Request**: Send merged data to API endpoint
+### **1. Trigger**
+- Weekly cron starts the workflow every Monday at 8 AM.
 
-#### Current Testing Configuration:
-- `TESTING_MODE = true`
-- `TESTING_LIMIT = 2` (only generate 2 images for faster testing)
+### **2. Examples Node**
+- Provides static **reference examples of past trends**.  
+- Used for tone, schema, and depth — not duplication.
+- Injects high-quality exemplar trends for agent guidance.
 
-### 2. API Endpoint (`trends-with-storage.js`)
-**Purpose**: Receive trend data, process images, store in database
+### **3. Trend Agent (Core AI)**
+- Generates exactly 2 trends using OpenAI GPT-4o (will scale to 10).
+- **Memory System**: 
+  - Simple Memory node with session key `trends-agent-memory` (context: 5)
+  - RSS Scout Memory node with session key `rss-scout-memory` (context: 10)
+- Equipped with the following tools:
+  - **Simple Memory** – stores conversation history across runs to avoid duplication
+  - **Check Existing Trends (DB)** – queries database to avoid duplication
+  - **Ask RSS Scout** – queries the RSS Scout agent which fetches context from curated feeds
+  - **Search Current Examples** – Perplexity validates live examples/signals, restricted to last 3 months of 2025
+  - **Reflect on Patterns** – internal thinking tool to refine insights
 
-#### Key Functions:
-- **validateMergeData()**: Validates Merge node output structure
-- **processMergeDataWithImages()**: Processes base64 images and uploads to Vercel Blob
-- **downloadAndUploadImage()**: Converts base64 to Buffer and uploads to Vercel Blob
-- **writeTrendsToSupabase()**: Saves processed trends to Supabase database
-- **readTrendsFromSupabase()**: Retrieves trends from database
+### **4. RSS Scout Agent**
+- **Purpose**: Specialized agent for surfacing concrete, recent signals from marketing/culture feeds
+- **Memory System**: RSS Scout Memory with session key `rss-scout-memory` (context: 10)
+- **Connected Feeds**:
+  - AdWeek Articles
+  - Campaign Latest & News
+  - Reddit Marketing & Advertising
+  - NielsenIQ Insights
+  - Mintel Insights
+  - Forrester Blogs
+- **Enhanced Prompt**: Focuses on finding specific brand launches, platform changes, and consumer behavior shifts
+- **Output Format**: Concise bullets with source, action, date, and consumer angle
 
-#### Data Flow:
-1. Receives Merge node output (array of objects with `trend` and `imageBinary`)
-2. Validates data structure
-3. Uploads base64 images to Vercel Blob storage
-4. Replaces base64 data with permanent blob URLs
-5. Saves to Supabase database
+### **5. Output Schema**
+- Trend Agent must return JSON with:
+  - `title` – concise, newsworthy headline  
+  - `summary` – 4-part framing: Driver → Tension → Behaviour → Signal  
+  - `category` – mapped to dashboard categories (AI, Consumer Behaviour, Sustainability, Media, etc.)  
+  - `tags` – key topical labels  
+  - `scores` – novelty, velocity, relevance, confidence, total  
+  - `whyItMatters` – strategic significance for brands  
+  - `brandAngles` – how a brand could act on this trend  
+  - `exampleUseCases` – real or plausible case studies  
+  - `creative` – copy, image prompt, alt text, podcast snippet  
+  - `viz` – size, intensity, colour hint (TBD: may be removed from schema)
 
-### 3. Storage Solutions
+---
 
-#### Vercel Blob Storage
-- **Purpose**: Permanent image storage (OpenAI URLs expire quickly)
-- **Process**: Convert base64 → Buffer → Upload to Blob → Get permanent URL
-- **Access**: Public URLs for frontend display
+## 📊 Quality Expectations
+- Must use **Driver → Tension → Behaviour → Signal** framework.  
+- Depth must show **consumer experience, cultural resonance, and strategic brand implications**.  
+- Avoid clichés and vague statements — each trend should feel distinct and actionable.  
+- Trends should **connect to fresh cultural or behavioural signals**, not just broad commentary.  
+- Scoring should vary meaningfully to aid dashboard visualisation.
 
-#### Supabase Database
-- **Purpose**: Persistent trends data storage
-- **Schema**: Single `trends` table with JSONB column
-- **Columns**: `id`, `trends` (JSONB), `generatedat`, `lastupdated`, `storagetype`, `version`
+---
 
-### 4. Frontend (React + Three.js)
-**Purpose**: Display trends in interactive 3D dashboard
+## 🔄 Execution Flow
+1. **Weekly cron** triggers pipeline.  
+2. **Examples** injected for guidance.  
+3. **Trend Agent**:
+   - Checks memory for previous trends
+   - Checks DB for duplicates.  
+   - Pulls context from RSS Scout (7 feeds).  
+   - Validates with Perplexity (time-filtered).  
+   - Uses Reflect tool to refine.  
+   - Outputs 2 schema-compliant trends (will scale to 10).  
+4. **Processing Pipeline**:
+   - Loop Over Trends splits brain output into individual items
+   - Each trend processed through image generation
+   - Color mapping applied based on category
+   - Data sent to API for storage and frontend visualization
 
-#### Key Components:
-- **TrendCrystal**: 3D visualization of individual trends
-- **Scene**: Orchestrates 3D scene and renders crystals
-- **UI**: User interface controls and information display
+---
 
-#### Data Source:
-- Fetches from API endpoint: `https://trends-dashboard-six.vercel.app/api/trends-with-storage`
+## 🗂️ Prompts & Examples Storage
+All prompt logic and references are stored as separate files.  
+Agents should **first read this outline**, then fetch the additional files below as needed.
 
-## Current Issue Being Fixed
+- **System Prompt**: `Agents-Instructions/trend-agent-system-prompt-v2.md`  
+- **User Prompt**: `Agents-Instructions/trend-agent-user-prompt-v2.md`  
+- **RSS Scout Enhanced Prompt**: `Agents-Instructions/rss-scout-enhanced-prompt.md`
+- **Reference Examples**: Injected via Examples node in workflow
+- **Output Schema**: `Agents-Instructions/trend-agent-schema.json`
 
-### Problem:
-The Merge node in n8n is successfully combining trends with their corresponding images, but the API endpoint is rejecting the data with validation errors.
+**Usage Rules:**
+1. Study the **reference examples** for depth, specificity, and consumer texture.  
+2. Follow the **schema** strictly for output structure.  
+3. Use the **system** and **user** prompt files for live instructions.  
+4. Do not hardcode examples or schema into output — always check the stored files.  
 
-### Error Message:
-```
-"Invalid Merge data - validation failed"
-"receivedItems": 2
-```
+---
 
-### Data Structure Being Sent:
-```json
-[
-  {
-    "trend": {
-      "id": 0,
-      "title": "AI-Driven Personalization Redefines Consumer Engagement",
-      "summary": "...",
-      "category": "AI",
-      "scores": {"total": 88, ...},
-      "creative": {...},
-      "viz": {"size": 19, ...}
-    },
-    "trendId": 0,
-    "trendTitle": "...",
-    "imageBinary": "iVBORw0KGgoAAAANSUhEUgAABAAAAAQACAYAAAB/HSuDAADqSGNhQlgAAOpIanVtYgAAAB5qdW1kYzJwYQARABCAAACqADibcQNjMnBhAAAANwpqdW1kYgAAAClqdW1kYzJhcwARABCAAACqADibcQNjMnBhLmFzc2VydGlvbnMAAAABBWp1bWIAAAApanVtZGNib3IAEQAQgAAAqgA4m3EDYzJwYS5hY3Rpb25zLnYyAAAAANRjYm9yoWdhY3Rpb25zgqNmYWN0aW9ubGMycGEuY3JlYXRlZG1zb2Z0d2FyZUFnZW50v2RuYW1lZkdQVC00b/9xZGlnaXRhbFNvdXJjZVR5cGV4Rmh0dHA6Ly9jdi5pcHRjLm9yZy9uZXdzY29kZXMvZGlnaXRhbHNvdXJjZXR5cGV1dHJhaW5lZEFsZ29yaXRobWljTWVkaWGiZmFjdGlvbm5jMnBhLmNvbnZlcnRlZG1zb2Z0d2FyZUFnZW50..."
-  }
-]
-```
+## 🎨 Frontend Integration
+- **React App** (`trends-app/`) with 3D visualization using Three.js
+- **Real-time data fetching** from API endpoint: `https://trends-dashboard-six.vercel.app/api/trends-individual`
+- **Auto-refresh** every 5 minutes
+- **Color-coded categories** with 10-color palette system
+- **Multiple view modes**: demo, screens, test
 
-### HTTP Request Configuration:
-- **Method**: POST
-- **URL**: `https://trends-dashboard-six.vercel.app/api/trends-with-storage`
-- **Body**: `{{ $json }}` (entire Merge output as-is)
-- **Content-Type**: application/json
+---
 
-### Validation Logic:
-The API has been updated to:
-1. Detect if input is an array (Merge format) vs object (old format)
-2. Use `validateMergeData()` for Merge format
-3. Accept minimum 2 items for testing
-4. Be very lenient with field validation
+## 🔐 Access & Permissions
+- Workflow runs in **n8n MCP**.  
+- **Workflow ID**: `ELyp1FDKhHb0boG2`
+- **Workflow Name**: `agentic-trends-restore`
+- **Status**: Currently inactive (needs activation for production)
+- Agents have **VIEW-only access** to the workflow for traceability and inspection.
 
-### Recent Changes Made:
-1. Updated API to handle Merge node output structure directly
-2. Added `validateMergeData()` function
-3. Added `processMergeDataWithImages()` function
-4. Made validation more lenient (removed strict field requirements)
-5. Added detailed logging to debug validation issues
+---
 
-### Current Status:
-- ✅ Merge node is working and producing correct data structure
-- ✅ HTTP Request node is sending data correctly
-- ❌ API validation is still failing (unknown reason)
-- ❌ Images not being processed and stored
+## 📈 Recent Improvements
+- **Enhanced RSS Scout prompt** for better signal detection
+- **Memory system** implemented to avoid trend duplication
+- **Specific query strategy** for concrete brand launches and platform changes
+- **Better signal validation** with Perplexity integration
+- **Structured output parsing** with JSON schema validation
+- **Workspace cleanup** - organized old files into `project-md-files/` and `old-n8n-workflows/`
+- **Processing pipeline** connected to brain output
 
-### Next Steps Needed:
-1. Debug why validation is still failing despite lenient rules
-2. Check if there's a deployment/caching issue
-3. Verify the exact data structure being received by API
-4. Ensure images are processed and stored correctly
-5. Test end-to-end workflow
+---
 
-## Technical Stack
-- **n8n**: Workflow automation
-- **OpenAI GPT-4 Vision**: Image generation
-- **Vercel**: API hosting and Blob storage
-- **Supabase**: PostgreSQL database
-- **React + Three.js**: Frontend 3D visualization
-- **TypeScript**: Type safety across the stack
+## 🚀 Current Status
+- ✅ **Workflow architecture** complete and functional
+- ✅ **Memory system** configured and working
+- ✅ **RSS integration** with 7 curated feeds
+- ✅ **Frontend visualization** ready for data
+- ✅ **API endpoints** configured
+- ✅ **Workspace organized** and cleaned up
+- ✅ **Processing pipeline** connected to brain
+- ⏳ **Brain workflow** - configured but not tested
+- ⏳ **Processing pipeline** - configured but not tested
+- ⏳ **Workflow activation** pending
+- ⏳ **Production deployment** pending
 
-## Environment Variables Required
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `BLOB_READ_WRITE_TOKEN` (Vercel Blob)
-- OpenAI API keys (in n8n)
+---
 
-## Deployment
-- **Frontend**: Vercel (from `trends-app` directory)
-- **API**: Vercel serverless functions
-- **Database**: Supabase
-- **Storage**: Vercel Blob
+## 📋 Next Steps
+
+### **Immediate (This Week)**
+1. **Test brain workflow** - Validate trend generation and quality
+2. **Test processing pipeline** - Verify image generation and API flow
+3. **Fix color mapping** - Implement category-to-color mapping system
+4. **Update image prompts** - Ensure colors are properly applied
+
+### **Critical TODOs**
+1. **Color System Fix**:
+   - **Option A**: Remove `colorHint` from brain schema, add color mapping in processing loop
+   - **Option B**: Update brain to know predefined category colors
+   - **Decision needed**: Which approach is preferred?
+
+2. **Image Generation Fix**:
+   - Current image prompts don't properly apply category colors
+   - Need to update image generation to use mapped colors
+   - Ensure visual consistency with frontend color palette
+
+3. **Scale to 10 Trends**:
+   - Update brain schema from 2 to 10 trends
+   - Test diversity and quality at scale
+   - Optimize processing pipeline for larger batches
+
+### **Short Term (Next 2 Weeks)**
+1. **Deploy to production** environment
+2. **Set up monitoring** and error handling
+3. **Configure automated testing** for trend quality
+4. **Document deployment process**
+
+### **Medium Term (Next Month)**
+1. **Scale to 10 trends** (currently set to 2)
+2. **Add image generation** integration
+3. **Implement trend analytics** dashboard
+4. **Set up weekly digest** automation
+
+### **Long Term (Next Quarter)**
+1. **Add more RSS sources** for broader coverage
+2. **Implement trend clustering** and categorization
+3. **Build trend prediction** models
+4. **Create trend impact** measurement tools
+
+### **Future Stretch Goals (Post-Production)**
+**Conversational Command System & WPP Open Integration**
+
+## 🎯 Goal
+Enable **natural-language interaction** with the Trend Engine for real-time use in workshops, pitches, and client sessions. Integrate as an iFrame within WPP Open platform.
+
+## 🛠️ Natural Language Interface
+Instead of rigid inputs, users can type natural queries like:
+- *"Show me trends about sustainability in retail"*
+- *"Generate insights about Gen Z gaming behaviors"*
+- *"What's happening in retail media?"*
+
+The system will automatically:
+- **Parse intent** (search existing vs. generate new)
+- **Route to appropriate agent** (search or discovery)
+- **Return structured trend outputs**
+
+## 🖼️ WPP Open Integration
+- **iFrame deployment** of trends dashboard
+- **PostMessage communication** with parent WPP Open system
+- **Responsive design** for constrained container dimensions
+- **Real-time command processing** from WPP Open interface
+
+## ⚠️ Implementation Notes
+- **Significant lift** - requires new workflow architecture
+- **Dependencies**: Current brain must be fully tested and stable
+- **Timeline**: Post-production, after core system is proven
+- **Priority**: Low - focus on current brain and processing pipeline first
