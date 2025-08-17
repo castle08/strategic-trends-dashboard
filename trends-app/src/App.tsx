@@ -1,4 +1,5 @@
 import { useState, useEffect, Suspense } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Canvas } from '@react-three/fiber';
 import { TrendsData, TrendItem } from './types';
 import Scene from './components/Scene';
@@ -8,8 +9,31 @@ import ErrorBoundary from './components/ErrorBoundary';
 import TrendCard from './components/TrendCard';
 import ErrorScreen from './components/ErrorScreen';
 import SimpleTrendTest from './components/SimpleTrendTest';
+import Dashboard from './components/Dashboard';
+import TrendsWallV2 from './components/TrendsWallV2';
+import { TrendItem as DashboardTrendItem } from './data/dummy-dashboard-data';
 
 const REFRESH_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+
+// Transform API trends to Dashboard format
+const transformTrendsForDashboard = (apiTrends: TrendItem[]): DashboardTrendItem[] => {
+  return apiTrends.map(trend => ({
+    id: trend.id,
+    title: trend.title,
+    summary: trend.summary,
+    category: trend.category,
+    confidence: trend.scores?.confidence || 85,
+    signals: trend.tags || [],
+    generatedAt: trend.publishedAt || new Date().toISOString(),
+    takeaway: trend.whyItMatters,
+    drivers: trend.brandAngles,
+    tensions: [], // Not available in API data
+    behaviors: trend.exampleUseCases,
+    aiInsights: [trend.whyItMatters], // Use whyItMatters as AI insight
+    audienceImpact: [], // Not available in API data
+    industryImpact: [] // Not available in API data
+  }));
+};
 
 const DEMO_DATA: TrendsData = {
   generatedAt: new Date().toISOString(),
@@ -165,8 +189,10 @@ function App() {
       setLoading(true);
       setError(null);
       try {
-        // Use the new individual trends API endpoint
-        const apiUrl = 'https://trends-dashboard-six.vercel.app/api/trends-individual';
+        // Use local API endpoint during development, external in production
+        const apiUrl = process.env.NODE_ENV === 'development' 
+          ? '/api/trends-individual'
+          : 'https://trends-dashboard-six.vercel.app/api/trends-individual';
         console.log('🔄 Fetching trends from:', apiUrl);
         
         const response = await fetch(apiUrl);
@@ -185,8 +211,8 @@ function App() {
           console.log('🔍 First trend scores:', data.trends[0].scores);
           
           // Compare trends with and without images
-          const trendsWithImages = data.trends.filter(t => t.creative?.imageUrl);
-          const trendsWithoutImages = data.trends.filter(t => !t.creative?.imageUrl);
+          const trendsWithImages = data.trends.filter((t: TrendItem) => t.creative?.imageUrl);
+          const trendsWithoutImages = data.trends.filter((t: TrendItem) => !t.creative?.imageUrl);
           
           console.log('🔍 Trends WITH images:', trendsWithImages.length);
           if (trendsWithImages.length > 0) {
@@ -211,8 +237,9 @@ function App() {
     };
 
     fetchTrends();
-    const interval = setInterval(fetchTrends, 30000); // Refresh every 30 seconds
-    return () => clearInterval(interval);
+    // Removed automatic refresh for now - uncomment below to re-enable
+    // const interval = setInterval(fetchTrends, 30000); // Refresh every 30 seconds
+    // return () => clearInterval(interval);
   }, []);
 
   // Card rotation for screens mode
@@ -282,32 +309,65 @@ function App() {
     );
   }
 
-  // Default 3D Dashboard Mode
+  // Main App with Routing
   return (
-    <ErrorBoundary>
-      <div className="w-screen h-screen bg-gradient-to-b from-gray-900 via-slate-800 to-black">
-        <Canvas
-          camera={{ position: [0, 0, 40], fov: 70 }}
-          gl={{ antialias: true, alpha: false }}
-        >
-          <Suspense fallback={null}>
-            <Scene
-              trends={trendsData?.trends || []}
-              onTrendSelect={setSelectedTrend}
-              selectedTrend={selectedTrend}
-            />
-          </Suspense>
-        </Canvas>
-        
-        <UI
-          trendsData={trendsData}
-          selectedTrend={selectedTrend}
-          onTrendSelect={setSelectedTrend}
-          error={error}
-          isDemoMode={isDemoMode}
+    <Router>
+      <Routes>
+        {/* Dashboard Route */}
+        <Route 
+          path="/dash" 
+          element={
+            <div className="min-h-screen bg-white">
+              <Dashboard trends={transformTrendsForDashboard(trendsData.trends)} isLoading={loading} />
+            </div>
+          } 
         />
-      </div>
-    </ErrorBoundary>
+        
+        {/* Dashboard V2 Route */}
+        <Route 
+          path="/dash-v2" 
+          element={
+            <div className="min-h-screen bg-white">
+              <TrendsWallV2 />
+            </div>
+          } 
+        />
+        
+        {/* Default 3D Dashboard Route */}
+        <Route 
+          path="/" 
+          element={
+            <ErrorBoundary>
+              <div className="w-screen h-screen bg-gradient-to-b from-gray-900 via-slate-800 to-black">
+                <Canvas
+                  camera={{ position: [0, 0, 40], fov: 70 }}
+                  gl={{ antialias: true, alpha: false }}
+                >
+                  <Suspense fallback={null}>
+                    <Scene
+                      trends={trendsData?.trends || []}
+                      onTrendSelect={setSelectedTrend}
+                      selectedTrend={selectedTrend}
+                    />
+                  </Suspense>
+                </Canvas>
+                
+                <UI
+                  trendsData={trendsData}
+                  selectedTrend={selectedTrend}
+                  onTrendSelect={setSelectedTrend}
+                  error={error}
+                  isDemoMode={isDemoMode}
+                />
+              </div>
+            </ErrorBoundary>
+          } 
+        />
+        
+        {/* Catch all other routes and redirect to home */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Router>
   );
 }
 

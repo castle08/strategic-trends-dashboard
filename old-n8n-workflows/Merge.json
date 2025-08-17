@@ -1,0 +1,70 @@
+[
+  {
+    "json": {
+      "trend": {
+        "trend": {
+          "title": "Immersive Consumer Engagement through Unique Brand Experiences",
+          "summary": "Driver: Growing consumer demand for unique, memorable brand experiences.\nTension: Balancing brand creativity with consumer fatigue of novelty.\nBehaviour: Consumers flock to unconventional spaces for engaging brand interactions.\nSignal: (Beavertown hot-air balloon pub launch, Aug 2025)",
+          "category": "Creativity",
+          "tags": [
+            "Experiential Marketing",
+            "Unique Venues",
+            "Consumer Engagement"
+          ],
+          "scores": {
+            "novelty": 90,
+            "velocity": 85,
+            "relevance": 82,
+            "confidence": 70,
+            "total": 81
+          },
+          "whyItMatters": "To captivate consumers, brands must create memorable experiences in novel venues, driving both engagement and differentiation in a crowded marketplace.",
+          "brandAngles": [
+            "Develop partnerships with unique venues for impactful brand events.",
+            "Create cross-sensory activations connecting product and experience.",
+            "Utilize virtual interfaces to extend physical brand encounters online."
+          ],
+          "exampleUseCases": [
+            "A tech company hosts a product launch event inside a themed amusement park ride.",
+            "Fashion brands utilise iconic city landmarks for interactive displays.",
+            "Beverage companies collaborate with skydiving centres for unique tasting experiences."
+          ],
+          "creative": {
+            "shortCardCopy": "Explore brand experiences that break free from conventional settings.",
+            "imagePrompt": "A 3D wireframe balloon floating over a city, showcasing brands engaging consumers in unique ways.",
+            "altText": "Illustration of a hot-air balloon emphasizing unique brand venues.",
+            "podcastSnippet": "Explore how unique brand ativations elevate consumer interactions and engagement."
+          },
+          "viz": {
+            "size": 18,
+            "intensity": 2.8,
+            "colorHint": "#FF4500"
+          }
+        },
+        "generatedAt": "2023-10-01T12:00:00Z",
+        "id": 0,
+        "viz": {
+          "size": 15,
+          "intensity": 2.1,
+          "colorHint": "hsl(240, 80%, 50%)"
+        }
+      },
+      "generatedAt": "2025-08-17T07:33:50.382Z",
+      "base64Image": "iVBORw0KGgoAAAANSUhEUgAABAAAAAQACAYAAAB/....."
+    },
+    "binary": {},
+    "pairedItem": [
+      {
+        "item": 0
+      },
+      {
+        "item": 0,
+        "input": 1
+      },
+      {
+        "item": 0,
+        "input": 1
+      }
+    ]
+  }
+]

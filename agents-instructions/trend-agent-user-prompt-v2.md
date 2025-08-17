@@ -23,7 +23,7 @@ Scores: novelty, velocity, relevance, confidence, total. Ensure a visible 10–9
 Brand Angles (3–5): Specific, shippable idea seeds tied to context + mechanism + consumer behaviour + payoff. Avoid clichés.
 Example Use Cases (3–5): Brand type + context + mechanism + payoff. Avoid “launch a campaign”.
 Creative: shortCardCopy (≤140 chars, consumer‑focused); imagePrompt (3D wireframe island with category symbolism); altText (clear description of wireframe scene); podcastSnippet (crisp behaviour insight).
-Viz: size 1–20 (proportional to relevance); intensity 0.5–3.0 (proportional to velocity); colorHint HEX (placeholder allowed).
+Viz: size 1–20 (proportional to relevance); intensity 0.5–3.0 (proportional to velocity)
 
 SIGNAL RULES (strict)
 Use 2025 examples only, ideally last 3 months. Cite in Signal line as plain text, e.g., (TikTok Shopping affiliate policy, Jul 2025). When Perplexity provides examples, use those. If no fresh signal verified, write: "Signal: (None verified, lower confidence, <Mon YYYY>)" and reduce confidence.

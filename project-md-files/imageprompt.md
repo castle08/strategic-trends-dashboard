@@ -17,3 +17,32 @@ Create a hyper-detailed 3D render of a floating island symbolizing “Gen Z Micr
 	•	Style: Realistic yet slightly stylized for visual clarity, cinematic depth of field.
 	•	Background: Transparent PNG with alpha channel (no sky or scenery).
 
+
+// Generate image prompt for single trend
+
+const trend = $json.trend;
+
+// Use the existing imagePrompt as the base, or create one from the title
+const basePrompt = trend.creative?.imagePrompt || `a 3D wireframe floating island`;
+
+// Create the detailed prompt
+const imagePrompt = `Create a hyper-detailed, high quality render of ${basePrompt} representing "${trend.title}" in the ${trend.category} category.
+
+Style:
+• Clean 3D wireframe with thin, glowing lines and geometric shapes
+• Symbolism: Include visual elements symbolizing the trend theme "${trend.title}" and its significance in ${trend.category}
+• Materials: Transparent surfaces with visible wireframe edges
+• Primary color tone: Use ${trend.viz.colorHint} prominently in lighting, accents, and key elements
+• Lighting: Subtle glow along the wireframe lines with ${trend.viz.colorHint} color
+• Background: Transparent PNG with alpha channel (no sky or scenery)
+• Format: 1024x1024 PNG with transparent background`;
+
+console.log(`📝 Generated image prompt for "${trend.title}": ${imagePrompt.substring(0, 100)}...`);
+
+return [{
+  json: {
+    trend: trend,
+    imagePrompt: imagePrompt,
+    generatedAt: new Date().toISOString()
+  }
+}];

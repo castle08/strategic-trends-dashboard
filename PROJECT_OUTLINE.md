@@ -5,6 +5,8 @@ An automated system that generates **2 fresh, high-quality marketing & culture t
 Trends should be **consumer-centric, culturally grounded, and behaviour-focused**.  
 The final output is a **strict JSON schema** that can be visualised on a dashboard and reused in weekly digests.
 
+**Current Status**: V2 Dashboard implemented with sidebar layout, filter popup, and auto-cycling components. Ready for live data integration.
+
 ---
 
 ## 🏗️ System Architecture
@@ -162,8 +164,12 @@ Agents should **first read this outline**, then fetch the additional files below
 - ✅ **API endpoints** configured
 - ✅ **Workspace organized** and cleaned up
 - ✅ **Processing pipeline** connected to brain
+- ✅ **V2 Dashboard** implemented with sidebar layout and filter popup
+- ✅ **UI Components** created (Panel, Chip, Badge, Meter, Sparkline, Modal)
+- ✅ **Auto-cycling carousels** for threats and opportunities
 - ⏳ **Brain workflow** - configured but not tested
 - ⏳ **Processing pipeline** - configured but not tested
+- ⏳ **Live data integration** - ready to implement
 - ⏳ **Workflow activation** pending
 - ⏳ **Production deployment** pending
 
@@ -172,10 +178,12 @@ Agents should **first read this outline**, then fetch the additional files below
 ## 📋 Next Steps
 
 ### **Immediate (This Week)**
-1. **Test brain workflow** - Validate trend generation and quality
-2. **Test processing pipeline** - Verify image generation and API flow
-3. **Fix color mapping** - Implement category-to-color mapping system
-4. **Update image prompts** - Ensure colors are properly applied
+1. **Integrate live data** - Connect V2 dashboard to `/api/trends-individual` endpoint
+2. **Implement data transformations** - Convert raw trend data to dashboard components
+3. **Test brain workflow** - Validate trend generation and quality
+4. **Test processing pipeline** - Verify image generation and API flow
+5. **Fix color mapping** - Implement category-to-color mapping system
+6. **Update image prompts** - Ensure colors are properly applied
 
 ### **Critical TODOs**
 1. **Color System Fix**:
@@ -192,6 +200,11 @@ Agents should **first read this outline**, then fetch the additional files below
    - Update brain schema from 2 to 10 trends
    - Test diversity and quality at scale
    - Optimize processing pipeline for larger batches
+
+4. **n8n Agent Database Access**:
+   - Update Trend Agent to use Supabase nodes directly instead of API endpoint
+   - Use "service_role secret" key for n8n workflows
+   - Implement direct database queries for checking existing trends and storing new ones
 
 ### **Short Term (Next 2 Weeks)**
 1. **Deploy to production** environment
