@@ -189,8 +189,10 @@ function App() {
       setLoading(true);
       setError(null);
       try {
-        // Use the new individual trends API endpoint
-        const apiUrl = 'https://trends-dashboard-six.vercel.app/api/trends-individual';
+        // Use local API endpoint during development, external in production
+        const apiUrl = process.env.NODE_ENV === 'development' 
+          ? '/api/trends-individual'
+          : 'https://trends-dashboard-six.vercel.app/api/trends-individual';
         console.log('🔄 Fetching trends from:', apiUrl);
         
         const response = await fetch(apiUrl);

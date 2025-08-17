@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
+import { TrendsData, TrendItem } from '../types';
 
 /** ---------------------------
  *  MOCK DATA (edit freely)
@@ -172,16 +173,66 @@ export default function TrendsWallV2() {
   const [currentThreatIndex, setCurrentThreatIndex] = useState(0);
   const [currentOpportunityIndex, setCurrentOpportunityIndex] = useState(0);
   const [showFilters, setShowFilters] = useState(false);
+  
+  // Live data states
+  const [trendsData, setTrendsData] = useState<TrendsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch live data
+  useEffect(() => {
+    const fetchTrends = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const apiUrl = process.env.NODE_ENV === 'development' 
+          ? '/api/trends-individual'
+          : 'https://trends-dashboard-six.vercel.app/api/trends-individual';
+        
+        const response = await fetch(apiUrl);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setTrendsData(data);
+      } catch (err) {
+        console.error('❌ Error fetching trends:', err);
+        setError('Failed to load live data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTrends();
+  }, []);
+
+  // Transform live trends to dashboard format
+  const liveSpotlights = useMemo(() => {
+    if (!trendsData?.trends) return dashboardMock.spotlights;
+    
+    return trendsData.trends.map(trend => ({
+      id: trend.id,
+      title: trend.title,
+      category: trend.category,
+      summary: {
+        driver: trend.summary.split('\n')[0]?.replace('Driver: ', '') || '',
+        tension: trend.summary.split('\n')[1]?.replace('Tension: ', '') || '',
+        behaviour: trend.summary.split('\n')[2]?.replace('Behaviour: ', '') || ''
+      },
+      scores: trend.scores,
+      tags: trend.tags
+    }));
+  }, [trendsData]);
 
   const filteredSpotlights = useMemo(()=>{
-    let items = dashboardMock.spotlights;
+    let items = liveSpotlights;
     if(activeCats.length) items = items.filter(t => activeCats.includes(t.category));
     if(query.trim()) {
       const q = query.toLowerCase();
       items = items.filter(t => (t.title + " " + t.tags.join(" ") + " " + t.category).toLowerCase().includes(q));
     }
     return items;
-  },[activeCats,query]);
+  },[liveSpotlights, activeCats, query]);
 
   // Auto-cycle threats every 4 seconds
   useEffect(() => {
@@ -198,6 +249,36 @@ export default function TrendsWallV2() {
     }, 5000);
     return () => clearInterval(interval);
   }, []);
+
+  // Extract live categories from trends data
+  const liveCategories = useMemo(() => {
+    if (!trendsData?.trends) return dashboardMock.filters.categories;
+    return [...new Set(trendsData.trends.map(t => t.category))];
+  }, [trendsData]);
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="text-slate-600">Loading live trends...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-600 mb-4">⚠️ {error}</div>
+          <div className="text-slate-600">Using demo data instead</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -274,22 +355,22 @@ export default function TrendsWallV2() {
               <div className="space-y-4">
                 <div>
                   <div className="text-xs font-semibold text-slate-500 mb-2">Categories</div>
-                  <div className="flex flex-wrap gap-2">
-                    {dashboardMock.filters.categories.map(cat=>{
-                      const active = activeCats.includes(cat);
-                      return (
-                        <Chip
-                          key={cat}
-                          active={active}
-                          onClick={()=>{
-                            setActiveCats(prev => prev.includes(cat) ? prev.filter(c=>c!==cat) : [...prev, cat]);
-                          }}
-                        >
-                          {cat}
-                        </Chip>
-                      );
-                    })}
-                  </div>
+                                                <div className="flex flex-wrap gap-2">
+                                {liveCategories.map(cat=>{
+                                  const active = activeCats.includes(cat);
+                                  return (
+                                    <Chip
+                                      key={cat}
+                                      active={active}
+                                      onClick={()=>{
+                                        setActiveCats(prev => prev.includes(cat) ? prev.filter(c=>c!==cat) : [...prev, cat]);
+                                      }}
+                                    >
+                                      {cat}
+                                    </Chip>
+                                  );
+                                })}
+                              </div>
                 </div>
                 
                 <div>
