@@ -1,141 +1,133 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
+  "required": [
+    "STATE_OF_WORLD",
+    "AI_INSIGHT",
+    "LIVE_SIGNALS",
+    "BRAND_OPPORTUNITIES",
+    "COMPETITIVE_THREATS",
+    "SIGNAL_TICKER"
+  ],
   "properties": {
-    "stateOfWorld": {
+    "STATE_OF_WORLD": {
       "type": "object",
+      "description": "Macro view for the current week",
+      "required": ["thesis", "velocityPercent", "velocitySpark", "movers"],
       "properties": {
         "thesis": {
           "type": "string",
-          "description": "A concise thesis statement capturing the current macro trend landscape"
+          "description": "Single-sentence macro thesis"
         },
-        "velocity": {
+        "velocityPercent": {
+          "type": "integer",
+          "minimum": -500,
+          "maximum": 500,
+          "description": "Week-over-week composite momentum as a %"
+        },
+        "velocitySpark": {
           "type": "array",
-          "items": {
-            "type": "number"
-          },
+          "items": { "type": "integer", "minimum": 0, "maximum": 100 },
           "minItems": 8,
           "maxItems": 8,
-          "description": "8 weeks of trend velocity data (weighted signals per week)"
+          "description": "8-week sparkline values (0–100)"
         },
         "movers": {
           "type": "array",
+          "minItems": 3,
+          "maxItems": 4,
           "items": {
             "type": "object",
+            "required": ["label", "deltaPercent"],
             "properties": {
-              "label": {
-                "type": "string",
-                "description": "Category or trend name"
-              },
-              "strength": {
-                "type": "string",
-                "description": "Growth percentage or strength indicator"
-              }
-            },
-            "required": ["label", "strength"]
+              "label": { "type": "string" },
+              "deltaPercent": { "type": "integer", "minimum": -500, "maximum": 500 }
+            }
           },
-          "description": "Top performing categories or movements"
+          "description": "Top accelerating themes/categories"
         }
-      },
-      "required": ["thesis", "velocity", "movers"]
+      }
     },
-    "aiInsight": {
+
+    "AI_INSIGHT": {
       "type": "object",
+      "description": "One strategic AI headline + short implications",
+      "required": ["title", "bullets"],
       "properties": {
-        "title": {
-          "type": "string",
-          "description": "Headline insight about the current trend landscape"
-        },
+        "title": { "type": "string" },
         "bullets": {
           "type": "array",
-          "items": {
-            "type": "string"
-          },
           "minItems": 3,
           "maxItems": 5,
-          "description": "Key strategic insights derived from trend analysis"
+          "items": { "type": "string" }
         }
-      },
-      "required": ["title", "bullets"]
+      }
     },
-    "liveSignals": {
+
+    "LIVE_SIGNALS": {
       "type": "array",
-      "items": {
-        "type": "string"
-      },
+      "description": "Recent, named signals backing the dashboard",
       "minItems": 3,
       "maxItems": 8,
-      "description": "Recent signals and breaking news from trend analysis"
-    },
-    "opportunities": {
-      "type": "array",
       "items": {
         "type": "object",
+        "required": ["event", "source", "date", "whyItMatters"],
         "properties": {
-          "title": {
-            "type": "string",
-            "description": "Opportunity name and description"
-          },
-          "level": {
-            "type": "string",
-            "enum": ["High", "Medium", "Low"],
-            "description": "Priority level"
-          },
-          "whyNow": {
-            "type": "string",
-            "description": "Why this opportunity is relevant now"
-          },
+          "event": { "type": "string" },
+          "source": { "type": "string", "description": "Brand/platform/regulator" },
+          "date": { "type": "string", "description": "Date in YYYY-MM-DD format" },
+          "whyItMatters": { "type": "string" }
+        }
+      }
+    },
+
+    "BRAND_OPPORTUNITIES": {
+      "type": "array",
+      "description": "2–4 opportunities with evidence and an action play",
+      "minItems": 2,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "required": ["title", "level", "whyNow", "signals", "play"],
+        "properties": {
+          "title": { "type": "string" },
+          "level": { "type": "string", "enum": ["High", "Medium", "Low"] },
+          "whyNow": { "type": "string" },
           "signals": {
             "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Supporting signals and data points"
+            "minItems": 1,
+            "maxItems": 4,
+            "items": { "type": "string" }
           },
-          "play": {
-            "type": "string",
-            "description": "Recommended action or strategy"
-          }
-        },
-        "required": ["title", "level", "whyNow", "signals", "play"]
-      },
+          "play": { "type": "string", "description": "Specific action to execute" }
+        }
+      }
+    },
+
+    "COMPETITIVE_THREATS": {
+      "type": "array",
+      "description": "2–4 competitor moves with a concrete response",
       "minItems": 2,
       "maxItems": 4,
-      "description": "Strategic opportunities identified from trend analysis"
-    },
-    "threats": {
-      "type": "array",
       "items": {
         "type": "object",
+        "required": ["brand", "move", "urgency", "seen", "action"],
         "properties": {
-          "brand": {
-            "type": "string",
-            "description": "Competitor or brand name"
-          },
-          "move": {
-            "type": "string",
-            "description": "What they did or are doing"
-          },
-          "urgency": {
-            "type": "string",
-            "enum": ["High", "Medium", "Low"],
-            "description": "Urgency level"
-          },
-          "seen": {
-            "type": "string",
-            "description": "When this was observed (e.g., '6 days ago')"
-          },
-          "action": {
-            "type": "string",
-            "description": "Recommended response action"
-          }
-        },
-        "required": ["brand", "move", "urgency", "seen", "action"]
-      },
-      "minItems": 2,
-      "maxItems": 4,
-      "description": "Competitive threats and market movements"
+          "brand": { "type": "string" },
+          "move": { "type": "string" },
+          "urgency": { "type": "string", "enum": ["High", "Medium", "Low"] },
+          "seen": { "type": "string", "description": "e.g., '6 days ago'" },
+          "action": { "type": "string" }
+        }
+      }
+    },
+
+    "SIGNAL_TICKER": {
+      "type": "array",
+      "description": "Short, scannable ticker items",
+      "minItems": 3,
+      "maxItems": 6,
+      "items": { "type": "string" }
     }
-  },
-  "required": ["stateOfWorld", "aiInsight", "liveSignals", "opportunities", "threats"]
+  }
 }

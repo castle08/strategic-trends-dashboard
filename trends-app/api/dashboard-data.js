@@ -15,7 +15,9 @@ export default async function handler(req, res) {
   // Handle POST requests (store dashboard data)
   if (req.method === 'POST') {
     try {
-      latestDashboardData = req.body;
+      // Handle both wrapped and unwrapped data
+      const dataToStore = req.body.output || req.body;
+      latestDashboardData = dataToStore;
       console.log('✅ Dashboard data stored in memory');
       return res.status(200).json({ success: true, message: 'Dashboard data stored' });
     } catch (error) {
