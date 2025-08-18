@@ -1,28 +1,26 @@
 import express from 'express';
 import cors from 'cors';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import dotenv from 'dotenv';
 
-// Load environment variables from .env.local
+// Load environment variables
 dotenv.config({ path: '.env.local' });
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 const app = express();
-const PORT = 3002;
+const PORT = 3003;
 
 // Environment variables
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseKey = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
 
 if (!supabaseUrl || !supabaseKey) {
   console.error('Missing Supabase environment variables');
+  console.error('SUPABASE_URL:', !!process.env.SUPABASE_URL);
+  console.error('SUPABASE_SECRET_KEY:', !!process.env.SUPABASE_SECRET_KEY);
+  console.error('SUPABASE_SERVICE_ROLE_KEY:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
+  process.exit(1);
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -30,93 +28,9 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
-
-// Test the download-and-store-image endpoint
-app.post('/api/download-and-store-image', async (req, res) => {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  const { imageUrl, trendId, trendTitle } = req.body;
-
-  if (!imageUrl || !trendId) {
-    return res.status(400).json({ error: 'Missing imageUrl or trendId' });
-  }
-
-  try {
-    console.log('🖼️ Downloading image for trend:', trendTitle);
-    
-    // Fetch the image from OpenAI
-    const response = await fetch(imageUrl);
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
-    }
-
-    // Get the image data
-    const imageBuffer = await response.arrayBuffer();
-    const contentType = response.headers.get('content-type') || 'image/png';
-    
-    // Determine file extension
-    const extension = contentType.includes('png') ? 'png' : 'jpg';
-    
-    // Create unique filename
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const filename = `${trendId}-${timestamp}.${extension}`;
-    
-    // Ensure images directory exists
-    const imagesDir = path.join(process.cwd(), 'public', 'trends', 'images');
-    if (!fs.existsSync(imagesDir)) {
-      fs.mkdirSync(imagesDir, { recursive: true });
-    }
-    
-    // Save image to file
-    const imagePath = path.join(imagesDir, filename);
-    fs.writeFileSync(imagePath, Buffer.from(imageBuffer));
-    
-    // Create local URL
-    const localImageUrl = `/trends/images/${filename}`;
-    
-    console.log('✅ Image saved successfully:', localImageUrl);
-    
-    return res.status(200).json({
-      success: true,
-      localImageUrl: localImageUrl,
-      filename: filename,
-      originalUrl: imageUrl
-    });
-    
-  } catch (error) {
-    console.error('❌ Error downloading image:', error);
-    res.status(500).json({ 
-      error: 'Failed to download and store image',
-      details: error.message 
-    });
-  }
-});
-
-// Serve the test page
-app.get('/test-download', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'test-download.html'));
-});
 
 // Chat to Wall API
 app.post('/api/chat-to-wall', async (req, res) => {
-  // Add CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
   try {
     const { question } = req.body;
     
@@ -128,7 +42,6 @@ app.post('/api/chat-to-wall', async (req, res) => {
 
     // Fetch all relevant data from database
     const [trendsResult, dashboardResult] = await Promise.all([
-      // Get latest trends
       supabase
         .from('trends_individual')
         .select('*')
@@ -136,7 +49,6 @@ app.post('/api/chat-to-wall', async (req, res) => {
         .order('created_at', { ascending: false })
         .limit(20),
       
-      // Get latest dashboard insights
       supabase
         .from('dashboard_insights')
         .select('*')
@@ -154,11 +66,9 @@ app.post('/api/chat-to-wall', async (req, res) => {
       return res.status(500).json({ error: 'Database error' });
     }
 
-    // Prepare context data
     const trends = trendsResult.data || [];
     const dashboard = dashboardResult.data?.[0] || null;
 
-    // Create context for AI
     const context = {
       trends: trends.map(t => ({
         title: t.title,
@@ -180,7 +90,6 @@ app.post('/api/chat-to-wall', async (req, res) => {
       } : null
     };
 
-    // Create AI prompt
     const prompt = `You are the "Wall" - an AI assistant with access to real-time trend data and strategic insights. You can see all the trends, dashboard insights, and strategic analysis.
 
 CONTEXT DATA:
@@ -198,7 +107,6 @@ INSTRUCTIONS:
 
 RESPONSE:`;
 
-    // Get AI response
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
     const result = await model.generateContent(prompt);
     const response = await result.response;
@@ -226,18 +134,9 @@ RESPONSE:`;
 
 // Dashboard Data API
 app.get('/api/dashboard-data', async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
   try {
     console.log('📊 Fetching dashboard data from database...');
 
-    // Get the latest dashboard data
     const { data: dashboardRecords, error } = await supabase
       .from('dashboard_insights')
       .select('*')
@@ -321,18 +220,9 @@ app.get('/api/dashboard-data', async (req, res) => {
 });
 
 app.post('/api/dashboard-data', async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
   try {
     let dataToStore = req.body;
     
-    // Handle n8n wrapped data format
     if (Array.isArray(req.body) && req.body.length > 0) {
       if (req.body[0].output) {
         dataToStore = req.body[0].output;
@@ -343,14 +233,12 @@ app.post('/api/dashboard-data', async (req, res) => {
 
     console.log('📊 Storing dashboard data to database...');
 
-    // First, get the IDs of the last 3 records to keep
     const { data: recentRecords } = await supabase
       .from('dashboard_insights')
       .select('id')
       .order('created_at', { ascending: false })
       .limit(3);
 
-    // Delete records older than the last 3 (keep safety net)
     if (recentRecords && recentRecords.length >= 3) {
       const oldestToKeep = recentRecords[2].id;
       const { error: deleteError } = await supabase
@@ -364,7 +252,6 @@ app.post('/api/dashboard-data', async (req, res) => {
       }
     }
 
-    // Insert new dashboard data
     const { data, error } = await supabase
       .from('dashboard_insights')
       .insert({
@@ -393,8 +280,7 @@ app.post('/api/dashboard-data', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Test server running on http://localhost:${PORT}`);
-  console.log(`📄 Test page: http://localhost:${PORT}/test-download`);
+  console.log(`🚀 API server running on http://localhost:${PORT}`);
   console.log(`🤖 Chat to Wall API: http://localhost:${PORT}/api/chat-to-wall`);
   console.log(`📊 Dashboard API: http://localhost:${PORT}/api/dashboard-data`);
 });

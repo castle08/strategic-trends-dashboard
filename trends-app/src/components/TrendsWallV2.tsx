@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { TrendsData, TrendItem } from '../types';
+import ChatToWall from './ChatToWall';
 
 /** ---------------------------
  *  MOCK DATA (edit freely)
@@ -346,6 +347,10 @@ export default function TrendsWallV2() {
   const [openRadar, setOpenRadar] = useState(false);
   const [hoveredTrend, setHoveredTrend] = useState<string | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [chatQuestion, setChatQuestion] = useState('');
+  const [chatAnswer, setChatAnswer] = useState('');
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const [showChatResponse, setShowChatResponse] = useState(false);
 
   // Live data states
   const [trendsData, setTrendsData] = useState<TrendsData | null>(null);
@@ -495,21 +500,74 @@ export default function TrendsWallV2() {
               <div className="text-sm text-slate-500">Strategic Intelligence</div>
             </div>
             
-            {/* Ask the wall */}
+            {/* Chat to Wall */}
             <div className="rounded-xl border border-slate-200 overflow-hidden">
-              <div className="px-3 py-2 text-xs font-medium text-slate-600 border-b bg-slate-50">Ask the wall</div>
+              <div className="px-3 py-2 text-xs font-medium text-slate-600 border-b bg-slate-50">Chat to Wall</div>
               <div className="p-3">
-                <input
-                  value={query}
-                  onChange={e=>setQuery(e.target.value)}
-                  placeholder="e.g., Gen Z retail, refill, on-device AI (not functional)"
-                  className="w-full rounded-lg border border-red-300 px-3 py-2 outline-none focus:ring-2 focus:ring-red-500 text-red-600"
-                />
-                <div className="mt-2 flex gap-2 text-xs text-slate-500">
-                  <span className="px-2 py-0.5 rounded bg-slate-100">/search</span>
-                  <span className="px-2 py-0.5 rounded bg-slate-100">/discover</span>
-                  <span className="px-2 py-0.5 rounded bg-slate-100">/compare</span>
-                </div>
+                {!showChatResponse ? (
+                  <>
+                    <form onSubmit={async (e) => {
+                      e.preventDefault();
+                      if (!chatQuestion.trim() || isChatLoading) return;
+                      
+                      setIsChatLoading(true);
+                      setChatAnswer('');
+                      setShowChatResponse(true);
+                      
+                      try {
+                        const response = await fetch('/api/chat-to-wall', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ question: chatQuestion.trim() }),
+                        });
+                        
+                        if (response.ok) {
+                          const data = await response.json();
+                          setChatAnswer(data.answer);
+                        } else {
+                          setChatAnswer("Sorry, I'm having trouble connecting to the Wall right now. Please try again.");
+                        }
+                      } catch (error) {
+                        setChatAnswer("Sorry, I'm having trouble connecting to the Wall right now. Please try again.");
+                      } finally {
+                        setIsChatLoading(false);
+                        setChatQuestion(''); // Clear input after submission
+                      }
+                    }}>
+                      <input
+                        type="text"
+                        value={chatQuestion}
+                        onChange={(e) => setChatQuestion(e.target.value)}
+                        placeholder="Ask me anything about trends & insights..."
+                        className="w-full rounded-lg border border-blue-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 mb-2"
+                        disabled={isChatLoading}
+                      />
+                      <button
+                        type="submit"
+                        disabled={!chatQuestion.trim() || isChatLoading}
+                        className="w-full rounded-lg bg-blue-600 text-white px-3 py-2 font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {isChatLoading ? 'Asking...' : 'Ask the Wall'}
+                      </button>
+                    </form>
+                    <div className="mt-2 flex gap-2 text-xs text-slate-500">
+                      <span className="px-2 py-0.5 rounded bg-slate-100">Live AI</span>
+                      <span className="px-2 py-0.5 rounded bg-slate-100">Fast</span>
+                      <span className="px-2 py-0.5 rounded bg-slate-100">Smart</span>
+                    </div>
+                  </>
+                ) : (
+                  <ChatToWall
+                    question={chatQuestion}
+                    answer={chatAnswer}
+                    isLoading={isChatLoading}
+                    onAskNew={() => {
+                      setShowChatResponse(false);
+                      setChatAnswer('');
+                      setChatQuestion('');
+                    }}
+                  />
+                )}
               </div>
             </div>
 
@@ -788,11 +846,11 @@ export default function TrendsWallV2() {
                   <text x="8" y="30" transform="rotate(-90 8 30)" textAnchor="middle" fontSize="3" fill="#475569" fontWeight="600">Velocity →</text>
                   
                   {/* Trend bubbles */}
-                  {liveSpotlights.slice(0, 6).map((trend, idx) => {
+                  {liveSpotlights.slice(0, 12).map((trend, idx) => {
                     const x = 15 + (trend.scores.novelty / 100) * 70;
                     const y = 50 - (trend.scores.velocity / 100) * 40;
-                    const r = Math.max(1.5, Math.min(4, trend.scores.relevance / 25));
-                    const colors = ['#3b82f6', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444'];
+                    const r = Math.max(0.8, Math.min(2.5, trend.scores.relevance / 40));
+                    const colors = ['#3b82f6', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5a2b', '#6366f1', '#14b8a6', '#f97316', '#84cc16'];
                     
                     return (
                       <g key={idx}>
@@ -824,11 +882,11 @@ export default function TrendsWallV2() {
                   {/* Legend */}
                   <g transform="translate(75, 3)">
                     <text x="0" y="0" fontSize="3" fill="#475569" fontWeight="600">Size = Relevance</text>
-                    <circle cx="2" cy="3" r="1.5" fill="#3b82f6" />
+                    <circle cx="2" cy="3" r="1.2" fill="#3b82f6" />
                     <text x="5" y="1" fontSize="3" fill="#64748b">High</text>
-                    <circle cx="2" cy="6" r="1" fill="#8b5cf6" />
+                    <circle cx="2" cy="6" r="0.8" fill="#8b5cf6" />
                     <text x="5" y="4" fontSize="3" fill="#64748b">Med</text>
-                    <circle cx="2" cy="8.5" r="0.7" fill="#06b6d4" />
+                    <circle cx="2" cy="8.5" r="0.5" fill="#06b6d4" />
                     <text x="5" y="6.5" fontSize="3" fill="#64748b">Low</text>
                   </g>
                 </svg>
@@ -925,6 +983,8 @@ export default function TrendsWallV2() {
           </div>
         </Modal>
       )}
+
+
     </div>
   );
 }

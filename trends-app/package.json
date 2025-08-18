@@ -13,6 +13,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@react-three/drei": "^9.96.1",
     "@react-three/fiber": "^8.15.19",
     "@supabase/supabase-js": "^2.55.0",
@@ -22,6 +23,7 @@
     "@vercel/kv": "^3.0.0",
     "chart.js": "^4.5.0",
     "cors": "^2.8.5",
+    "dotenv": "^16.4.1",
     "express": "^5.1.0",
     "framer-motion": "^10.18.0",
     "lucide-react": "^0.312.0",

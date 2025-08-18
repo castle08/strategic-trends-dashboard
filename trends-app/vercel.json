@@ -11,6 +11,12 @@
   "functions": {
     "api/merge-audio.js": {
       "maxDuration": 30
+    },
+    "api/chat-to-wall.js": {
+      "maxDuration": 30
+    },
+    "api/dashboard-data.js": {
+      "maxDuration": 30
     }
   },
   "build": {
