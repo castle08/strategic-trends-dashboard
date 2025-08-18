@@ -1,4 +1,4 @@
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { OrbitControls, Environment, Float } from '@react-three/drei';
 import { TrendItem } from '../types';
@@ -13,6 +13,17 @@ interface SceneProps {
 
 const Scene: React.FC<SceneProps> = ({ trends, onTrendSelect, selectedTrend }) => {
   const groupRef = useRef<THREE.Group>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  
+  const handleDragStart = () => {
+    console.log('🎯 Scene: Drag started');
+    setIsDragging(true);
+  };
+  
+  const handleDragEnd = () => {
+    console.log('🎯 Scene: Drag ended');
+    setIsDragging(false);
+  };
   
   const positions = useMemo(() => {
     const maxNodes = parseInt((import.meta as any).env?.VITE_THREE_MAX_NODES || '200');
@@ -22,7 +33,7 @@ const Scene: React.FC<SceneProps> = ({ trends, onTrendSelect, selectedTrend }) =
     for (let i = 0; i < nodesToShow; i++) {
       const phi = Math.acos(-1 + (2 * i) / nodesToShow);
       const theta = Math.sqrt(nodesToShow * Math.PI) * phi;
-      const radius = 18 + Math.random() * 12; // Tighter grouping: 18-30 for better initial view
+      const radius = 20 + Math.random() * 15; // Closer grouping: 20-35 for bigger images
       
       const x = radius * Math.cos(theta) * Math.sin(phi);
       const y = radius * Math.sin(theta) * Math.sin(phi);
@@ -36,7 +47,7 @@ const Scene: React.FC<SceneProps> = ({ trends, onTrendSelect, selectedTrend }) =
 
   useFrame(() => {
     if (groupRef.current) {
-      groupRef.current.rotation.y += 0.0005;
+      groupRef.current.rotation.y += 0.0002; // Slower rotation
     }
   });
 
@@ -53,12 +64,13 @@ const Scene: React.FC<SceneProps> = ({ trends, onTrendSelect, selectedTrend }) =
       
       {/* Controls */}
       <OrbitControls
-        enablePan={true}
-        enableZoom={true}
-        maxDistance={150}
-        minDistance={2}
-        autoRotate={!selectedTrend}
-        autoRotateSpeed={0.5}
+        enablePan={!isDragging}
+        enableZoom={!isDragging}
+        enableRotate={!isDragging}
+        maxDistance={200}
+        minDistance={10}
+        autoRotate={!selectedTrend && !isDragging}
+        autoRotateSpeed={0.2}
         panSpeed={1.2}
         zoomSpeed={1.2}
         rotateSpeed={0.8}
@@ -70,9 +82,9 @@ const Scene: React.FC<SceneProps> = ({ trends, onTrendSelect, selectedTrend }) =
         {trends.slice(0, positions.length).map((trend, index) => (
           <Float
             key={trend.id}
-            speed={0.5 + Math.random() * 0.5}
-            rotationIntensity={0.3}
-            floatIntensity={0.3}
+            speed={0.2 + Math.random() * 0.3}
+            rotationIntensity={0.1}
+            floatIntensity={0.1}
           >
             <TrendCrystal
               trend={trend}
@@ -80,6 +92,8 @@ const Scene: React.FC<SceneProps> = ({ trends, onTrendSelect, selectedTrend }) =
               selected={selectedTrend?.id === trend.id}
               onSelect={() => onTrendSelect(trend)}
               anyTrendSelected={selectedTrend !== null}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
             />
           </Float>
         ))}

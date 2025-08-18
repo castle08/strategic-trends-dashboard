@@ -69,7 +69,7 @@ const UI: React.FC<UIProps> = ({
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 400, opacity: 0 }}
             transition={{ type: "spring", damping: 20, stiffness: 100 }}
-            className="absolute top-0 right-0 h-full w-96 z-30 glass-panel border-l border-white/10 overflow-y-auto scrollbar-hide"
+            className="fixed top-0 right-0 h-full w-96 z-[99999] glass-panel border-l border-white/10 overflow-y-auto scrollbar-hide"
           >
             <div className="p-6">
               {/* Close button */}

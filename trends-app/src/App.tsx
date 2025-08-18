@@ -345,10 +345,11 @@ function App() {
           path="/" 
           element={
             <ErrorBoundary>
-              <div className="w-screen h-screen bg-gradient-to-b from-gray-900 via-slate-800 to-black">
+              <div className="w-screen h-screen bg-gradient-to-b from-gray-900 via-slate-800 to-black relative">
                 <Canvas
-                  camera={{ position: [0, 0, 40], fov: 70 }}
+                  camera={{ position: [0, 0, 60], fov: 60 }}
                   gl={{ antialias: true, alpha: false }}
+                  style={{ zIndex: 1 }}
                 >
                   <Suspense fallback={null}>
                     <Scene

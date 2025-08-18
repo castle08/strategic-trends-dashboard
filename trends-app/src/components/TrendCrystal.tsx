@@ -1,5 +1,4 @@
-import React, { useRef, useState } from 'react';
-import { useFrame } from '@react-three/fiber';
+import React, { useState, useRef } from 'react';
 import { Html } from '@react-three/drei';
 import { TrendItem, getCategoryColor } from '../types';
 import * as THREE from 'three';
@@ -10,17 +9,28 @@ interface TrendCrystalProps {
   selected: boolean;
   onSelect: () => void;
   anyTrendSelected?: boolean;
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
 }
 
-const TrendCrystal: React.FC<TrendCrystalProps> = ({ trend, position, selected, onSelect, anyTrendSelected = false }) => {
+const TrendCrystal: React.FC<TrendCrystalProps> = ({ 
+  trend, 
+  position, 
+  selected, 
+  onSelect, 
+  anyTrendSelected = false,
+  onDragStart,
+  onDragEnd
+}) => {
   console.log('🔍 TrendCrystal component starting for:', trend.title);
   
   // Use anyTrendSelected parameter to avoid TypeScript warning
   void anyTrendSelected;
-  const meshRef = useRef<THREE.Mesh>(null);
-  const [hovered, setHovered] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartPos = useRef<{ x: number; y: number } | null>(null);
+  const isMouseDown = useRef(false);
   
   console.log('🔍 State initialized for:', trend.title);
   
@@ -34,18 +44,10 @@ const TrendCrystal: React.FC<TrendCrystalProps> = ({ trend, position, selected, 
   
 
   
-  // Dynamic size scaling based on actual live data range
-  const minScore = 50; // Much wider range to handle live data variety
-  const maxScore = 100; // Full theoretical range
-  const normalizedScore = Math.max(0, Math.min(1, (trend.scores.total - minScore) / (maxScore - minScore)));
-  // Reasonable scaling with clear differences
-  const adjustedSize = 1.0 + (normalizedScore * 4.0); // Range 1.0 to 5.0 (5x difference)
-  
   // Debug logging to see actual scores
-  console.log(`📊 ${trend.category} (${trend.scores.total}) -> Size: ${adjustedSize.toFixed(1)}`);
-  const intensity = trend.viz?.intensity || 1.0; // Fallback if viz data is missing
+  console.log(`📊 ${trend.category} (${trend.scores.total})`);
   
-  console.log('🔍 Size and intensity calculated for:', trend.title);
+  console.log('🔍 Image-based display prepared for:', trend.title);
   
 
   
@@ -64,60 +66,8 @@ const TrendCrystal: React.FC<TrendCrystalProps> = ({ trend, position, selected, 
     whyItMattersLength: trend.whyItMatters?.length
   });
 
-  // Shape based on category - using adjusted size for better visual distinction
-  const getGeometry = (category: string) => {
-    console.log('🔍 Getting geometry for category:', category);
-    switch (category.toLowerCase()) {
-      case 'ai/ml':
-      case 'ai':
-        return <dodecahedronGeometry args={[adjustedSize, 0]} />; // Complex AI shape
-      case 'sustainability':
-      case 'design':
-        return <tetrahedronGeometry args={[adjustedSize * 1.2, 0]} />; // Clean pyramid for design
-      case 'e-commerce':
-      case 'technology':
-        return <boxGeometry args={[adjustedSize * 1.2, adjustedSize * 1.2, adjustedSize * 1.2]} />; // Cube for tech
-      case 'social media':
-        return <sphereGeometry args={[adjustedSize, 16, 16]} />; // Sphere for social
-      default:
-        return <octahedronGeometry args={[adjustedSize, 0]} />; // Default crystal
-    }
-  };
-
-  const getWireframeGeometry = (category: string) => {
-    switch (category.toLowerCase()) {
-      case 'ai/ml':
-      case 'ai':
-        return <dodecahedronGeometry args={[adjustedSize * 1.02, 0]} />;
-      case 'sustainability':
-      case 'design':
-        return <tetrahedronGeometry args={[adjustedSize * 1.22, 0]} />;
-      case 'e-commerce':
-      case 'technology':
-        return <boxGeometry args={[adjustedSize * 1.22, adjustedSize * 1.22, adjustedSize * 1.22]} />;
-      case 'social media':
-        return <sphereGeometry args={[adjustedSize * 1.02, 16, 16]} />;
-      default:
-        return <octahedronGeometry args={[adjustedSize * 1.02, 0]} />;
-    }
-  };
-
-  console.log('🔍 Geometry functions defined for:', trend.title);
-
-  useFrame((state) => {
-    if (meshRef.current) {
-      const time = state.clock.getElapsedTime();
-      const pulseScale = 1 + Math.sin(time * intensity * 0.5) * 0.05;
-      const selectedScale = selected ? 1.3 : 1;
-      const hoverScale = hovered ? 1.15 : 1;
-      
-      meshRef.current.scale.setScalar(pulseScale * selectedScale * hoverScale);
-      
-      // Gentle rotation
-      meshRef.current.rotation.y = time * 0.2;
-      meshRef.current.rotation.x = Math.sin(time * 0.1) * 0.1;
-    }
-  });
+  // Remove unused geometry functions and useFrame since we're using images now
+  console.log('🔍 Image-based display for:', trend.title);
 
   // Handle image loading with CORS error handling
   const handleImageLoad = () => {
@@ -132,168 +82,167 @@ const TrendCrystal: React.FC<TrendCrystalProps> = ({ trend, position, selected, 
     setImageLoaded(false);
   };
 
-  // Try to load image with different strategies
-  const getImageUrl = (originalUrl: string) => {
-    if (!originalUrl) return '';
-    
-    // For development, try the proxy first, then fallback to direct URL
-    if (window.location.hostname === 'localhost') {
-      const encodedUrl = encodeURIComponent(originalUrl);
-      return `/api/proxy-image?url=${encodedUrl}`;
+  // Get image URL - prioritize imageUrl (Vercel blob storage) over blobFilename
+  const getImageUrl = () => {
+    // Use imageUrl first (direct Vercel blob storage URL)
+    if (trend.creative?.imageUrl) {
+      return trend.creative.imageUrl;
     }
     
-    // For production, try direct URL first
-    return originalUrl;
+    // Fallback to blobFilename if no imageUrl
+    if (trend.creative?.blobFilename) {
+      return `/trends/images/${trend.creative.blobFilename}`;
+    }
+    
+    return '';
   };
+
+  // Handle mouse events for drag vs click
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    console.log('🖱️ Mouse down on trend:', trend.title);
+    isMouseDown.current = true;
+    dragStartPos.current = { x: e.clientX, y: e.clientY };
+    setIsDragging(false);
+    onDragStart?.();
+    
+    // Add global mouse listeners
+    document.addEventListener('mousemove', handleGlobalMouseMove);
+    document.addEventListener('mouseup', handleGlobalMouseUp);
+  };
+
+  const handleGlobalMouseMove = (e: MouseEvent) => {
+    if (isMouseDown.current && dragStartPos.current) {
+      const deltaX = Math.abs(e.clientX - dragStartPos.current.x);
+      const deltaY = Math.abs(e.clientY - dragStartPos.current.y);
+      
+      // If moved more than 5px, consider it a drag
+      if (deltaX > 5 || deltaY > 5) {
+        console.log('🔄 Dragging trend:', trend.title, 'delta:', { deltaX, deltaY });
+        setIsDragging(true);
+      }
+    }
+  };
+
+  const handleGlobalMouseUp = (e: MouseEvent) => {
+    if (isMouseDown.current && dragStartPos.current) {
+      const deltaX = Math.abs(e.clientX - dragStartPos.current.x);
+      const deltaY = Math.abs(e.clientY - dragStartPos.current.y);
+      
+      console.log('🖱️ Mouse up on trend:', trend.title, 'delta:', { deltaX, deltaY }, 'isDragging:', isDragging);
+      
+      // Only trigger onSelect if it wasn't a drag (moved less than 5px)
+      if (deltaX <= 5 && deltaY <= 5) {
+        console.log('✅ Click detected - opening side drawer for:', trend.title);
+        onSelect();
+      } else {
+        console.log('🔄 Drag detected - not opening side drawer');
+      }
+      
+      // Clean up
+      isMouseDown.current = false;
+      dragStartPos.current = null;
+      setIsDragging(false);
+      onDragEnd?.();
+      
+      // Remove global listeners
+      document.removeEventListener('mousemove', handleGlobalMouseMove);
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
+    }
+  };
+
+
 
   console.log('🔍 About to render JSX for:', trend.title);
 
   try {
     return (
       <group position={position}>
-        {/* Main crystal mesh */}
-        <mesh
-          ref={meshRef}
-          onClick={(e) => {
-            e.stopPropagation();
-            onSelect();
-          }}
-          onPointerOver={(e) => {
-            e.stopPropagation();
-            console.log('🖱️ Hover start for:', trend.title);
-            setHovered(true);
-            document.body.style.cursor = 'pointer';
-          }}
-          onPointerOut={() => {
-            console.log('🖱️ Hover end for:', trend.title);
-            setHovered(false);
-            document.body.style.cursor = 'auto';
+        {/* Image-based trend display */}
+        <Html
+          as="div"
+          center
+          transform
+          sprite
+          style={{
+            pointerEvents: 'auto',
+            transform: 'translate3d(0, 0, 0)',
+            zIndex: 1,
           }}
         >
-          {getGeometry(trend.category)}
-          <meshPhongMaterial
-            color={color}
-            transparent
-            opacity={0.4}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
-
-        {/* Wireframe layers for depth */}
-        {[0, 1, 2].map((i) => (
-          <mesh
-            key={i}
-            onClick={(e) => {
-              e.stopPropagation();
-              onSelect();
-            }}
-            onPointerOver={(e) => {
-              e.stopPropagation();
-              setHovered(true);
-              document.body.style.cursor = 'pointer';
-            }}
-            onPointerOut={() => {
-              setHovered(false);
-              document.body.style.cursor = 'auto';
+          <div 
+            className={`cursor-grab ${isDragging ? 'cursor-grabbing' : ''}`}
+            onMouseDown={handleMouseDown}
+            onMouseLeave={() => {
+              if (isMouseDown.current) {
+                isMouseDown.current = false;
+                dragStartPos.current = null;
+                setIsDragging(false);
+                onDragEnd?.();
+                document.removeEventListener('mousemove', handleGlobalMouseMove);
+                document.removeEventListener('mouseup', handleGlobalMouseUp);
+              }
             }}
           >
-            {getWireframeGeometry(trend.category)}
-            <meshBasicMaterial
-              color={color}
-              wireframe
-              transparent
-              opacity={0.8 - i * 0.12}
-            />
-          </mesh>
-        ))}
-      
-        {/* Enhanced hover card with image preview */}
-        {(() => {
-          console.log(`🎯 Rendering hover card for "${trend.title}": hovered=${hovered}, selected=${selected}, hasImage=${!!trend.creative?.imageUrl}`);
-          return (hovered || selected);
-        })() && (
-          <Html
-            as="div"
-            center
-            transform
-            sprite
-            style={{
-              pointerEvents: 'none',
-              transform: 'translate3d(0, -80px, 0)',
-            }}
-          >
-            <div className="glass-panel rounded-xl p-4 text-white max-w-sm min-h-[200px]">
-              <div className="font-bold mb-2 text-lg">{trend.title || 'No Title'}</div>
-              <div className="text-white/80 text-sm mb-2">{trend.category || 'No Category'}</div>
-              <div className="text-white/60 text-sm mb-3">
-                Score: {trend.scores?.total || 'N/A'}
-              </div>
+            {/* Image Container */}
+            <div className="relative">
+              {/* Loading state */}
+              {!imageLoaded && !imageError && (
+                <div 
+                  className="w-96 h-96 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: color.getHexString() + '20' }}
+                >
+                  <div className="text-white/70 text-xl">Loading...</div>
+                </div>
+              )}
               
-              {/* Image Preview Section - Only show if we have an image URL */}
-              {trend.creative?.imageUrl && (
-                <div className="mb-3">
-                  <div className="text-white/70 text-xs mb-2">Generated Image:</div>
-                  <div className="relative">
-                    {/* Loading state */}
-                    {!imageLoaded && !imageError && (
-                      <div className="w-32 h-32 bg-white/10 rounded-lg flex items-center justify-center">
-                        <div className="text-white/50 text-xs">Loading...</div>
-                      </div>
-                    )}
-                    
-                    {/* Error state */}
-                    {imageError && (
-                      <div className="w-32 h-32 bg-red-500/20 rounded-lg flex items-center justify-center border border-red-500/30">
-                        <div className="text-red-300 text-xs">⚠️ Image failed to load</div>
-                      </div>
-                    )}
-                    
-                    {/* Image - Only show when loaded successfully */}
-                    <img
-                      src={getImageUrl(trend.creative.imageUrl) || ''}
-                      alt={trend.title}
-                      className={`w-32 h-32 object-cover rounded-lg border-2 ${
-                        imageLoaded ? 'border-green-400/50' : 'border-transparent'
-                      } ${imageError ? 'hidden' : ''}`}
-                      onLoad={handleImageLoad}
-                      onError={handleImageError}
-                      style={{ display: imageLoaded ? 'block' : 'none' }}
-                    />
-                    
-                    {/* Always show the link, even if image fails */}
-                    <a 
-                      href={trend.creative.imageUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-blue-300 hover:text-blue-200 underline text-xs block mt-1"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {imageError ? 'View Generated Image (opens in new tab)' : 'View Full Size'}
-                    </a>
+              {/* Error state - show colored placeholder */}
+              {imageError && (
+                <div 
+                  className="w-96 h-96 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: color.getHexString() + '40' }}
+                >
+                  <div className="text-white/90 text-xl text-center">
+                    <div className="font-bold mb-1">{trend.title?.slice(0, 20)}...</div>
+                    <div className="text-white/70">{trend.category}</div>
                   </div>
                 </div>
               )}
               
-              {/* Description */}
-              <div className="text-white/90 text-sm">
-                {trend.whyItMatters ? trend.whyItMatters.slice(0, 100) + '...' : 'No description available'}
-              </div>
+              {/* Image - Show if we have any image data */}
+              {(trend.creative?.imageUrl || trend.creative?.blobFilename) && (
+                <img
+                  src={getImageUrl()}
+                  alt={trend.title}
+                  className={`w-96 h-96 object-cover rounded-lg ${
+                        imageLoaded ? '' : 'hidden'
+                      } ${imageError ? 'hidden' : ''}`}
+                  onLoad={handleImageLoad}
+                  onError={handleImageError}
+                  style={{ display: imageLoaded ? 'block' : 'none' }}
+                />
+              )}
+              
+              {/* Fallback for trends without images */}
+              {!trend.creative?.imageUrl && !trend.creative?.blobFilename && (
+                <div 
+                  className="w-96 h-96 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: color.getHexString() + '40' }}
+                >
+                  <div className="text-white/90 text-xl text-center">
+                    <div className="font-bold mb-1">{trend.title?.slice(0, 20)}...</div>
+                    <div className="text-white/70">{trend.category}</div>
+                  </div>
+                </div>
+              )}
+              
+              
             </div>
-          </Html>
-        )}
+          </div>
+        </Html>
       
-        {/* Particle effects for velocity */}
-        {trend.scores.velocity > 70 && (
-          <points>
-            <sphereGeometry args={[adjustedSize * 2, 8, 8]} />
-            <pointsMaterial
-              color={color}
-              size={0.1}
-              transparent
-              opacity={0.4}
-            />
-          </points>
-        )}
+
       </group>
     );
   } catch (error) {
