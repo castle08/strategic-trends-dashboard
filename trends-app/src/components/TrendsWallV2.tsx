@@ -10,16 +10,16 @@ const dashboardMock = {
     industries: ["Retail","CPG","Tech","Finance","Entertainment"],
     audiences: ["Gen Z Urban","Millennial Families","Value Seekers 45+"]
   },
-  stateOfWorld: {
+  STATE_OF_WORLD: {
     thesis: "Trust-first AI becomes a default consumer expectation.",
-    velocity: [12,14,18,22,28,34,41,43], // weekly weighted signals
+    velocitySpark: [12,14,18,22,28,34,41,43], // weekly weighted signals
     movers: [
-      {label:"Privacy-by-design platforms", delta:"+", strength:62},
-      {label:"Zero-waste retail", delta:"+", strength:55},
-      {label:"Community-driven media", delta:"+", strength:48}
+      {label:"Privacy-by-design platforms", deltaPercent:62},
+      {label:"Zero-waste retail", deltaPercent:55},
+      {label:"Community-driven media", deltaPercent:48}
     ]
   },
-  aiInsight: {
+  AI_INSIGHT: {
     title: "Ambient AI replaces app-switching.",
     bullets: [
       "Consumers expect seamless help without surveillance.",
@@ -27,13 +27,13 @@ const dashboardMock = {
       "Personalisation must be privacy-first."
     ]
   },
-  threats: [
+  COMPETITIVE_THREATS: [
     {brand:"Coca-Cola", move:"Voice-Order via Alexa", urgency:"Medium", seen:"11 days ago",
      action:"Test your own voice SKUs + promo scripts in Q4."},
     {brand:"Nike", move:"Phygital Membership Hubs", urgency:"High", seen:"6 days ago",
      action:"Explore experiential pop-ups tied directly to loyalty data."}
   ],
-  opportunities: [
+  BRAND_OPPORTUNITIES: [
     {
       title:"Sustainable Packaging Becomes a Purchase Shortcut",
       level:"High",
@@ -75,7 +75,7 @@ const dashboardMock = {
       tags:["digital ID","brand resale","repair economy"]
     }
   ],
-  liveSignals: [
+  SIGNAL_TICKER: [
     "EU expands Digital Product Passport pilots → mid-market brands (Jul 2025)",
     "TikTok Shopping revises affiliate rules (Aug 2025)",
     "Apple Vision Pro v2.0 pre-orders exceed forecasts (Sep 2025)",
@@ -438,7 +438,7 @@ export default function TrendsWallV2() {
   // Auto-cycle threats every 4 seconds
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentThreatIndex((prev) => (prev + 1) % dashboardMock.threats.length);
+      setCurrentThreatIndex((prev) => (prev + 1) % dashboardMock.COMPETITIVE_THREATS.length);
     }, 4000);
     return () => clearInterval(interval);
   }, []);
@@ -446,7 +446,7 @@ export default function TrendsWallV2() {
   // Auto-cycle opportunities every 5 seconds (offset from threats)
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentOpportunityIndex((prev) => (prev + 1) % dashboardMock.opportunities.length);
+      setCurrentOpportunityIndex((prev) => (prev + 1) % dashboardMock.BRAND_OPPORTUNITIES.length);
     }, 5000);
     return () => clearInterval(interval);
   }, []);
@@ -648,12 +648,12 @@ export default function TrendsWallV2() {
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="font-semibold text-lg">State of the World <span className={`text-sm ${hasLiveDashboard ? 'text-green-600' : 'text-red-600'}`}>{hasLiveDashboard ? '(LIVE)' : '(DEMO)'}</span></h3>
-                  <p className={`text-base font-medium ${hasLiveDashboard ? 'text-green-700' : 'text-red-600'}`}>{dashboardData?.STATE_OF_WORLD?.Thesis || dashboardMock.stateOfWorld.thesis}</p>
+                  <p className={`text-base font-medium ${hasLiveDashboard ? 'text-green-700' : 'text-red-600'}`}>{dashboardData?.STATE_OF_WORLD?.thesis || dashboardMock.STATE_OF_WORLD.thesis}</p>
                   <div className="mt-2 space-y-1">
                     <div className="text-sm text-slate-700">• Top Movers:</div>
                     <div className="ml-4 space-y-1">
-                      {(dashboardData?.STATE_OF_WORLD?.Movers || dashboardMock.stateOfWorld.movers).map((m: any, i: number) => (
-                        <div key={i} className="text-sm text-slate-700">• {m.label} (+{m.strength}%)</div>
+                      {(dashboardData?.STATE_OF_WORLD?.movers || dashboardMock.STATE_OF_WORLD.movers).map((m: any, i: number) => (
+                        <div key={i} className="text-sm text-slate-700">• {m.label} ({m.deltaPercent > 0 ? '+' : ''}{m.deltaPercent}%)</div>
                       ))}
                     </div>
                   </div>
@@ -661,14 +661,14 @@ export default function TrendsWallV2() {
                 <div className="text-right">
                   <div className="text-2xl font-bold text-slate-900">
                     {(() => {
-                      const velocityData = dashboardData?.STATE_OF_WORLD?.Velocity || dashboardMock.stateOfWorld.velocity;
+                      const velocityData = dashboardData?.STATE_OF_WORLD?.velocitySpark || dashboardMock.STATE_OF_WORLD.velocitySpark;
                       if (velocityData && velocityData.length >= 2) {
                         const first = velocityData[0];
                         const last = velocityData[velocityData.length - 1];
                         const growth = Math.round(((last - first) / first) * 100);
                         return `${growth > 0 ? '+' : ''}${growth}%`;
                       }
-                      return '+244%';
+                      return '+0%';
                     })()}
                   </div>
                   <div className="text-xs text-slate-500">Velocity</div>
@@ -679,16 +679,16 @@ export default function TrendsWallV2() {
                          {/* AI Insight */}
              <Panel id="ai-insight-card" accent="purple" className="col-span-4 ai-insight-card">
                <h3 className="font-semibold text-lg">AI Insight <span className={`text-sm ${hasLiveDashboard ? 'text-green-600' : 'text-red-600'}`}>{hasLiveDashboard ? '(LIVE)' : '(DEMO)'}</span></h3>
-               <div className={`text-base font-medium ${hasLiveDashboard ? 'text-green-700' : 'text-red-700'}`}>{dashboardData?.AI_INSIGHT?.Title || dashboardMock.aiInsight.title}</div>
+               <div className={`text-base font-medium ${hasLiveDashboard ? 'text-green-700' : 'text-red-700'}`}>{dashboardData?.AI_INSIGHT?.title || dashboardMock.AI_INSIGHT.title}</div>
                <ul className={`mt-2 space-y-1 text-sm list-disc pl-4 ${hasLiveDashboard ? 'text-green-600' : 'text-red-600'}`}>
-                 {(dashboardData?.AI_INSIGHT?.Bullets || dashboardMock.aiInsight.bullets).map((b: string, i: number)=><li key={i}>{b}</li>)}
+                 {(dashboardData?.AI_INSIGHT?.bullets || dashboardMock.AI_INSIGHT.bullets).map((b: string, i: number)=><li key={i}>{b}</li>)}
                </ul>
              </Panel>
 
                           {/* Live Signals Strip */}
              <div id="live-signals-strip" className={`col-span-12 overflow-hidden relative h-8 rounded-lg border ${hasLiveDashboard ? 'bg-gradient-to-r from-green-50 to-green-100 border-green-200' : 'bg-gradient-to-r from-red-50 to-red-100 border-red-200'}`}>
                                 <div className={`text-sm py-2 px-4 ${hasLiveDashboard ? 'text-green-700' : 'text-red-700'}`}>
-                   • {(dashboardData?.LIVE_SIGNALS || dashboardMock.liveSignals)[0]?.Event || dashboardMock.liveSignals[0]} {hasLiveDashboard ? '(LIVE)' : '(DEMO)'} • {(dashboardData?.LIVE_SIGNALS || dashboardMock.liveSignals)[1]?.Event || dashboardMock.liveSignals[1]} {hasLiveDashboard ? '(LIVE)' : '(DEMO)'}
+                   • {(dashboardData?.SIGNAL_TICKER || dashboardMock.SIGNAL_TICKER)[0]} {hasLiveDashboard ? '(LIVE)' : '(DEMO)'} • {(dashboardData?.SIGNAL_TICKER || dashboardMock.SIGNAL_TICKER)[1]} {hasLiveDashboard ? '(LIVE)' : '(DEMO)'}
                  </div>
              </div>
 
@@ -698,14 +698,14 @@ export default function TrendsWallV2() {
                <Panel id="brand-opportunities-card" accent="green" className="opportunities-card">
                  <h3 className="font-semibold text-base mb-1">Brand Opportunities <span className={`text-sm ${hasLiveDashboard ? 'text-green-600' : 'text-red-600'}`}>{hasLiveDashboard ? '(LIVE)' : '(DEMO)'}</span></h3>
                  <div className="rounded-lg border border-slate-200 p-2">
-                   <div className="font-medium">{(dashboardData?.BRAND_OPPORTUNITIES || dashboardMock.opportunities)[currentOpportunityIndex]?.Opportunity || dashboardMock.opportunities[currentOpportunityIndex]?.title}</div>
-                   <div className="text-sm text-slate-700 mt-1"><span className="font-semibold">Why now:</span> {(dashboardData?.BRAND_OPPORTUNITIES || dashboardMock.opportunities)[currentOpportunityIndex]?.Evidence || dashboardMock.opportunities[currentOpportunityIndex]?.whyNow}</div>
-                   <div className="text-sm text-slate-700 mt-1"><span className="font-semibold">Signals:</span> {(dashboardData?.BRAND_OPPORTUNITIES || dashboardMock.opportunities)[currentOpportunityIndex]?.Evidence || dashboardMock.opportunities[currentOpportunityIndex]?.signals?.join(" • ")}</div>
-                   <div className="text-sm text-slate-700 mt-1"><span className="font-semibold">Play:</span> {(dashboardData?.BRAND_OPPORTUNITIES || dashboardMock.opportunities)[currentOpportunityIndex]?.Action || dashboardMock.opportunities[currentOpportunityIndex]?.play}</div>
+                   <div className="font-medium">{(dashboardData?.BRAND_OPPORTUNITIES || dashboardMock.BRAND_OPPORTUNITIES)[currentOpportunityIndex]?.title || dashboardMock.BRAND_OPPORTUNITIES[currentOpportunityIndex]?.title}</div>
+                   <div className="text-sm text-slate-700 mt-1"><span className="font-semibold">Why now:</span> {(dashboardData?.BRAND_OPPORTUNITIES || dashboardMock.BRAND_OPPORTUNITIES)[currentOpportunityIndex]?.whyNow || dashboardMock.BRAND_OPPORTUNITIES[currentOpportunityIndex]?.whyNow}</div>
+                   <div className="text-sm text-slate-700 mt-1"><span className="font-semibold">Signals:</span> {(dashboardData?.BRAND_OPPORTUNITIES || dashboardMock.BRAND_OPPORTUNITIES)[currentOpportunityIndex]?.signals?.join(" • ") || dashboardMock.BRAND_OPPORTUNITIES[currentOpportunityIndex]?.signals?.join(" • ")}</div>
+                   <div className="text-sm text-slate-700 mt-1"><span className="font-semibold">Play:</span> {(dashboardData?.BRAND_OPPORTUNITIES || dashboardMock.BRAND_OPPORTUNITIES)[currentOpportunityIndex]?.play || dashboardMock.BRAND_OPPORTUNITIES[currentOpportunityIndex]?.play}</div>
                  </div>
                  {/* Navigation dots */}
                  <div className="flex justify-center mt-2 space-x-1">
-                   {(dashboardData?.BRAND_OPPORTUNITIES || dashboardMock.opportunities).map((_, idx) => (
+                   {(dashboardData?.BRAND_OPPORTUNITIES || dashboardMock.BRAND_OPPORTUNITIES).map((_, idx) => (
                      <button
                        key={idx}
                        onClick={() => setCurrentOpportunityIndex(idx)}
@@ -723,15 +723,15 @@ export default function TrendsWallV2() {
                <Panel id="competitive-threats-card" accent="red" className="threats-card">
                  <h3 className="font-semibold text-base mb-1">Competitive Threats <span className={`text-sm ${hasLiveDashboard ? 'text-green-600' : 'text-red-600'}`}>{hasLiveDashboard ? '(LIVE)' : '(DEMO)'}</span></h3>
                  <div className="rounded-lg border border-slate-200 p-2">
-                   <div className="font-medium">{(dashboardData?.COMPETITIVE_THREATS || dashboardMock.threats)[currentThreatIndex]?.Threat || `${dashboardMock.threats[currentThreatIndex]?.brand} → ${dashboardMock.threats[currentThreatIndex]?.move}`}</div>
-                   <div className="text-sm text-slate-700 mt-1"><span className="font-semibold">Seen:</span> {(dashboardData?.COMPETITIVE_THREATS || dashboardMock.threats)[currentThreatIndex]?.seen || dashboardMock.threats[currentThreatIndex]?.seen}</div>
-                   <div className="text-sm text-slate-700 mt-1"><span className="font-semibold">Move:</span> {(dashboardData?.COMPETITIVE_THREATS || dashboardMock.threats)[currentThreatIndex]?.Move || dashboardMock.threats[currentThreatIndex]?.move}</div>
-                   <div className="text-sm text-slate-700 mt-1"><span className="font-semibold">Urgency:</span> {(dashboardData?.COMPETITIVE_THREATS || dashboardMock.threats)[currentThreatIndex]?.urgency || dashboardMock.threats[currentThreatIndex]?.urgency}</div>
-                   <div className="text-sm text-slate-700 mt-1"><span className="font-semibold">Action:</span> {(dashboardData?.COMPETITIVE_THREATS || dashboardMock.threats)[currentThreatIndex]?.Counter_Action || dashboardMock.threats[currentThreatIndex]?.action}</div>
+                   <div className="font-medium">{dashboardMock.COMPETITIVE_THREATS[currentThreatIndex]?.brand} → {dashboardMock.COMPETITIVE_THREATS[currentThreatIndex]?.move}</div>
+                   <div className="text-sm text-slate-700 mt-1"><span className="font-semibold">Seen:</span> {(dashboardData?.COMPETITIVE_THREATS || dashboardMock.COMPETITIVE_THREATS)[currentThreatIndex]?.seen || dashboardMock.COMPETITIVE_THREATS[currentThreatIndex]?.seen}</div>
+                   <div className="text-sm text-slate-700 mt-1"><span className="font-semibold">Move:</span> {(dashboardData?.COMPETITIVE_THREATS || dashboardMock.COMPETITIVE_THREATS)[currentThreatIndex]?.move || dashboardMock.COMPETITIVE_THREATS[currentThreatIndex]?.move}</div>
+                   <div className="text-sm text-slate-700 mt-1"><span className="font-semibold">Urgency:</span> {(dashboardData?.COMPETITIVE_THREATS || dashboardMock.COMPETITIVE_THREATS)[currentThreatIndex]?.urgency || dashboardMock.COMPETITIVE_THREATS[currentThreatIndex]?.urgency}</div>
+                   <div className="text-sm text-slate-700 mt-1"><span className="font-semibold">Action:</span> {(dashboardData?.COMPETITIVE_THREATS || dashboardMock.COMPETITIVE_THREATS)[currentThreatIndex]?.action || dashboardMock.COMPETITIVE_THREATS[currentThreatIndex]?.action}</div>
                  </div>
                  {/* Navigation dots */}
                  <div className="flex justify-center mt-2 space-x-1">
-                   {(dashboardData?.COMPETITIVE_THREATS || dashboardMock.threats).map((_, idx) => (
+                   {(dashboardData?.COMPETITIVE_THREATS || dashboardMock.COMPETITIVE_THREATS).map((_, idx) => (
                      <button
                        key={idx}
                        onClick={() => setCurrentThreatIndex(idx)}

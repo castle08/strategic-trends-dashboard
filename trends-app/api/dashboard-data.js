@@ -35,18 +35,19 @@ export default async function handler(req, res) {
       return res.status(200).json(latestDashboardData);
     } else {
       return res.status(200).json({
-        stateOfWorld: {
+        STATE_OF_WORLD: {
           thesis: "Dashboard insights are generated on-demand from current trends",
-          velocity: [0, 0, 0, 0, 0, 0, 0, 0],
+          velocityPercent: 0,
+          velocitySpark: [0, 0, 0, 0, 0, 0, 0, 0],
           movers: []
         },
-        aiInsight: {
+        AI_INSIGHT: {
           title: "Dashboard analysis runs when trends are updated",
           bullets: ["Insights are generated fresh each time", "No database storage needed"]
         },
-        liveSignals: ["Dashboard data generated on-demand"],
-        opportunities: [],
-        threats: []
+        SIGNAL_TICKER: ["Dashboard data generated on-demand"],
+        BRAND_OPPORTUNITIES: [],
+        COMPETITIVE_THREATS: []
       });
     }
 
