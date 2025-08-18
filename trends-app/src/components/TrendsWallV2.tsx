@@ -482,7 +482,7 @@ export default function TrendsWallV2() {
   }
 
   return (
-    <div className="bg-white overflow-auto">
+    <div className="bg-white w-full overflow-y-auto">
 
 
       <div className="max-w-8xl mx-auto px-6 py-6">
