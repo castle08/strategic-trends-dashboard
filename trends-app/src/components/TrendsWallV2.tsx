@@ -501,75 +501,65 @@ export default function TrendsWallV2() {
             </div>
             
             {/* Chat to Wall */}
-            <div className="rounded-xl border border-slate-200 overflow-hidden">
-              <div className="px-3 py-2 text-xs font-medium text-slate-600 border-b bg-slate-50">Chat to Wall</div>
-              <div className="p-3">
-                {!showChatResponse ? (
-                  <>
-                    <form onSubmit={async (e) => {
-                      e.preventDefault();
-                      if (!chatQuestion.trim() || isChatLoading) return;
-                      
-                      setIsChatLoading(true);
-                      setChatAnswer('');
-                      setShowChatResponse(true);
-                      
-                      try {
-                        const response = await fetch('/api/chat-to-wall', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ question: chatQuestion.trim() }),
-                        });
-                        
-                        if (response.ok) {
-                          const data = await response.json();
-                          setChatAnswer(data.answer);
-                        } else {
-                          setChatAnswer("Sorry, I'm having trouble connecting to the Wall right now. Please try again.");
-                        }
-                      } catch (error) {
-                        setChatAnswer("Sorry, I'm having trouble connecting to the Wall right now. Please try again.");
-                      } finally {
-                        setIsChatLoading(false);
-                        setChatQuestion(''); // Clear input after submission
-                      }
-                    }}>
-                      <input
-                        type="text"
-                        value={chatQuestion}
-                        onChange={(e) => setChatQuestion(e.target.value)}
-                        placeholder="Ask me anything about trends & insights..."
-                        className="w-full rounded-lg border border-blue-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 mb-2"
-                        disabled={isChatLoading}
-                      />
-                      <button
-                        type="submit"
-                        disabled={!chatQuestion.trim() || isChatLoading}
-                        className="w-full rounded-lg bg-blue-600 text-white px-3 py-2 font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        {isChatLoading ? 'Asking...' : 'Ask the Wall'}
-                      </button>
-                    </form>
-                    <div className="mt-2 flex gap-2 text-xs text-slate-500">
-                      <span className="px-2 py-0.5 rounded bg-slate-100">Live AI</span>
-                      <span className="px-2 py-0.5 rounded bg-slate-100">Fast</span>
-                      <span className="px-2 py-0.5 rounded bg-slate-100">Smart</span>
-                    </div>
-                  </>
-                ) : (
-                  <ChatToWall
-                    question={chatQuestion}
-                    answer={chatAnswer}
-                    isLoading={isChatLoading}
-                    onAskNew={() => {
-                      setShowChatResponse(false);
-                      setChatAnswer('');
-                      setChatQuestion('');
-                    }}
+            {!showChatResponse ? (
+              <>
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!chatQuestion.trim() || isChatLoading) return;
+                  
+                  setIsChatLoading(true);
+                  setChatAnswer('');
+                  setShowChatResponse(true);
+                  
+                  try {
+                    const response = await fetch('/api/chat-to-wall', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ question: chatQuestion.trim() }),
+                    });
+                    
+                    if (response.ok) {
+                      const data = await response.json();
+                      setChatAnswer(data.answer);
+                    } else {
+                      setChatAnswer("Sorry, I'm having trouble connecting to the Wall right now. Please try again.");
+                    }
+                  } catch (error) {
+                    setChatAnswer("Sorry, I'm having trouble connecting to the Wall right now. Please try again.");
+                  } finally {
+                    setIsChatLoading(false);
+                    setChatQuestion(''); // Clear input after submission
+                  }
+                }}>
+                  <input
+                    type="text"
+                    value={chatQuestion}
+                    onChange={(e) => setChatQuestion(e.target.value)}
+                    placeholder="Ask me anything about trends & insights..."
+                    className="w-full rounded-lg border border-blue-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 mb-2"
+                    disabled={isChatLoading}
                   />
-                )}
-              </div>
-            </div>
+                  <button
+                    type="submit"
+                    disabled={!chatQuestion.trim() || isChatLoading}
+                    className="w-full rounded-lg bg-blue-600 text-white px-3 py-2 font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {isChatLoading ? 'Asking...' : 'Ask the Wall'}
+                  </button>
+                </form>
+              </>
+            ) : (
+              <ChatToWall
+                question={chatQuestion}
+                answer={chatAnswer}
+                isLoading={isChatLoading}
+                onAskNew={() => {
+                  setShowChatResponse(false);
+                  setChatAnswer('');
+                  setChatQuestion('');
+                }}
+              />
+            )}
 
             {/* Filter button */}
             <button
