@@ -378,16 +378,16 @@ export default function TrendsWallV2() {
       }
       
       try {
-        // Fetch dashboard data (optional - for dashboard-specific insights)
-        const dashboardApiUrl = 'https://trends-dashboard-six.vercel.app/api/dashboard-data';
-        const dashboardResponse = await fetch(dashboardApiUrl);
+        // Fetch dashboard data from JSON file
+        const dashboardJsonUrl = 'https://trends-dashboard-six.vercel.app/trends/dashboard.json';
+        const dashboardResponse = await fetch(dashboardJsonUrl);
         if (dashboardResponse.ok) {
           const dashboardData = await dashboardResponse.json();
           // Only set as live if we have actual dashboard insights, not just the fallback message
-          if (dashboardData && dashboardData.STATE_OF_WORLD && !dashboardData.stateOfWorld) {
+          if (dashboardData && dashboardData.STATE_OF_WORLD && dashboardData.STATE_OF_WORLD.thesis) {
             setDashboardData(dashboardData);
             setHasLiveDashboard(true);
-            console.log('✅ Live dashboard data loaded');
+            console.log('✅ Live dashboard data loaded from JSON');
           } else {
             setDashboardData(dashboardData);
             setHasLiveDashboard(false);

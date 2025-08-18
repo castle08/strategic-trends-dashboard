@@ -1,5 +1,8 @@
 // trends-app/api/dashboard-data.js
-let latestDashboardData = null;
+import fs from 'fs';
+import path from 'path';
+
+const DASHBOARD_DATA_FILE = path.join(process.cwd(), 'public', 'trends', 'dashboard.json');
 
 export default async function handler(req, res) {
   // Add CORS headers for local development
@@ -36,12 +39,24 @@ export default async function handler(req, res) {
         dataToStore = req.body;
       }
       
-      latestDashboardData = dataToStore;
-      console.log('✅ Dashboard data stored in memory:', JSON.stringify(dataToStore, null, 2));
-      return res.status(200).json({ success: true, message: 'Dashboard data stored' });
+      // Save to JSON file
+      const dataWithTimestamp = {
+        ...dataToStore,
+        generatedAt: new Date().toISOString()
+      };
+      
+      // Ensure directory exists
+      const dir = path.dirname(DASHBOARD_DATA_FILE);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      
+      fs.writeFileSync(DASHBOARD_DATA_FILE, JSON.stringify(dataWithTimestamp, null, 2));
+      console.log('✅ Dashboard data saved to JSON file:', DASHBOARD_DATA_FILE);
+      return res.status(200).json({ success: true, message: 'Dashboard data saved to file' });
     } catch (error) {
-      console.error('Error storing dashboard data:', error);
-      return res.status(500).json({ error: 'Failed to store dashboard data' });
+      console.error('Error saving dashboard data:', error);
+      return res.status(500).json({ error: 'Failed to save dashboard data' });
     }
   }
   
@@ -51,16 +66,14 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Return stored data or demo data
-    console.log('Latest dashboard data:', latestDashboardData);
-    console.log('Data type:', typeof latestDashboardData);
-    console.log('Data keys:', latestDashboardData ? Object.keys(latestDashboardData) : 'null');
-    
-    if (latestDashboardData && typeof latestDashboardData === 'object' && Object.keys(latestDashboardData).length > 0) {
-      console.log('Returning live data');
-      return res.status(200).json(latestDashboardData);
+    // Try to read from JSON file
+    if (fs.existsSync(DASHBOARD_DATA_FILE)) {
+      const fileData = fs.readFileSync(DASHBOARD_DATA_FILE, 'utf8');
+      const dashboardData = JSON.parse(fileData);
+      console.log('✅ Returning dashboard data from JSON file');
+      return res.status(200).json(dashboardData);
     } else {
-      console.log('Returning demo data');
+      console.log('⚠️ No dashboard JSON file found, returning demo data');
       return res.status(200).json({
         STATE_OF_WORLD: {
           thesis: "Dashboard insights are generated on-demand from current trends",
@@ -79,7 +92,7 @@ export default async function handler(req, res) {
     }
 
   } catch (error) {
-    console.error('Unexpected error:', error);
+    console.error('Error reading dashboard data:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 }
