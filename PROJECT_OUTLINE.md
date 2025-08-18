@@ -151,6 +151,14 @@ Agents should **first read this outline**, then fetch the additional files below
 - **Interactive Elements**: Trend Radar with hover tooltips, Live Signals ticker
 - **Responsive Design**: Optimized for 14-inch MacBook viewport without scrolling
 
+### **Screens Mode** (`/screens` route)
+- **Presentation-Ready Interface** for client meetings and workshops
+- **Full-Screen Trend Display** optimized for large screens and projectors
+- **Auto-Rotating Trends** with smooth transitions between trend cards
+- **Minimal UI Elements** for distraction-free presentation
+- **Touch-Friendly Controls** for interactive presentations
+- **High-Contrast Design** for visibility in various lighting conditions
+
 ## 🤖 Chat to Wall AI Feature
 - **Real-time AI Assistant** integrated into the Executive Dashboard sidebar
 - **Direct Database Access**: Connects to both `trends_individual` and `dashboard_insights` tables
@@ -211,6 +219,7 @@ Agents should **first read this outline**, then fetch the additional files below
 - ✅ **RSS integration** with 7 curated feeds
 - ✅ **Main 3D Frontend** (`/` route) ready for data with Three.js visualization
 - ✅ **Executive Dashboard** (`/dash-v2` route) fully implemented with live data integration
+- ✅ **Screens Mode** (`/screens` route) presentation-ready interface for client meetings
 - ✅ **Chat to Wall AI Feature** fully functional with Google AI integration
 - ✅ **API endpoints** configured for all features
 - ✅ **Database integration** complete with Supabase
