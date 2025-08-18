@@ -250,44 +250,52 @@ export default function TrendsWallV2() {
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isLiveData, setIsLiveData] = useState(false);
+  const [hasLiveTrends, setHasLiveTrends] = useState(false);
+  const [hasLiveDashboard, setHasLiveDashboard] = useState(false);
 
-  // Fetch live data
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        // Fetch trends data
-        const trendsApiUrl = 'https://trends-dashboard-six.vercel.app/api/trends-individual';
-        const trendsResponse = await fetch(trendsApiUrl);
-        if (!trendsResponse.ok) {
-          throw new Error(`HTTP error! status: ${trendsResponse.status}`);
-        }
-        const trendsData = await trendsResponse.json();
-        setTrendsData(trendsData);
-        
-        // Fetch dashboard data
-        const dashboardApiUrl = 'https://trends-dashboard-six.vercel.app/api/dashboard-data';
-        const dashboardResponse = await fetch(dashboardApiUrl);
-        if (dashboardResponse.ok) {
-          const dashboardData = await dashboardResponse.json();
-          setDashboardData(dashboardData);
-          setIsLiveData(true); // Set to true if we get any live data
-        } else {
-          console.warn('Dashboard data not available yet, using demo data');
-          setIsLiveData(false);
-        }
-      } catch (err) {
-        console.error('❌ Error fetching data:', err);
-        setError('Failed to load live data');
-        setIsLiveData(false); // Set to false on error
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+                // Fetch live data
+              useEffect(() => {
+                const fetchData = async () => {
+                  setLoading(true);
+                  setError(null);
+                  let hasLiveData = false;
+                  
+                  try {
+                    // Fetch trends data
+                    const trendsApiUrl = 'https://trends-dashboard-six.vercel.app/api/trends-individual';
+                    const trendsResponse = await fetch(trendsApiUrl);
+                    if (trendsResponse.ok) {
+                      const trendsData = await trendsResponse.json();
+                      setTrendsData(trendsData);
+                      setHasLiveTrends(true);
+                      console.log('✅ Live trends data loaded');
+                    } else {
+                      console.warn('⚠️ Trends data not available, using demo data');
+                    }
+                  } catch (err) {
+                    console.error('❌ Error fetching trends data:', err);
+                  }
+                  
+                  try {
+                    // Fetch dashboard data (optional - for dashboard-specific insights)
+                    const dashboardApiUrl = 'https://trends-dashboard-six.vercel.app/api/dashboard-data';
+                    const dashboardResponse = await fetch(dashboardApiUrl);
+                    if (dashboardResponse.ok) {
+                      const dashboardData = await dashboardResponse.json();
+                      setDashboardData(dashboardData);
+                      setHasLiveDashboard(true);
+                      console.log('✅ Live dashboard data loaded');
+                    } else {
+                      console.warn('⚠️ Dashboard insights not available yet, using demo data');
+                    }
+                  } catch (err) {
+                    console.error('❌ Error fetching dashboard data:', err);
+                  }
+                  
+                  setLoading(false);
+                };
+                fetchData();
+              }, []);
 
   // Transform live trends to dashboard format
   const liveSpotlights = useMemo(() => {
@@ -351,8 +359,8 @@ export default function TrendsWallV2() {
     );
   }
 
-  // Show error state
-  if (error) {
+  // Show error state (only if we have no data at all)
+  if (error && !trendsData && !dashboardData) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
@@ -427,10 +435,10 @@ export default function TrendsWallV2() {
                     onClick={()=>setOpenTrend(filteredSpotlights[currentSpotlightIndex])}
                     className="w-full text-left rounded-xl border border-slate-200 p-3 hover:border-slate-300 hover:shadow-sm transition"
                   >
-                    <div className={`text-xs mb-1 ${isLiveData ? 'text-green-600' : 'text-red-600'}`}>
-                      {filteredSpotlights[currentSpotlightIndex].category} {isLiveData ? '(LIVE)' : '(DEMO)'}
+                    <div className={`text-xs mb-1 ${hasLiveTrends ? 'text-green-600' : 'text-red-600'}`}>
+                      {filteredSpotlights[currentSpotlightIndex].category} {hasLiveTrends ? '(LIVE)' : '(DEMO)'}
                     </div>
-                    <div className={`font-medium ${isLiveData ? 'text-green-700' : 'text-red-700'}`}>
+                    <div className={`font-medium ${hasLiveTrends ? 'text-green-700' : 'text-red-700'}`}>
                       {filteredSpotlights[currentSpotlightIndex].title}
                     </div>
                     <div className="mt-2 text-sm text-slate-700">
@@ -528,8 +536,8 @@ export default function TrendsWallV2() {
           <Panel accent="blue" className="col-span-8">
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="font-semibold text-base mb-0.5">State of the World <span className={isLiveData ? 'text-green-600' : 'text-red-600'} className="text-sm">{isLiveData ? '(LIVE)' : '(DEMO)'}</span></h3>
-                <p className={isLiveData ? 'text-green-700' : 'text-red-600'} className="text-sm">{dashboardData?.stateOfWorld?.thesis || dashboardMock.stateOfWorld.thesis}</p>
+                <h3 className="font-semibold text-base mb-0.5">State of the World <span className={`text-sm ${hasLiveDashboard ? 'text-green-600' : 'text-red-600'}`}>{hasLiveDashboard ? '(LIVE)' : '(DEMO)'}</span></h3>
+                <p className={`text-sm ${hasLiveDashboard ? 'text-green-700' : 'text-red-600'}`}>{dashboardData?.stateOfWorld?.thesis || dashboardMock.stateOfWorld.thesis}</p>
               </div>
               <div className="text-right">
                 <div className="text-xs text-slate-500 mb-0.5">Trend Velocity (8 weeks)</div>
@@ -550,18 +558,18 @@ export default function TrendsWallV2() {
 
           {/* AI Insight */}
           <Panel id="ai-insight-card" accent="purple" className="col-span-4 ai-insight-card">
-            <h3 className="font-semibold text-base mb-0.5">AI Insight <span className={isLiveData ? 'text-green-600' : 'text-red-600'} className="text-sm">{isLiveData ? '(LIVE)' : '(DEMO)'}</span></h3>
-            <div className={`font-medium text-sm ${isLiveData ? 'text-green-700' : 'text-red-700'}`}>{dashboardData?.aiInsight?.title || dashboardMock.aiInsight.title}</div>
-            <ul className={`mt-1 space-y-0.5 text-sm list-disc pl-4 ${isLiveData ? 'text-green-600' : 'text-red-600'}`}>
+                          <h3 className="font-semibold text-base mb-0.5">AI Insight <span className={`text-sm ${hasLiveDashboard ? 'text-green-600' : 'text-red-600'}`}>{hasLiveDashboard ? '(LIVE)' : '(DEMO)'}</span></h3>
+            <div className={`font-medium text-sm ${hasLiveDashboard ? 'text-green-700' : 'text-red-700'}`}>{dashboardData?.aiInsight?.title || dashboardMock.aiInsight.title}</div>
+            <ul className={`mt-1 space-y-0.5 text-sm list-disc pl-4 ${hasLiveDashboard ? 'text-green-600' : 'text-red-600'}`}>
               {(dashboardData?.aiInsight?.bullets || dashboardMock.aiInsight.bullets).map((b: string, i: number)=><li key={i}>{b}</li>)}
             </ul>
           </Panel>
 
           {/* Live Signals Strip */}
-          <div id="live-signals-strip" className={`col-span-12 overflow-hidden relative h-8 rounded-lg border ${isLiveData ? 'bg-gradient-to-r from-green-50 to-green-100 border-green-200' : 'bg-gradient-to-r from-red-50 to-red-100 border-red-200'}`}>
-            <div className={`absolute whitespace-nowrap animate-[marquee_20s_linear_infinite] text-sm py-2 ${isLiveData ? 'text-green-700' : 'text-red-700'}`}>
+          <div id="live-signals-strip" className={`col-span-12 overflow-hidden relative h-8 rounded-lg border ${hasLiveDashboard ? 'bg-gradient-to-r from-green-50 to-green-100 border-green-200' : 'bg-gradient-to-r from-red-50 to-red-100 border-red-200'}`}>
+            <div className={`absolute whitespace-nowrap animate-[marquee_20s_linear_infinite] text-sm py-2 ${hasLiveDashboard ? 'text-green-700' : 'text-red-700'}`}>
               {(dashboardData?.liveSignals || dashboardMock.liveSignals).map((s: string, i: number)=>(
-                <span key={i} className="mr-8">• {s} {isLiveData ? '(LIVE)' : '(DEMO)'}</span>
+                <span key={i} className="mr-8">• {s} {hasLiveDashboard ? '(LIVE)' : '(DEMO)'}</span>
               ))}
             </div>
           </div>
@@ -570,7 +578,7 @@ export default function TrendsWallV2() {
           <div id="opportunities-threats-container" className="col-span-6 space-y-2">
             {/* Opportunities */}
             <Panel id="brand-opportunities-card" accent="green" className="opportunities-card">
-              <h3 className="font-semibold text-base mb-1">Brand Opportunities <span className={isLiveData ? 'text-green-600' : 'text-red-600'} className="text-sm">{isLiveData ? '(LIVE)' : '(DEMO)'}</span></h3>
+              <h3 className="font-semibold text-base mb-1">Brand Opportunities <span className={`text-sm ${hasLiveDashboard ? 'text-green-600' : 'text-red-600'}`}>{hasLiveDashboard ? '(LIVE)' : '(DEMO)'}</span></h3>
               <div className="rounded-lg border border-slate-200 p-2">
                 <div className="flex items-start justify-between">
                   <div className="font-medium">{(dashboardData?.opportunities || dashboardMock.opportunities)[currentOpportunityIndex]?.title}</div>
@@ -598,7 +606,7 @@ export default function TrendsWallV2() {
 
             {/* Threats */}
             <Panel id="competitive-threats-card" accent="red" className="threats-card">
-              <h3 className="font-semibold text-base mb-1">Competitive Threats <span className={isLiveData ? 'text-green-600' : 'text-red-600'} className="text-sm">{isLiveData ? '(LIVE)' : '(DEMO)'}</span></h3>
+              <h3 className="font-semibold text-base mb-1">Competitive Threats <span className={`text-sm ${hasLiveDashboard ? 'text-green-600' : 'text-red-600'}`}>{hasLiveDashboard ? '(LIVE)' : '(DEMO)'}</span></h3>
               <div className="rounded-lg border border-slate-200 p-2">
                 <div className="flex items-start justify-between">
                   <div>
@@ -629,7 +637,7 @@ export default function TrendsWallV2() {
           {/* Column 2: Trend Radar */}
           <Panel id="trend-radar-card" accent="blue" className="col-span-6 radar-card">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-lg">Trend Radar <span className="text-green-600 text-sm">(LIVE)</span></h3>
+              <h3 className="font-semibold text-lg">Trend Radar <span className={`text-sm ${hasLiveTrends ? 'text-green-600' : 'text-red-600'}`}>{hasLiveTrends ? '(LIVE)' : '(DEMO)'}</span></h3>
               <div className="text-xs text-slate-500">Positioned by relevance, velocity, and novelty</div>
             </div>
             <div className="w-full h-full flex items-center justify-center">

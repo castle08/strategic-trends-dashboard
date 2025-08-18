@@ -1,70 +1,54 @@
-// Dashboard Data API - Read-only access to trends database
-// This endpoint provides aggregated data for the dashboard without modifying the database
-
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+// trends-app/api/dashboard-data.js
+let latestDashboardData = null;
 
 export default async function handler(req, res) {
   // Add CORS headers for local development
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
+
+  // Handle POST requests (store dashboard data)
+  if (req.method === 'POST') {
+    try {
+      latestDashboardData = req.body;
+      console.log('✅ Dashboard data stored in memory');
+      return res.status(200).json({ success: true, message: 'Dashboard data stored' });
+    } catch (error) {
+      console.error('Error storing dashboard data:', error);
+      return res.status(500).json({ error: 'Failed to store dashboard data' });
+    }
+  }
   
+  // Handle GET requests (retrieve dashboard data)
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    // Fetch dashboard data from the dashboard_data table
-    const { data: dashboardData, error } = await supabase
-      .from('dashboard_data')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(1);
-
-    if (error) {
-      console.error('Error fetching dashboard data:', error);
-      return res.status(500).json({ error: 'Failed to fetch dashboard data' });
-    }
-
-    // If no dashboard data exists, return empty structure
-    if (!dashboardData || dashboardData.length === 0) {
+    // Return stored data or demo data
+    if (latestDashboardData) {
+      return res.status(200).json(latestDashboardData);
+    } else {
       return res.status(200).json({
         stateOfWorld: {
-          thesis: "No dashboard data available yet",
+          thesis: "Dashboard insights are generated on-demand from current trends",
           velocity: [0, 0, 0, 0, 0, 0, 0, 0],
           movers: []
         },
         aiInsight: {
-          title: "Dashboard analysis pending",
-          bullets: ["Waiting for dashboard analyst to process trends"]
+          title: "Dashboard analysis runs when trends are updated",
+          bullets: ["Insights are generated fresh each time", "No database storage needed"]
         },
-        liveSignals: ["Dashboard data not yet generated"],
+        liveSignals: ["Dashboard data generated on-demand"],
         opportunities: [],
         threats: []
       });
     }
-
-    // Return the most recent dashboard data
-    const latestDashboard = dashboardData[0];
-    
-    res.status(200).json({
-      stateOfWorld: latestDashboard.state_of_world,
-      aiInsight: latestDashboard.ai_insight,
-      liveSignals: latestDashboard.live_signals,
-      opportunities: latestDashboard.opportunities,
-      threats: latestDashboard.threats,
-      lastUpdated: latestDashboard.created_at
-    });
 
   } catch (error) {
     console.error('Unexpected error:', error);
