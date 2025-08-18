@@ -899,3 +899,479 @@ const BubbleRadar: React.FC<{trends: typeof dashboardMock.spotlights}> = ({trend
     </svg>
   );
 };
+
+export default function TrendsWallV2() {
+  // State management
+  const [query, setQuery] = useState("");
+  const [activeCats, setActiveCats] = useState<string[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [currentSpotlightIndex, setCurrentSpotlightIndex] = useState(0);
+  const [currentThreatIndex, setCurrentThreatIndex] = useState(0);
+  const [currentOpportunityIndex, setCurrentOpportunityIndex] = useState(0);
+  const [openTrend, setOpenTrend] = useState<any>(null);
+  const [openRadar, setOpenRadar] = useState(false);
+
+  // Live data states
+  const [trendsData, setTrendsData] = useState<TrendsData | null>(null);
+  const [dashboardData, setDashboardData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [hasLiveTrends, setHasLiveTrends] = useState(false);
+  const [hasLiveDashboard, setHasLiveDashboard] = useState(false);
+
+  // Fetch live data
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      let hasLiveData = false;
+      
+      try {
+        // Fetch trends data
+        const trendsApiUrl = 'https://trends-dashboard-six.vercel.app/api/trends-individual';
+        const trendsResponse = await fetch(trendsApiUrl);
+        if (trendsResponse.ok) {
+          const trendsData = await trendsResponse.json();
+          setTrendsData(trendsData);
+          setHasLiveTrends(true);
+          console.log('✅ Live trends data loaded');
+        } else {
+          console.warn('⚠️ Trends data not available, using demo data');
+        }
+      } catch (err) {
+        console.error('❌ Error fetching trends data:', err);
+      }
+      
+      try {
+        // Fetch dashboard data (optional - for dashboard-specific insights)
+        const dashboardApiUrl = 'https://trends-dashboard-six.vercel.app/api/dashboard-data';
+        const dashboardResponse = await fetch(dashboardApiUrl);
+        if (dashboardResponse.ok) {
+          const dashboardData = await dashboardResponse.json();
+          setDashboardData(dashboardData);
+          setHasLiveDashboard(true);
+          console.log('✅ Live dashboard data loaded');
+        } else {
+          console.warn('⚠️ Dashboard insights not available yet, using demo data');
+        }
+      } catch (err) {
+        console.error('❌ Error fetching dashboard data:', err);
+      }
+      
+      setLoading(false);
+    };
+    fetchData();
+  }, []);
+
+  // Transform live trends to dashboard format
+  const liveSpotlights = useMemo(() => {
+    if (!trendsData?.trends) return dashboardMock.spotlights;
+    
+    return trendsData.trends.map(trend => ({
+      id: trend.id,
+      title: trend.title,
+      category: trend.category,
+      summary: {
+        driver: trend.summary.split('\n')[0]?.replace('Driver: ', '') || '',
+        tension: trend.summary.split('\n')[1]?.replace('Tension: ', '') || '',
+        behaviour: trend.summary.split('\n')[2]?.replace('Behaviour: ', '') || ''
+      },
+      scores: trend.scores,
+      tags: trend.tags
+    }));
+  }, [trendsData]);
+
+  const filteredSpotlights = useMemo(()=>{
+    let items = liveSpotlights;
+    if(activeCats.length) items = items.filter(t => activeCats.includes(t.category));
+    if(query.trim()) {
+      const q = query.toLowerCase();
+      items = items.filter(t => (t.title + " " + t.tags.join(" ") + " " + t.category).toLowerCase().includes(q));
+    }
+    return items;
+  },[liveSpotlights, activeCats, query]);
+
+  // Auto-cycle threats every 4 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentThreatIndex((prev) => (prev + 1) % dashboardMock.threats.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Auto-cycle opportunities every 5 seconds (offset from threats)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentOpportunityIndex((prev) => (prev + 1) % dashboardMock.opportunities.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Extract live categories from trends data
+  const liveCategories = useMemo(() => {
+    if (!trendsData?.trends) return dashboardMock.filters.categories;
+    return [...new Set(trendsData.trends.map(t => t.category))];
+  }, [trendsData]);
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="text-slate-600">Loading live trends...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state (only if we have no data at all)
+  if (error && !trendsData && !dashboardData) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-600 mb-4">⚠️ {error}</div>
+          <div className="text-slate-600">Using demo data instead</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white">
+      {/* Header */}
+      <header className="border-b border-slate-200 bg-white">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="text-2xl font-bold text-slate-900">Trends Dashboard</div>
+              <div className="text-sm text-slate-500">Strategic Intelligence</div>
+            </div>
+            
+            {/* Search/Command Input */}
+            <div className="flex items-center space-x-3">
+              <input
+                type="text"
+                placeholder="Search trends... (not functional)"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="px-4 py-2 border border-red-300 rounded-lg text-red-600 placeholder-red-400 bg-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="grid grid-cols-12 gap-6">
+          {/* Left Sidebar */}
+          <aside className="col-span-3 space-y-4">
+            {/* Trend Radar Link */}
+            <Panel accent="blue">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-base">Trend Radar</h3>
+                <div className="text-xs text-slate-500">Interactive</div>
+              </div>
+              <button
+                onClick={() => setOpenRadar(true)}
+                className="w-full mt-2 text-left rounded-lg border border-slate-200 p-2 hover:border-slate-300 hover:shadow-sm transition"
+              >
+                <div className="text-sm font-medium text-slate-700">View Full Radar →</div>
+                <div className="text-xs text-slate-500 mt-1">Positioned by relevance, velocity, and novelty</div>
+              </button>
+            </Panel>
+
+            {/* Filter button */}
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="w-full p-3 rounded-xl border border-red-300 hover:bg-red-50 transition-colors flex items-center gap-2"
+            >
+              <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+              <span className="text-sm font-medium text-red-700">Filters (not functional)</span>
+              {activeCats.length > 0 && (
+                <span className="ml-auto px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                  {activeCats.length}
+                </span>
+              )}
+            </button>
+
+            {/* Trend Spotlights */}
+            <Panel accent="purple">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-base">Trend Spotlights</h3>
+                <div className="text-xs text-slate-500">{filteredSpotlights.length} total</div>
+              </div>
+              {filteredSpotlights.length > 0 && (
+                <>
+                  <div className="mt-3">
+                    <button
+                      onClick={()=>setOpenTrend(filteredSpotlights[currentSpotlightIndex])}
+                      className="w-full text-left rounded-xl border border-slate-200 p-3 hover:border-slate-300 hover:shadow-sm transition"
+                    >
+                      <div className={`text-xs mb-1 ${hasLiveTrends ? 'text-green-600' : 'text-red-600'}`}>
+                        {filteredSpotlights[currentSpotlightIndex].category} {hasLiveTrends ? '(LIVE)' : '(DEMO)'}
+                      </div>
+                      <div className={`font-medium ${hasLiveTrends ? 'text-green-700' : 'text-red-700'}`}>
+                        {filteredSpotlights[currentSpotlightIndex].title}
+                      </div>
+                      <div className="mt-2 text-sm text-slate-700">
+                        <div><span className="font-semibold">Driver:</span> {filteredSpotlights[currentSpotlightIndex].summary.driver}</div>
+                        <div><span className="font-semibold">Tension:</span> {filteredSpotlights[currentSpotlightIndex].summary.tension}</div>
+                        <div><span className="font-semibold">Behaviour:</span> {filteredSpotlights[currentSpotlightIndex].summary.behaviour}</div>
+                      </div>
+                      <div className="mt-3 space-y-1">
+                        <ScoreRow label="Novelty" value={filteredSpotlights[currentSpotlightIndex].scores.novelty} />
+                        <ScoreRow label="Velocity" value={filteredSpotlights[currentSpotlightIndex].scores.velocity} />
+                        <ScoreRow label="Relevance" value={filteredSpotlights[currentSpotlightIndex].scores.relevance} />
+                        <ScoreRow label="Confidence" value={filteredSpotlights[currentSpotlightIndex].scores.confidence} />
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {filteredSpotlights[currentSpotlightIndex].tags.map(tag=>(
+                          <span key={tag} className="px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-600">{tag}</span>
+                        ))}
+                      </div>
+                    </button>
+                  </div>
+                  {/* Navigation dots */}
+                  <div className="flex justify-center mt-3 space-x-1">
+                    {filteredSpotlights.map((_, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setCurrentSpotlightIndex(idx)}
+                        className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                          idx === currentSpotlightIndex 
+                            ? 'bg-purple-500 w-4' 
+                            : 'bg-slate-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+            </Panel>
+          </aside>
+
+          {/* Filter Popup */}
+          {showFilters && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+              <div className="bg-white rounded-2xl shadow-xl p-6 max-w-md w-full mx-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">Filters</h3>
+                  <button onClick={() => setShowFilters(false)} className="text-slate-500 hover:text-slate-900">✕</button>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <div className="text-xs font-semibold text-slate-500 mb-2">Categories (not functional)</div>
+                    <div className="flex flex-wrap gap-2">
+                      {liveCategories.map(cat=>{
+                        const active = activeCats.includes(cat);
+                        return (
+                          <Chip
+                            key={cat}
+                            active={active}
+                            onClick={()=>{
+                              setActiveCats(prev => prev.includes(cat) ? prev.filter(c=>c!==cat) : [...prev, cat]);
+                            }}
+                          >
+                            {cat}
+                          </Chip>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div className="text-xs font-semibold text-slate-500 mb-2">Industries (not functional)</div>
+                    <div className="flex flex-wrap gap-2">
+                      {dashboardMock.filters.industries.map(ind=>(
+                        <Chip key={ind} active={false}>
+                          {ind}
+                        </Chip>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div className="text-xs font-semibold text-slate-500 mb-2">Audiences (not functional)</div>
+                    <div className="flex flex-wrap gap-2">
+                      {dashboardMock.filters.audiences.map(aud=>(
+                        <Chip key={aud} active={false}>
+                          {aud}
+                        </Chip>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Main grid */}
+          <main className="col-span-9 grid grid-cols-12 gap-4 content-start">
+            {/* State of World */}
+            <Panel id="state-of-world-card" accent="blue" className="col-span-8 state-of-world-card">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="font-semibold text-base mb-0.5">State of the World <span className={`text-sm ${hasLiveDashboard ? 'text-green-600' : 'text-red-600'}`}>{hasLiveDashboard ? '(LIVE)' : '(DEMO)'}</span></h3>
+                  <p className={`text-sm ${hasLiveDashboard ? 'text-green-700' : 'text-red-600'}`}>{dashboardData?.stateOfWorld?.thesis || dashboardMock.stateOfWorld.thesis}</p>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs text-slate-500 mb-0.5">Trend Velocity (8 weeks)</div>
+                  <div className="w-90 h-20"><Sparkline data={dashboardData?.stateOfWorld?.velocity || dashboardMock.stateOfWorld.velocity} /></div>
+                </div>
+              </div>
+              <div className="mt-1">
+                <div className="text-xs text-slate-500 mb-0.5">Top Movers</div>
+                <div className="flex flex-wrap gap-1">
+                  {(dashboardData?.stateOfWorld?.movers || dashboardMock.stateOfWorld.movers).map((m: any, i: number)=>(
+                    <span key={i} className="px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-700">
+                      {m.label} <span className="text-emerald-600">▲{m.strength}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </Panel>
+
+            {/* AI Insight */}
+            <Panel id="ai-insight-card" accent="purple" className="col-span-4 ai-insight-card">
+              <h3 className="font-semibold text-base mb-0.5">AI Insight <span className={`text-sm ${hasLiveDashboard ? 'text-green-600' : 'text-red-600'}`}>{hasLiveDashboard ? '(LIVE)' : '(DEMO)'}</span></h3>
+              <div className={`font-medium text-sm ${hasLiveDashboard ? 'text-green-700' : 'text-red-700'}`}>{dashboardData?.aiInsight?.title || dashboardMock.aiInsight.title}</div>
+              <ul className={`mt-1 space-y-0.5 text-sm list-disc pl-4 ${hasLiveDashboard ? 'text-green-600' : 'text-red-600'}`}>
+                {(dashboardData?.aiInsight?.bullets || dashboardMock.aiInsight.bullets).map((b: string, i: number)=><li key={i}>{b}</li>)}
+              </ul>
+            </Panel>
+
+            {/* Live Signals Strip */}
+            <div id="live-signals-strip" className={`col-span-12 overflow-hidden relative h-8 rounded-lg border ${hasLiveDashboard ? 'bg-gradient-to-r from-green-50 to-green-100 border-green-200' : 'bg-gradient-to-r from-red-50 to-red-100 border-red-200'}`}>
+              <div className={`absolute whitespace-nowrap animate-[marquee_20s_linear_infinite] text-sm py-2 ${hasLiveDashboard ? 'text-green-700' : 'text-red-700'}`}>
+                {(dashboardData?.liveSignals || dashboardMock.liveSignals).map((s: string, i: number)=>(
+                  <span key={i} className="mr-8">• {s} {hasLiveDashboard ? '(LIVE)' : '(DEMO)'}</span>
+                ))}
+              </div>
+            </div>
+
+            {/* Column 1: Opportunities and Threats (stacked) */}
+            <div id="opportunities-threats-container" className="col-span-6 space-y-2">
+              {/* Opportunities */}
+              <Panel id="brand-opportunities-card" accent="green" className="opportunities-card">
+                <h3 className="font-semibold text-base mb-1">Brand Opportunities <span className={`text-sm ${hasLiveDashboard ? 'text-green-600' : 'text-red-600'}`}>{hasLiveDashboard ? '(LIVE)' : '(DEMO)'}</span></h3>
+                <div className="rounded-lg border border-slate-200 p-2">
+                  <div className="flex items-start justify-between">
+                    <div className="font-medium">{(dashboardData?.opportunities || dashboardMock.opportunities)[currentOpportunityIndex]?.title}</div>
+                    <Badge tone={(dashboardData?.opportunities || dashboardMock.opportunities)[currentOpportunityIndex]?.level as any} />
+                  </div>
+                  <div className="text-sm text-slate-700 mt-1"><span className="font-semibold">Why now:</span> {(dashboardData?.opportunities || dashboardMock.opportunities)[currentOpportunityIndex]?.whyNow}</div>
+                  <div className="text-sm text-slate-700 mt-1"><span className="font-semibold">Signals:</span> {(dashboardData?.opportunities || dashboardMock.opportunities)[currentOpportunityIndex]?.signals?.join(" • ")}</div>
+                  <div className="text-sm text-slate-700 mt-1"><span className="font-semibold">Play:</span> {(dashboardData?.opportunities || dashboardMock.opportunities)[currentOpportunityIndex]?.play}</div>
+                </div>
+                {/* Navigation dots */}
+                <div className="flex justify-center mt-2 space-x-1">
+                  {(dashboardData?.opportunities || dashboardMock.opportunities).map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentOpportunityIndex(idx)}
+                      className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                        idx === currentOpportunityIndex 
+                          ? 'bg-green-500 w-4' 
+                          : 'bg-slate-300'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </Panel>
+
+              {/* Threats */}
+              <Panel id="competitive-threats-card" accent="red" className="threats-card">
+                <h3 className="font-semibold text-base mb-1">Competitive Threats <span className={`text-sm ${hasLiveDashboard ? 'text-green-600' : 'text-red-600'}`}>{hasLiveDashboard ? '(LIVE)' : '(DEMO)'}</span></h3>
+                <div className="rounded-lg border border-slate-200 p-2">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="font-medium">{(dashboardData?.threats || dashboardMock.threats)[currentThreatIndex]?.brand} → <span className="text-slate-700">{(dashboardData?.threats || dashboardMock.threats)[currentThreatIndex]?.move}</span></div>
+                      <div className="text-xs text-slate-500 mt-1">Seen: {(dashboardData?.threats || dashboardMock.threats)[currentThreatIndex]?.seen}</div>
+                    </div>
+                    <Badge tone={(dashboardData?.threats || dashboardMock.threats)[currentThreatIndex]?.urgency as any} />
+                  </div>
+                  <div className="text-sm text-slate-700 mt-1"><span className="font-semibold">Action:</span> {(dashboardData?.threats || dashboardMock.threats)[currentThreatIndex]?.action}</div>
+                </div>
+                {/* Navigation dots */}
+                <div className="flex justify-center mt-2 space-x-1">
+                  {(dashboardData?.threats || dashboardMock.threats).map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentThreatIndex(idx)}
+                      className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                        idx === currentThreatIndex 
+                          ? 'bg-red-500 w-4' 
+                          : 'bg-slate-300'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </Panel>
+            </div>
+
+            {/* Column 2: Trend Radar */}
+            <Panel id="trend-radar-card" accent="blue" className="col-span-6 radar-card">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-lg">Trend Radar <span className={`text-sm ${hasLiveTrends ? 'text-green-600' : 'text-red-600'}`}>{hasLiveTrends ? '(LIVE)' : '(DEMO)'}</span></h3>
+                <div className="text-xs text-slate-500">Positioned by relevance, velocity, and novelty</div>
+              </div>
+              <div className="h-64">
+                <BubbleRadar trends={liveSpotlights} />
+              </div>
+            </Panel>
+          </main>
+        </div>
+      </div>
+
+      {/* Trend Detail Modal */}
+      {openTrend && (
+        <Modal onClose={() => setOpenTrend(null)} title={openTrend.title}>
+          <div className="space-y-4">
+            <div>
+              <div className="text-sm font-semibold text-slate-500">Category</div>
+              <div className="text-lg font-medium">{openTrend.category}</div>
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-slate-500">Summary</div>
+              <div className="space-y-2">
+                <div><span className="font-semibold">Driver:</span> {openTrend.summary.driver}</div>
+                <div><span className="font-semibold">Tension:</span> {openTrend.summary.tension}</div>
+                <div><span className="font-semibold">Behaviour:</span> {openTrend.summary.behaviour}</div>
+              </div>
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-slate-500">Scores</div>
+              <div className="grid grid-cols-2 gap-2">
+                <ScoreRow label="Novelty" value={openTrend.scores.novelty} />
+                <ScoreRow label="Velocity" value={openTrend.scores.velocity} />
+                <ScoreRow label="Relevance" value={openTrend.scores.relevance} />
+                <ScoreRow label="Confidence" value={openTrend.scores.confidence} />
+              </div>
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-slate-500">Tags</div>
+              <div className="flex flex-wrap gap-2">
+                {openTrend.tags.map((tag: string) => (
+                  <span key={tag} className="px-2 py-1 rounded-full text-xs bg-slate-100 text-slate-600">{tag}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Radar Modal */}
+      {openRadar && (
+        <Modal onClose={() => setOpenRadar(false)} title="Interactive Trend Radar">
+          <div className="w-800 h-600">
+            <BubbleRadar trends={liveSpotlights} />
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
