@@ -69,6 +69,8 @@ The final output is a **strict JSON schema** that can be visualised on a dashboa
 ---
 
 ## 🔄 Execution Flow
+
+### **Main Trend Generation Pipeline**
 1. **Weekly cron** triggers pipeline.  
 2. **Examples** injected for guidance.  
 3. **Trend Agent**:
@@ -83,6 +85,30 @@ The final output is a **strict JSON schema** that can be visualised on a dashboa
    - Each trend processed through image generation
    - Color mapping applied based on category
    - Data sent to API for storage and frontend visualization
+
+### **Dashboard Analysis Pipeline**
+1. **Webhook trigger** from main trend generation workflow
+2. **Dashboard Analyst Agent**:
+   - Fetches latest trends from `trends_individual` table
+   - Analyzes patterns and generates strategic insights
+   - Creates structured dashboard data (State of World, AI Insights, etc.)
+   - Outputs JSON schema for dashboard display
+3. **Data Storage**:
+   - Stores dashboard insights in `dashboard_insights` table
+   - Maintains latest 3 records for safety
+   - Updates frontend via `/api/dashboard-data` endpoint
+
+### **Chat to Wall AI Pipeline**
+1. **User Input** via Executive Dashboard sidebar
+2. **Context Gathering**:
+   - Fetches latest 20 active trends from database
+   - Retrieves latest dashboard insights
+   - Builds comprehensive context for AI
+3. **AI Processing**:
+   - Google Gemini 2.0 Flash Exp processes query
+   - Generates strategic response based on all available data
+   - Returns contextual insights and recommendations
+4. **Response Display** in clean, minimal UI
 
 ---
 
@@ -105,11 +131,34 @@ Agents should **first read this outline**, then fetch the additional files below
 ---
 
 ## 🎨 Frontend Integration
+
+### **Main 3D Visualization** (`/` route)
 - **React App** (`trends-app/`) with 3D visualization using Three.js
 - **Real-time data fetching** from API endpoint: `https://trends-dashboard-six.vercel.app/api/trends-individual`
 - **Auto-refresh** every 5 minutes
 - **Color-coded categories** with 10-color palette system
 - **Multiple view modes**: demo, screens, test
+- **3D Trend Spheres**: Interactive 3D visualization of trends with hover effects
+- **Trend Crystals**: Detailed trend cards with full information display
+- **Responsive Design**: Optimized for various screen sizes
+
+### **Executive Dashboard** (`/dash-v2` route)
+- **Strategic Intelligence Dashboard** for executive decision-making
+- **12-column grid layout** with optimized space utilization
+- **Live Data Integration**: Real-time connection to Supabase database
+- **Color-coded Data**: Green for live data, red for demo data
+- **Auto-cycling Components**: Brand Opportunities and Competitive Threats cycle automatically
+- **Interactive Elements**: Trend Radar with hover tooltips, Live Signals ticker
+- **Responsive Design**: Optimized for 14-inch MacBook viewport without scrolling
+
+## 🤖 Chat to Wall AI Feature
+- **Real-time AI Assistant** integrated into the Executive Dashboard sidebar
+- **Direct Database Access**: Connects to both `trends_individual` and `dashboard_insights` tables
+- **Google AI Integration**: Uses Gemini 2.0 Flash Exp for fast, contextual responses
+- **Strategic Intelligence**: Provides insights based on all available trend data and dashboard analysis
+- **Clean UI**: Minimal interface with input field and response display
+- **API Endpoint**: `/api/chat-to-wall` for handling AI interactions
+- **Context-Aware**: Leverages full context of trends, insights, and strategic analysis
 
 ## 📊 Analytics Dashboard
 - **New route**: `/dash` for analytics and data insights
@@ -160,24 +209,27 @@ Agents should **first read this outline**, then fetch the additional files below
 - ✅ **Workflow architecture** complete and functional
 - ✅ **Memory system** configured and working
 - ✅ **RSS integration** with 7 curated feeds
-- ✅ **Frontend visualization** ready for data
-- ✅ **API endpoints** configured
+- ✅ **Main 3D Frontend** (`/` route) ready for data with Three.js visualization
+- ✅ **Executive Dashboard** (`/dash-v2` route) fully implemented with live data integration
+- ✅ **Chat to Wall AI Feature** fully functional with Google AI integration
+- ✅ **API endpoints** configured for all features
+- ✅ **Database integration** complete with Supabase
+- ✅ **Environment variables** configured for production
 - ✅ **Workspace organized** and cleaned up
 - ✅ **Processing pipeline** connected to brain
-- ✅ **V2 Dashboard** fully implemented with comprehensive layout and live data integration
-- ✅ **Dashboard Analyst Agent** created with schema, system prompt, and user prompt (clean text format)
-- ✅ **API endpoint** (`/api/dashboard-data.js`) created for dashboard data storage and retrieval
+- ✅ **Dashboard Analyst Agent** created with schema, system prompt, and user prompt
+- ✅ **API endpoints** created for dashboard data and chat functionality
 - ✅ **Frontend updated** to fetch and display live dashboard data with fallback to demo data
 - ✅ **Color coding system** implemented (green for live data, red for demo data)
 - ✅ **All dashboard cards** have proper IDs and classes for easier targeting
-- ✅ **Layout issues fixed** - removed duplicate sections, positioned live signals strip correctly
+- ✅ **Layout optimized** for 14-inch MacBook viewport without scrolling
 - ✅ **Live data sections**: State of World, AI Insights, Live Signals, Brand Opportunities, Competitive Threats
 - ✅ **Trend Spotlights and Trend Radar** continue using existing live trend data
+- ✅ **Production deployment** live and functional
 - ⏳ **Brain workflow** - configured but not tested
 - ⏳ **Processing pipeline** - configured but not tested
 - ⏳ **Dashboard Analyst workflow** - ready to implement in n8n
 - ⏳ **Workflow activation** pending
-- ⏳ **Production deployment** pending
 
 ---
 
