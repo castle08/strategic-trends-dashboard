@@ -47,15 +47,25 @@ export default async function handler(req, res) {
       
       console.log('📊 Storing dashboard data to database...');
       
-      // First, deactivate all existing records
-      const { error: deactivateError } = await supabase
+      // First, get the IDs of the last 3 records to keep
+      const { data: recentRecords } = await supabase
         .from('dashboard_insights')
-        .update({ is_active: false })
-        .eq('is_active', true);
+        .select('id')
+        .order('created_at', { ascending: false })
+        .limit(3);
       
-      if (deactivateError) {
-        console.error('❌ Error deactivating existing records:', deactivateError);
-        return res.status(500).json({ error: 'Database error' });
+      // Delete records older than the last 3 (keep safety net)
+      if (recentRecords && recentRecords.length >= 3) {
+        const oldestToKeep = recentRecords[2].id;
+        const { error: deleteError } = await supabase
+          .from('dashboard_insights')
+          .delete()
+          .lt('id', oldestToKeep);
+        
+        if (deleteError) {
+          console.error('❌ Error deleting old records:', deleteError);
+          return res.status(500).json({ error: 'Database error' });
+        }
       }
       
       // Insert new dashboard data
@@ -93,11 +103,10 @@ export default async function handler(req, res) {
   try {
     console.log('📊 Fetching dashboard data from database...');
     
-    // Get the latest active dashboard data
+    // Get the latest dashboard data (there should only be one record now)
     const { data: dashboardRecords, error } = await supabase
       .from('dashboard_insights')
       .select('*')
-      .eq('is_active', true)
       .order('created_at', { ascending: false })
       .limit(1);
     
