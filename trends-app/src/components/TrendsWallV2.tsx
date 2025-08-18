@@ -665,6 +665,10 @@ export default function TrendsWallV2() {
                       if (velocityData && velocityData.length >= 2) {
                         const first = velocityData[0];
                         const last = velocityData[velocityData.length - 1];
+                        // Check for division by zero
+                        if (first === 0) {
+                          return '+0%';
+                        }
                         const growth = Math.round(((last - first) / first) * 100);
                         return `${growth > 0 ? '+' : ''}${growth}%`;
                       }

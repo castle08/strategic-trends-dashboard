@@ -15,10 +15,29 @@ export default async function handler(req, res) {
   // Handle POST requests (store dashboard data)
   if (req.method === 'POST') {
     try {
-      // Handle both wrapped and unwrapped data
-      const dataToStore = req.body.output || req.body;
+      // Handle n8n array format: [{ output: {...} }] or [{ json: { output: {...} } }]
+      let dataToStore;
+      
+      if (Array.isArray(req.body) && req.body.length > 0) {
+        // n8n array format
+        const firstItem = req.body[0];
+        if (firstItem.json && firstItem.json.output) {
+          dataToStore = firstItem.json.output;
+        } else if (firstItem.output) {
+          dataToStore = firstItem.output;
+        } else {
+          dataToStore = firstItem;
+        }
+      } else if (req.body.output) {
+        // Direct object with output wrapper
+        dataToStore = req.body.output;
+      } else {
+        // Direct object format
+        dataToStore = req.body;
+      }
+      
       latestDashboardData = dataToStore;
-      console.log('✅ Dashboard data stored in memory');
+      console.log('✅ Dashboard data stored in memory:', JSON.stringify(dataToStore, null, 2));
       return res.status(200).json({ success: true, message: 'Dashboard data stored' });
     } catch (error) {
       console.error('Error storing dashboard data:', error);
@@ -33,9 +52,15 @@ export default async function handler(req, res) {
 
   try {
     // Return stored data or demo data
-    if (latestDashboardData) {
+    console.log('Latest dashboard data:', latestDashboardData);
+    console.log('Data type:', typeof latestDashboardData);
+    console.log('Data keys:', latestDashboardData ? Object.keys(latestDashboardData) : 'null');
+    
+    if (latestDashboardData && typeof latestDashboardData === 'object' && Object.keys(latestDashboardData).length > 0) {
+      console.log('Returning live data');
       return res.status(200).json(latestDashboardData);
     } else {
+      console.log('Returning demo data');
       return res.status(200).json({
         STATE_OF_WORLD: {
           thesis: "Dashboard insights are generated on-demand from current trends",
