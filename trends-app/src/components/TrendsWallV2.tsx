@@ -378,9 +378,9 @@ export default function TrendsWallV2() {
       }
       
       try {
-        // Fetch dashboard data from JSON file
-        const dashboardJsonUrl = 'https://trends-dashboard-six.vercel.app/trends/dashboard.json';
-        const dashboardResponse = await fetch(dashboardJsonUrl);
+        // Fetch dashboard data from API
+        const dashboardApiUrl = 'https://trends-dashboard-six.vercel.app/api/dashboard-data';
+        const dashboardResponse = await fetch(dashboardApiUrl);
         if (dashboardResponse.ok) {
           const dashboardData = await dashboardResponse.json();
           // Only set as live if we have actual dashboard insights, not just the fallback message

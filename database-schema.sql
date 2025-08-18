@@ -98,3 +98,44 @@ CREATE TRIGGER update_trends_individual_updated_at
 -- Grant permissions (adjust as needed)
 GRANT ALL ON public.trends_individual TO postgres;
 GRANT SELECT ON public.latest_trends TO postgres;
+
+-- Dashboard Insights Table
+CREATE TABLE IF NOT EXISTS public.dashboard_insights (
+    id SERIAL PRIMARY KEY,
+    
+    -- Dashboard sections
+    state_of_world JSONB, -- {"thesis": "...", "velocityPercent": 123, "velocitySpark": [...], "movers": [...]}
+    ai_insight JSONB, -- {"title": "...", "bullets": [...]}
+    live_signals JSONB, -- Array of signal objects
+    brand_opportunities JSONB, -- Array of opportunity objects
+    competitive_threats JSONB, -- Array of threat objects
+    signal_ticker TEXT[], -- Array of ticker strings
+    
+    -- Metadata
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    is_active BOOLEAN DEFAULT TRUE,
+    version VARCHAR(10) DEFAULT '1.0'
+);
+
+-- Create indexes for dashboard insights
+CREATE INDEX IF NOT EXISTS idx_dashboard_created_at ON public.dashboard_insights(created_at);
+CREATE INDEX IF NOT EXISTS idx_dashboard_active ON public.dashboard_insights(is_active);
+
+-- Function to update the updated_at timestamp for dashboard
+CREATE OR REPLACE FUNCTION update_dashboard_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- Trigger to automatically update updated_at for dashboard
+CREATE TRIGGER update_dashboard_insights_updated_at 
+    BEFORE UPDATE ON public.dashboard_insights 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_dashboard_updated_at_column();
+
+-- Grant permissions for dashboard table
+GRANT ALL ON public.dashboard_insights TO postgres;
