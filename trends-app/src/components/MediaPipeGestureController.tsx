@@ -3,6 +3,11 @@ import { Hands } from '@mediapipe/hands';
 import { Camera } from '@mediapipe/camera_utils';
 import { drawConnectors, drawLandmarks } from '@mediapipe/drawing_utils';
 
+// Dynamic import for MediaPipe to handle production builds
+let HandsModule: any = null;
+let CameraModule: any = null;
+let DrawingUtilsModule: any = null;
+
 interface MediaPipeGestureControllerProps {
   onHandMove: (x: number, y: number, z: number) => void;
   onGestureDetected: (gesture: string) => void;
@@ -53,16 +58,22 @@ const MediaPipeGestureController: React.FC<MediaPipeGestureControllerProps> = ({
           throw new Error('MediaPipe requires HTTPS for camera access');
         }
 
+        // Dynamic import to handle production builds
+        if (!HandsModule) {
+          console.log('Loading MediaPipe modules...');
+          const handsImport = await import('@mediapipe/hands');
+          const cameraImport = await import('@mediapipe/camera_utils');
+          const drawingImport = await import('@mediapipe/drawing_utils');
+          
+          HandsModule = handsImport.Hands;
+          CameraModule = cameraImport.Camera;
+          DrawingUtilsModule = drawingImport;
+        }
+
         // Initialize MediaPipe Hands
-        const hands = new Hands({
+        const hands = new HandsModule({
           locateFile: (file) => {
-            // Try multiple CDNs for better reliability
-            const cdnUrls = [
-              `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
-              `https://unpkg.com/@mediapipe/hands/${file}`,
-              `https://cdn.skypack.dev/@mediapipe/hands/${file}`
-            ];
-            return cdnUrls[0]; // Start with jsdelivr
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
           }
         });
 
@@ -95,7 +106,7 @@ const MediaPipeGestureController: React.FC<MediaPipeGestureControllerProps> = ({
         // Initialize camera after a short delay to ensure video element is ready
         setTimeout(async () => {
           if (videoRef.current) {
-            const camera = new Camera(videoRef.current, {
+            const camera = new CameraModule(videoRef.current, {
               onFrame: async () => {
                 if (handsRef.current && videoRef.current) {
                   await handsRef.current.send({ image: videoRef.current });
@@ -300,14 +311,14 @@ const MediaPipeGestureController: React.FC<MediaPipeGestureControllerProps> = ({
     ctx.lineWidth = 2;
 
     // Draw landmarks
-    drawLandmarks(ctx, landmarks, {
+    DrawingUtilsModule.drawLandmarks(ctx, landmarks, {
       color: color,
       lineWidth: 2,
       radius: 3
     });
 
     // Draw connections
-    drawConnectors(ctx, landmarks, Hands.HAND_CONNECTIONS, {
+    DrawingUtilsModule.drawConnectors(ctx, landmarks, HandsModule.HAND_CONNECTIONS, {
       color: color,
       lineWidth: 2
     });
