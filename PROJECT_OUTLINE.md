@@ -5,7 +5,7 @@ An automated system that generates **2 fresh, high-quality marketing & culture t
 Trends should be **consumer-centric, culturally grounded, and behaviour-focused**.  
 The final output is a **strict JSON schema** that can be visualised on a dashboard and reused in weekly digests.
 
-**Current Status**: V2 Dashboard implemented with sidebar layout, filter popup, and auto-cycling components. Ready for live data integration.
+**Current Status**: V2 Dashboard implemented with sidebar layout, filter popup, auto-cycling components, and **MediaPipe gesture control system**. Live data integration active. Gesture control allows 3D scene manipulation via hand movements.
 
 ---
 
@@ -56,6 +56,26 @@ The final output is a **strict JSON schema** that can be visualised on a dashboa
   - `exampleUseCases` – real or plausible case studies  
   - `creative` – copy, image prompt, alt text, podcast snippet  
   - `viz` – size, intensity, colour hint (TBD: may be removed from schema)
+
+### **6. Gesture Control System**
+- **Technology**: MediaPipe Hands for accurate hand tracking
+- **Implementation**: React component with Three.js integration
+- **Features**:
+  - Hand presence detection with visual feedback
+  - Horizontal rotation (left/right hand movement)
+  - Vertical rotation (up/down hand movement)
+  - Full 360° rotation capability
+  - Camera movement for better item accessibility
+  - Auto-return to floaty state when hand removed
+- **Current Issues**:
+  - Hand deactivation UI state not updating properly
+  - Item ID 4 movement behavior differs from others
+- **TODO**:
+  - Fix hand deactivation state management
+  - Investigate item 4 positioning/movement
+  - Add zoom functionality
+  - Add unique IDs/classes to trend items
+  - Optimize for different screen sizes
 
 ---
 
@@ -198,7 +218,7 @@ Agents should **first read this outline**, then fetch the additional files below
 - **Workflow ID**: `ELyp1FDKhHb0boG2`
 - **Workflow Name**: `agentic-trends-restore`
 - **Status**: Currently inactive (needs activation for production)
-- Agents have **VIEW-only access** to the workflow for traceability and inspection.
+- Agents have **VIEW-only access** to the workflow for traceability and inspection.  
 
 ---
 
@@ -245,27 +265,31 @@ Agents should **first read this outline**, then fetch the additional files below
 ## 📋 Next Steps
 
 ### **Immediate (This Week)**
-1. **Implement Dashboard Analyst workflow** in n8n:
+1. **Fix color mapping in n8n workflow** - Implement category-to-color mapping system:
+   - Update image prompt generation to use proper category colors
+   - Ensure visual consistency with frontend color palette
+   - Test that generated images match category colors correctly
+2. **Implement Dashboard Analyst workflow** in n8n:
    - Create workflow with webhook trigger
    - Add Supabase node to get recent trends
    - Add OpenAI node with Dashboard Analyst prompts
    - Add HTTP Request node to store data via `/api/dashboard-data`
-2. **Test brain workflow** - Validate trend generation and quality
-3. **Test processing pipeline** - Verify image generation and API flow
-4. **Fix color mapping** - Implement category-to-color mapping system
-5. **Update image prompts** - Ensure colors are properly applied
-6. **Test complete dashboard** - Verify all sections show live data when available
+3. **Test brain workflow** - Validate trend generation and quality
+4. **Test processing pipeline** - Verify image generation and API flow
+5. **Test complete dashboard** - Verify all sections show live data when available
 
 ### **Critical TODOs**
-1. **Color System Fix**:
+1. **Color System Fix** (HIGH PRIORITY):
    - **Option A**: Remove `colorHint` from brain schema, add color mapping in processing loop
    - **Option B**: Update brain to know predefined category colors
    - **Decision needed**: Which approach is preferred?
+   - **Current Issue**: Generated images don't match category colors correctly
 
 2. **Image Generation Fix**:
    - Current image prompts don't properly apply category colors
    - Need to update image generation to use mapped colors
    - Ensure visual consistency with frontend color palette
+   - **Status**: Image prompts need updating with correct category-to-color mapping
 
 3. **Scale to 10 Trends**:
    - Update brain schema from 2 to 10 trends
