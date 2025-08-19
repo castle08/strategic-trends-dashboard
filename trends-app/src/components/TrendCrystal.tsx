@@ -11,6 +11,7 @@ interface TrendCrystalProps {
   anyTrendSelected?: boolean;
   onDragStart?: () => void;
   onDragEnd?: () => void;
+  itemId: string; // Add unique ID for debugging
 }
 
 const TrendCrystal: React.FC<TrendCrystalProps> = ({ 
@@ -20,7 +21,8 @@ const TrendCrystal: React.FC<TrendCrystalProps> = ({
   onSelect, 
   anyTrendSelected = false,
   onDragStart,
-  onDragEnd
+  onDragEnd,
+  itemId
 }) => {
   // console.log('🔍 TrendCrystal component starting for:', trend.title);
   
@@ -187,6 +189,10 @@ const TrendCrystal: React.FC<TrendCrystalProps> = ({
           >
             {/* Image Container */}
             <div className="relative">
+              {/* Debug ID - small indicator */}
+              <div className="absolute top-1 left-1 bg-black/70 text-white text-xs px-1 py-0.5 rounded z-10">
+                {itemId}
+              </div>
               {/* Loading state */}
               {!imageLoaded && !imageError && (
                 <div 

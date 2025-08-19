@@ -36,14 +36,29 @@ const Scene: React.FC<SceneProps> = ({ trends, onTrendSelect, selectedTrend, han
     for (let i = 0; i < nodesToShow; i++) {
       const phi = Math.acos(-1 + (2 * i) / nodesToShow);
       const theta = Math.sqrt(nodesToShow * Math.PI) * phi;
-      const radius = 20 + Math.random() * 15; // Closer grouping: 20-35 for bigger images
+      const radius = 18 + Math.random() * 12; // Optimized for 14" laptop: 18-30
 
-      const x = radius * Math.cos(theta) * Math.sin(phi);
-      const y = radius * Math.sin(theta) * Math.sin(phi);
-      const z = radius * Math.cos(phi);
+      let x = radius * Math.cos(theta) * Math.sin(phi);
+      let y = radius * Math.sin(theta) * Math.sin(phi);
+      let z = radius * Math.cos(phi);
+      
+      // Ensure no items are too close to the center axis
+      const minDistanceFromCenter = 15;
+      const distanceFromCenter = Math.sqrt(x * x + y * y);
+      
+      if (distanceFromCenter < minDistanceFromCenter) {
+        // Push the item away from center
+        const angle = Math.atan2(y, x);
+        x = minDistanceFromCenter * Math.cos(angle);
+        y = minDistanceFromCenter * Math.sin(angle);
+        console.log(`Scene: Repositioned item ${i} from center to (${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(2)})`);
+      }
 
       positions.push([x, y, z]);
     }
+
+    // Debug: Log all positions
+    console.log('Scene: All item positions:', positions.map((pos, i) => `Item ${i}: (${pos[0].toFixed(2)}, ${pos[1].toFixed(2)}, ${pos[2].toFixed(2)})`));
 
     return positions;
   }, [trends.length]);
@@ -60,12 +75,12 @@ const Scene: React.FC<SceneProps> = ({ trends, onTrendSelect, selectedTrend, han
       // Map hand X position to horizontal rotation (left/right)
       const targetRotationY = handPosition.x * Math.PI * 2; // Full rotation range
       const currentRotationY = groupRef.current.rotation.y;
-      const smoothedRotationY = THREE.MathUtils.lerp(currentRotationY, targetRotationY, 0.05); // Even less responsive
+      const smoothedRotationY = THREE.MathUtils.lerp(currentRotationY, targetRotationY, 0.03); // Smoother movement
       
       // Map hand Y position to vertical rotation (up/down) - full 360° range
       const targetRotationX = handPosition.y * Math.PI * 2; // Full rotation range
       const currentRotationX = groupRef.current.rotation.x;
-      const smoothedRotationX = THREE.MathUtils.lerp(currentRotationX, targetRotationX, 0.05); // Even less responsive
+      const smoothedRotationX = THREE.MathUtils.lerp(currentRotationX, targetRotationX, 0.03); // Smoother movement
       
       groupRef.current.rotation.set(
         smoothedRotationX,  // Vertical rotation (up/down)
@@ -75,8 +90,8 @@ const Scene: React.FC<SceneProps> = ({ trends, onTrendSelect, selectedTrend, han
       
       // Also move camera slightly to make center items more accessible
       if (cameraRef.current) {
-        const cameraOffsetX = handPosition.x * 5; // Small camera movement
-        const cameraOffsetY = handPosition.y * 3;
+        const cameraOffsetX = handPosition.x * 8; // Increased camera movement
+        const cameraOffsetY = handPosition.y * 5;
         const targetCameraX = cameraOffsetX;
         const targetCameraY = cameraOffsetY;
         const currentCameraX = cameraRef.current.position.x;
@@ -132,6 +147,7 @@ const Scene: React.FC<SceneProps> = ({ trends, onTrendSelect, selectedTrend, han
               anyTrendSelected={selectedTrend !== null}
               onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
+              itemId={`${index}`}
             />
           </Float>
         ))}
