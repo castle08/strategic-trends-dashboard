@@ -20,5 +20,16 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
+    rollupOptions: {
+      external: [],
+      output: {
+        manualChunks: {
+          mediapipe: ['@mediapipe/hands', '@mediapipe/camera_utils', '@mediapipe/drawing_utils']
+        }
+      }
+    }
   },
+  optimizeDeps: {
+    include: ['@mediapipe/hands', '@mediapipe/camera_utils', '@mediapipe/drawing_utils']
+  }
 });

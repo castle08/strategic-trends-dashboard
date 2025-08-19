@@ -1,9 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-
-// Dynamic import for MediaPipe to handle production builds
-let HandsModule: any = null;
-let CameraModule: any = null;
-let DrawingUtilsModule: any = null;
+import { Hands } from '@mediapipe/hands';
+import { Camera } from '@mediapipe/camera_utils';
+import { drawConnectors, drawLandmarks } from '@mediapipe/drawing_utils';
 
 interface MediaPipeGestureControllerProps {
   onHandMove: (x: number, y: number, z: number) => void;
@@ -55,39 +53,8 @@ const MediaPipeGestureController: React.FC<MediaPipeGestureControllerProps> = ({
           throw new Error('MediaPipe requires HTTPS for camera access');
         }
 
-        // Dynamic import to handle production builds
-        if (!HandsModule) {
-          console.log('Loading MediaPipe modules...');
-          try {
-            const handsImport = await import('@mediapipe/hands');
-            const cameraImport = await import('@mediapipe/camera_utils');
-            const drawingImport = await import('@mediapipe/drawing_utils');
-            
-            console.log('MediaPipe imports:', { handsImport, cameraImport, drawingImport });
-            
-            HandsModule = handsImport.Hands || handsImport.default?.Hands;
-            CameraModule = cameraImport.Camera || cameraImport.default?.Camera;
-            DrawingUtilsModule = drawingImport;
-            
-            if (!HandsModule) {
-              // Try global MediaPipe as fallback
-              if ((window as any).MediaPipe && (window as any).MediaPipe.Hands) {
-                console.log('Using global MediaPipe object');
-                HandsModule = (window as any).MediaPipe.Hands;
-                CameraModule = (window as any).MediaPipe.Camera;
-                DrawingUtilsModule = (window as any).MediaPipe.DrawingUtils;
-              } else {
-                throw new Error('Hands module not found in import or global object');
-              }
-            }
-          } catch (importError) {
-            console.error('Failed to import MediaPipe modules:', importError);
-            throw new Error(`MediaPipe import failed: ${importError.message}`);
-          }
-        }
-
         // Initialize MediaPipe Hands
-        const hands = new HandsModule({
+        const hands = new Hands({
           locateFile: (file) => {
             return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
           }
@@ -122,7 +89,7 @@ const MediaPipeGestureController: React.FC<MediaPipeGestureControllerProps> = ({
         // Initialize camera after a short delay to ensure video element is ready
         setTimeout(async () => {
           if (videoRef.current) {
-            const camera = new CameraModule(videoRef.current, {
+            const camera = new Camera(videoRef.current, {
               onFrame: async () => {
                 if (handsRef.current && videoRef.current) {
                   await handsRef.current.send({ image: videoRef.current });
@@ -327,14 +294,14 @@ const MediaPipeGestureController: React.FC<MediaPipeGestureControllerProps> = ({
     ctx.lineWidth = 2;
 
     // Draw landmarks
-    DrawingUtilsModule.drawLandmarks(ctx, landmarks, {
+    drawLandmarks(ctx, landmarks, {
       color: color,
       lineWidth: 2,
       radius: 3
     });
 
     // Draw connections
-    DrawingUtilsModule.drawConnectors(ctx, landmarks, HandsModule.HAND_CONNECTIONS, {
+    drawConnectors(ctx, landmarks, Hands.HAND_CONNECTIONS, {
       color: color,
       lineWidth: 2
     });
