@@ -48,10 +48,21 @@ const MediaPipeGestureController: React.FC<MediaPipeGestureControllerProps> = ({
   useEffect(() => {
     const initMediaPipe = async () => {
       try {
+        // Check if we're in a secure context (HTTPS)
+        if (!window.isSecureContext) {
+          throw new Error('MediaPipe requires HTTPS for camera access');
+        }
+
         // Initialize MediaPipe Hands
         const hands = new Hands({
           locateFile: (file) => {
-            return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+            // Try multiple CDNs for better reliability
+            const cdnUrls = [
+              `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
+              `https://unpkg.com/@mediapipe/hands/${file}`,
+              `https://cdn.skypack.dev/@mediapipe/hands/${file}`
+            ];
+            return cdnUrls[0]; // Start with jsdelivr
           }
         });
 
@@ -102,7 +113,13 @@ const MediaPipeGestureController: React.FC<MediaPipeGestureControllerProps> = ({
 
       } catch (err) {
         console.error('❌ Failed to initialize MediaPipe:', err);
-        setError('Failed to initialize hand tracking');
+        console.error('❌ Error details:', {
+          isSecureContext: window.isSecureContext,
+          userAgent: navigator.userAgent,
+          mediaDevices: !!navigator.mediaDevices,
+          location: window.location.href
+        });
+        setError(`Failed to initialize hand tracking: ${err.message}`);
       }
     };
 
