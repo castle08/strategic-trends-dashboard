@@ -36,7 +36,9 @@ const MediaPipeGestureController: React.FC<MediaPipeGestureControllerProps> = ({
   
   // Tolerance system for state changes
   const handDetectedHistory = useRef<boolean[]>([]);
-  const TOLERANCE_FRAMES = 3; // Require 3 consecutive frames of same state
+  const TOLERANCE_FRAMES = 1; // Reduced from 3 to 1 for faster deactivation // Require 3 consecutive frames of same state
+  
+
   
   // MediaPipe references
   const handsRef = useRef<Hands | null>(null);

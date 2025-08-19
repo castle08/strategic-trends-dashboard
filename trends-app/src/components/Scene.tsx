@@ -60,18 +60,32 @@ const Scene: React.FC<SceneProps> = ({ trends, onTrendSelect, selectedTrend, han
       // Map hand X position to horizontal rotation (left/right)
       const targetRotationY = handPosition.x * Math.PI * 2; // Full rotation range
       const currentRotationY = groupRef.current.rotation.y;
-      const smoothedRotationY = THREE.MathUtils.lerp(currentRotationY, targetRotationY, 0.1);
+      const smoothedRotationY = THREE.MathUtils.lerp(currentRotationY, targetRotationY, 0.05); // Even less responsive
       
-      // Map hand Y position to vertical rotation (up/down)
-      const targetRotationX = handPosition.y * Math.PI * 0.5; // Limited vertical range
+      // Map hand Y position to vertical rotation (up/down) - full 360° range
+      const targetRotationX = handPosition.y * Math.PI * 2; // Full rotation range
       const currentRotationX = groupRef.current.rotation.x;
-      const smoothedRotationX = THREE.MathUtils.lerp(currentRotationX, targetRotationX, 0.1);
+      const smoothedRotationX = THREE.MathUtils.lerp(currentRotationX, targetRotationX, 0.05); // Even less responsive
       
       groupRef.current.rotation.set(
         smoothedRotationX,  // Vertical rotation (up/down)
         smoothedRotationY,  // Horizontal rotation (left/right)
         groupRef.current.rotation.z
       );
+      
+      // Also move camera slightly to make center items more accessible
+      if (cameraRef.current) {
+        const cameraOffsetX = handPosition.x * 5; // Small camera movement
+        const cameraOffsetY = handPosition.y * 3;
+        const targetCameraX = cameraOffsetX;
+        const targetCameraY = cameraOffsetY;
+        const currentCameraX = cameraRef.current.position.x;
+        const currentCameraY = cameraRef.current.position.y;
+        
+        cameraRef.current.position.x = THREE.MathUtils.lerp(currentCameraX, targetCameraX, 0.05);
+        cameraRef.current.position.y = THREE.MathUtils.lerp(currentCameraY, targetCameraY, 0.05);
+        cameraRef.current.lookAt(0, 0, 0); // Keep looking at center
+      }
     }
   });
 
