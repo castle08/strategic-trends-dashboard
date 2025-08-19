@@ -11,6 +11,8 @@ import ErrorScreen from './components/ErrorScreen';
 import SimpleTrendTest from './components/SimpleTrendTest';
 import Dashboard from './components/Dashboard';
 import TrendsWallV2 from './components/TrendsWallV2';
+import ImprovedGestureController from './components/ImprovedGestureController';
+import GestureTestEnvironment from './components/GestureTestEnvironment';
 import { TrendItem as DashboardTrendItem } from './data/dummy-dashboard-data';
 
 const REFRESH_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
@@ -175,6 +177,9 @@ const DEMO_DATA: TrendsData = {
 function App() {
   const [trendsData, setTrendsData] = useState<TrendsData | null>(null);
   const [selectedTrend, setSelectedTrend] = useState<TrendItem | null>(null);
+  const [handPosition, setHandPosition] = useState<{ x: number; y: number; z: number } | null>(null);
+  const [controlsActive, setControlsActive] = useState(false);
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -184,6 +189,8 @@ function App() {
   const isDemoMode = urlParams.has('demo');
   const isScreensMode = urlParams.has('screens') || urlParams.get('view') === 'screens';
   const isTestMode = urlParams.has('test');
+  const isGestureTest = urlParams.has('gesture-test');
+  const gestureTestMode = urlParams.get('gesture-mode') as 'hand-presence' | 'fist-activation' | 'keyboard-mouse' | 'voice' || 'hand-presence';
 
   useEffect(() => {
     const fetchTrends = async () => {
@@ -257,6 +264,11 @@ function App() {
   if (loading) return <LoadingScreen />;
   if (error && error !== 'not-live' && !trendsData) return <ErrorScreen message={error} />;
   if (!trendsData?.trends.length) return <ErrorScreen message="No trends available" />;
+
+  // Gesture Test Mode - Dedicated gesture testing environment
+  if (isGestureTest) {
+    return <GestureTestEnvironment controlMode={gestureTestMode} />;
+  }
 
   // Test Mode - Simple 3D Test
   if (isTestMode) {
@@ -356,6 +368,8 @@ function App() {
                       trends={trendsData?.trends || []}
                       onTrendSelect={setSelectedTrend}
                       selectedTrend={selectedTrend}
+                      handPosition={handPosition}
+                      controlsActive={controlsActive}
                     />
                   </Suspense>
                 </Canvas>
@@ -366,6 +380,25 @@ function App() {
                   onTrendSelect={setSelectedTrend}
                   error={error}
                   isDemoMode={isDemoMode}
+                />
+                
+                <ImprovedGestureController
+                  onHandMove={(x, y, z) => {
+                    if (x === 0 && y === 0 && z === 0) {
+                      // Reset hand position when no hand detected
+                      setHandPosition(null);
+                    } else {
+                      setHandPosition({ x, y, z });
+                    }
+                  }}
+                  onGestureDetected={(gesture) => {
+                    console.log('👆 Gesture detected:', gesture);
+                  }}
+                  onControlActivated={(activated) => {
+                    console.log('🎯 Controls activated:', activated);
+                    setControlsActive(activated);
+                  }}
+                  mode="hand-presence"
                 />
               </div>
             </ErrorBoundary>
