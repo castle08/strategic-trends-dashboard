@@ -110,6 +110,61 @@ const ImprovedGestureController: React.FC<ImprovedGestureControllerProps> = ({
     };
   }, [model]);
 
+  // Geometric validation: check if landmarks form a reasonable hand shape
+  const validateHandGeometry = useCallback((landmarks: number[][]) => {
+    if (!landmarks || landmarks.length !== 21) return false;
+    
+    // Check if hand size is reasonable (not too small or too large)
+    const palmBase = landmarks[0];
+    const wrist = landmarks[1];
+    const middleFingerMcp = landmarks[9];
+    
+    // Calculate hand size (distance from wrist to middle finger MCP)
+    const handSize = Math.sqrt(
+      Math.pow(middleFingerMcp[0] - wrist[0], 2) + 
+      Math.pow(middleFingerMcp[1] - wrist[1], 2)
+    );
+    
+    // Hand should be between 30-400 pixels (wider range for different distances)
+    const minHandSize = 30;
+    const maxHandSize = 400;
+    
+    if (handSize < minHandSize || handSize > maxHandSize) {
+      console.log('Hand size invalid:', handSize, 'should be between', minHandSize, 'and', maxHandSize);
+      return false;
+    }
+    
+    // Check if fingers are in reasonable positions relative to palm
+    const indexTip = landmarks[8];
+    const middleTip = landmarks[12];
+    const ringTip = landmarks[16];
+    const pinkyTip = landmarks[20];
+    
+    // All fingertips should be above the palm base (Y coordinate) - more lenient
+    const palmY = palmBase[1];
+    const fingersAbovePalm = [indexTip, middleTip, ringTip, pinkyTip].every(
+      tip => tip[1] < palmY + 20 // Allow some tolerance for different hand orientations
+    );
+    
+    if (!fingersAbovePalm) {
+      console.log('Fingers not above palm');
+      return false;
+    }
+    
+    // Check if hand is reasonably horizontal (not too tilted)
+    const handWidth = Math.max(indexTip[0], middleTip[0], ringTip[0], pinkyTip[0]) - 
+                     Math.min(indexTip[0], middleTip[0], ringTip[0], pinkyTip[0]);
+    const handHeight = palmY - Math.min(indexTip[1], middleTip[1], ringTip[1], pinkyTip[1]);
+    
+    // Hand should be wider than tall (reasonable aspect ratio) - more lenient
+    if (handWidth < handHeight * 0.3) {
+      console.log('Hand too narrow:', handWidth, 'vs height:', handHeight);
+      return false;
+    }
+    
+    return true;
+  }, []);
+
   // Simplified gesture detection - focus only on rotation
   const detectGestures = useCallback((landmarks: number[][]) => {
     const palmBase = landmarks[0];
@@ -180,6 +235,17 @@ const ImprovedGestureController: React.FC<ImprovedGestureControllerProps> = ({
               drawEmptyVideoFrame();
               return;
             }
+            
+            // Geometric validation: check if landmarks form a reasonable hand shape
+            const isValidHandShape = validateHandGeometry(hand.landmarks);
+            console.log('Valid hand geometry:', isValidHandShape);
+            
+            // Temporarily disable geometric validation to debug
+            // if (!isValidHandShape) {
+            //   console.log('Rejecting invalid hand geometry');
+            //   drawEmptyVideoFrame();
+            //   return;
+            // }
             
             // Debug: log confidence when it's low
             if (confidence < CONFIDENCE_THRESHOLD) {
@@ -309,7 +375,7 @@ const ImprovedGestureController: React.FC<ImprovedGestureControllerProps> = ({
     };
 
     detectHands();
-  }, [model, isTracking, handDetected, controlsActive, detectGestures, onHandMove, onControlActivated, onGestureDetected, mode]);
+  }, [model, isTracking, handDetected, controlsActive, detectGestures, validateHandGeometry, onHandMove, onControlActivated, onGestureDetected, mode]);
 
   const drawHandLandmarks = (landmarks: number[][], gesture: string, active: boolean) => {
     const canvas = canvasRef.current;
