@@ -1,7 +1,4 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { Hands } from '@mediapipe/hands';
-import { Camera } from '@mediapipe/camera_utils';
-import { drawConnectors, drawLandmarks } from '@mediapipe/drawing_utils';
 
 // Dynamic import for MediaPipe to handle production builds
 let HandsModule: any = null;
@@ -61,13 +58,32 @@ const MediaPipeGestureController: React.FC<MediaPipeGestureControllerProps> = ({
         // Dynamic import to handle production builds
         if (!HandsModule) {
           console.log('Loading MediaPipe modules...');
-          const handsImport = await import('@mediapipe/hands');
-          const cameraImport = await import('@mediapipe/camera_utils');
-          const drawingImport = await import('@mediapipe/drawing_utils');
-          
-          HandsModule = handsImport.Hands;
-          CameraModule = cameraImport.Camera;
-          DrawingUtilsModule = drawingImport;
+          try {
+            const handsImport = await import('@mediapipe/hands');
+            const cameraImport = await import('@mediapipe/camera_utils');
+            const drawingImport = await import('@mediapipe/drawing_utils');
+            
+            console.log('MediaPipe imports:', { handsImport, cameraImport, drawingImport });
+            
+            HandsModule = handsImport.Hands || handsImport.default?.Hands;
+            CameraModule = cameraImport.Camera || cameraImport.default?.Camera;
+            DrawingUtilsModule = drawingImport;
+            
+            if (!HandsModule) {
+              // Try global MediaPipe as fallback
+              if ((window as any).MediaPipe && (window as any).MediaPipe.Hands) {
+                console.log('Using global MediaPipe object');
+                HandsModule = (window as any).MediaPipe.Hands;
+                CameraModule = (window as any).MediaPipe.Camera;
+                DrawingUtilsModule = (window as any).MediaPipe.DrawingUtils;
+              } else {
+                throw new Error('Hands module not found in import or global object');
+              }
+            }
+          } catch (importError) {
+            console.error('Failed to import MediaPipe modules:', importError);
+            throw new Error(`MediaPipe import failed: ${importError.message}`);
+          }
         }
 
         // Initialize MediaPipe Hands
