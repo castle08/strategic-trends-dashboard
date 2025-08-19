@@ -212,26 +212,24 @@ const MediaPipeGestureController: React.FC<MediaPipeGestureControllerProps> = ({
 
   // Handle no hand detected
   const handleNoHandDetected = useCallback(() => {
-    // Add to tolerance history
-    handDetectedHistory.current.push(false);
-    if (handDetectedHistory.current.length > TOLERANCE_FRAMES) {
-      handDetectedHistory.current.shift();
-    }
+    console.log('MediaPipe: No hand detected - immediately deactivating');
     
-    // Only deactivate if we have consistent no-detection
-    const consistentNoDetection = handDetectedHistory.current.length === TOLERANCE_FRAMES && 
-                                handDetectedHistory.current.every(detected => !detected);
-    
-    if (handDetected && consistentNoDetection) {
+    // Immediately deactivate when no hand is detected
+    if (handDetected || controlsActive) {
+      console.log('MediaPipe: Deactivating controls immediately');
       setHandDetected(false);
       setControlsActive(false);
       onControlActivated(false);
       setCurrentGesture('none');
       lastPosition.current = null;
+      handDetectedHistory.current = []; // Reset history
+      
+      // Send a "no position" signal to Scene
+      onHandMove(0, 0, 0);
     }
     
     drawEmptyVideoFrame();
-  }, [handDetected, onControlActivated]);
+  }, [handDetected, controlsActive, onControlActivated]);
 
   // Gesture detection function (defined outside useCallback to avoid circular dependency)
   const detectGestures = (landmarks: any[]) => {
@@ -341,6 +339,9 @@ const MediaPipeGestureController: React.FC<MediaPipeGestureControllerProps> = ({
       />
       <div className="text-white text-xs mt-1">
         Hand: {handDetected ? '✅' : '❌'} | Controls: {controlsActive ? '🎯 ACTIVE' : '⏸️ INACTIVE'}
+      </div>
+      <div className="text-white text-xs">
+        Debug: handDetected={handDetected.toString()}, controlsActive={controlsActive.toString()}
       </div>
       <div className="text-white text-xs">
         Gesture: {currentGesture} | Mode: {mode}

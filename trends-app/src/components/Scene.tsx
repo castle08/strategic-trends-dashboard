@@ -59,6 +59,12 @@ const Scene: React.FC<SceneProps> = ({ trends, onTrendSelect, selectedTrend, han
 
     // Debug: Log all positions
     console.log('Scene: All item positions:', positions.map((pos, i) => `Item ${i}: (${pos[0].toFixed(2)}, ${pos[1].toFixed(2)}, ${pos[2].toFixed(2)})`));
+    
+    // Special debug for item 4
+    if (positions[4]) {
+      console.log('🔍 Item 4 position:', positions[4]);
+      console.log('🔍 Item 4 distance from center:', Math.sqrt(positions[4][0]**2 + positions[4][1]**2).toFixed(2));
+    }
 
     return positions;
   }, [trends.length]);
@@ -71,7 +77,9 @@ const Scene: React.FC<SceneProps> = ({ trends, onTrendSelect, selectedTrend, han
     
     // Handle hand controls when active
     if (handPosition && controlsActive && !isDragging && groupRef.current) {
-      console.log('Scene: Applying hand controls:', { handPosition, controlsActive });
+      // Only process if we have meaningful hand position (not 0,0,0)
+      if (Math.abs(handPosition.x) > 0.01 || Math.abs(handPosition.y) > 0.01) {
+        console.log('Scene: Applying hand controls:', { handPosition, controlsActive });
       // Map hand X position to horizontal rotation (left/right)
       const targetRotationY = handPosition.x * Math.PI * 2; // Full rotation range
       const currentRotationY = groupRef.current.rotation.y;
@@ -100,6 +108,7 @@ const Scene: React.FC<SceneProps> = ({ trends, onTrendSelect, selectedTrend, han
         cameraRef.current.position.x = THREE.MathUtils.lerp(currentCameraX, targetCameraX, 0.05);
         cameraRef.current.position.y = THREE.MathUtils.lerp(currentCameraY, targetCameraY, 0.05);
         cameraRef.current.lookAt(0, 0, 0); // Keep looking at center
+      }
       }
     }
   });
