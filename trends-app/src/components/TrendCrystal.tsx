@@ -22,7 +22,7 @@ const TrendCrystal: React.FC<TrendCrystalProps> = ({
   onDragStart,
   onDragEnd
 }) => {
-  console.log('🔍 TrendCrystal component starting for:', trend.title);
+  // console.log('🔍 TrendCrystal component starting for:', trend.title);
   
   // Use anyTrendSelected parameter to avoid TypeScript warning
   void anyTrendSelected;
@@ -32,7 +32,7 @@ const TrendCrystal: React.FC<TrendCrystalProps> = ({
   const dragStartPos = useRef<{ x: number; y: number } | null>(null);
   const isMouseDown = useRef(false);
   
-  console.log('🔍 State initialized for:', trend.title);
+  // console.log('🔍 State initialized for:', trend.title);
   
   // Error handling for malformed data
   if (!trend || typeof trend !== 'object') {
@@ -40,14 +40,14 @@ const TrendCrystal: React.FC<TrendCrystalProps> = ({
     return null;
   }
   
-  console.log('🔍 Trend data validated for:', trend.title);
+  // console.log('🔍 Trend data validated for:', trend.title);
   
 
   
   // Debug logging to see actual scores
-  console.log(`📊 ${trend.category} (${trend.scores.total})`);
+  // console.log(`📊 ${trend.category} (${trend.scores.total})`);
   
-  console.log('🔍 Image-based display prepared for:', trend.title);
+  // console.log('🔍 Image-based display prepared for:', trend.title);
   
 
   
@@ -55,29 +55,29 @@ const TrendCrystal: React.FC<TrendCrystalProps> = ({
   const categoryColor = getCategoryColor(trend.category);
   const color = new THREE.Color(categoryColor);
   
-  console.log('🔍 Color calculated for:', trend.title);
+  // console.log('🔍 Color calculated for:', trend.title);
   
   // Debug: Log what we're trying to render
-  console.log(`🎨 Rendering trend "${trend.title}":`, {
-    hasImageUrl: !!trend.creative?.imageUrl,
-    hasScores: !!trend.scores,
-    scoresTotal: trend.scores?.total,
-    hasWhyItMatters: !!trend.whyItMatters,
-    whyItMattersLength: trend.whyItMatters?.length
-  });
+  // console.log(`🎨 Rendering trend "${trend.title}":`, {
+  //   hasImageUrl: !!trend.creative?.imageUrl,
+  //   hasScores: !!trend.scores,
+  //   scoresTotal: trend.scores?.total,
+  //   hasWhyItMatters: !!trend.whyItMatters,
+  //   whyItMattersLength: trend.whyItMatters?.length
+  // });
 
   // Remove unused geometry functions and useFrame since we're using images now
-  console.log('🔍 Image-based display for:', trend.title);
+  // console.log('🔍 Image-based display for:', trend.title);
 
   // Handle image loading with CORS error handling
   const handleImageLoad = () => {
-    console.log('✅ Image loaded successfully for:', trend.title);
+    // console.log('✅ Image loaded successfully for:', trend.title);
     setImageLoaded(true);
     setImageError(false);
   };
 
   const handleImageError = (error: any) => {
-    console.log('❌ Image failed to load for:', trend.title, error);
+    // console.log('❌ Image failed to load for:', trend.title, error);
     setImageError(true);
     setImageLoaded(false);
   };
@@ -101,7 +101,7 @@ const TrendCrystal: React.FC<TrendCrystalProps> = ({
   const handleMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    console.log('🖱️ Mouse down on trend:', trend.title);
+    // console.log('🖱️ Mouse down on trend:', trend.title);
     isMouseDown.current = true;
     dragStartPos.current = { x: e.clientX, y: e.clientY };
     setIsDragging(false);
@@ -154,7 +154,7 @@ const TrendCrystal: React.FC<TrendCrystalProps> = ({
 
 
 
-  console.log('🔍 About to render JSX for:', trend.title);
+  // console.log('🔍 About to render JSX for:', trend.title);
 
   try {
     return (

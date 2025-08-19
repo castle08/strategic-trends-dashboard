@@ -48,19 +48,23 @@ const ImprovedGestureController: React.FC<ImprovedGestureControllerProps> = ({
   // Hand confidence tracking to avoid false positives
   const handConfidence = useRef<number>(0);
   const CONFIDENCE_THRESHOLD = 0.8; // Increased threshold to filter out false positives
+  
+  // Tolerance system for state changes
+  const handDetectedHistory = useRef<boolean[]>([]);
+  const TOLERANCE_FRAMES = 3; // Require 3 consecutive frames of same state
 
   // Initialize TensorFlow and load handpose model
   useEffect(() => {
     const initModel = async () => {
       try {
-        console.log('🔄 Initializing TensorFlow...');
+        // console.log('🔄 Initializing TensorFlow...');
         await tf.ready();
-        console.log('✅ TensorFlow ready');
+        // console.log('✅ TensorFlow ready');
         
-        console.log('🔄 Loading handpose model...');
+        // console.log('🔄 Loading handpose model...');
         const handposeModel = await handpose.load();
         setModel(handposeModel);
-        console.log('✅ Improved Handpose model loaded successfully');
+        // console.log('✅ Improved Handpose model loaded successfully');
       } catch (err) {
         console.error('❌ Failed to load handpose model:', err);
         console.error('Error details:', err.message, err.stack);
@@ -98,7 +102,7 @@ const ImprovedGestureController: React.FC<ImprovedGestureControllerProps> = ({
     };
 
     if (model) {
-      console.log('🔄 Model loaded, starting video...');
+              // console.log('🔄 Model loaded, starting video...');
       startVideo();
     }
 
@@ -125,10 +129,11 @@ const ImprovedGestureController: React.FC<ImprovedGestureControllerProps> = ({
       Math.pow(middleFingerMcp[1] - wrist[1], 2)
     );
     
-    // Hand should be between 30-400 pixels (wider range for different distances)
-    const minHandSize = 30;
-    const maxHandSize = 400;
+    // Hand should be between 20-500 pixels (very wide range for different distances)
+    const minHandSize = 20;
+    const maxHandSize = 500;
     
+    console.log('DEBUG - Hand size check:', handSize, 'range:', minHandSize, '-', maxHandSize);
     if (handSize < minHandSize || handSize > maxHandSize) {
       console.log('Hand size invalid:', handSize, 'should be between', minHandSize, 'and', maxHandSize);
       return false;
@@ -140,10 +145,10 @@ const ImprovedGestureController: React.FC<ImprovedGestureControllerProps> = ({
     const ringTip = landmarks[16];
     const pinkyTip = landmarks[20];
     
-    // All fingertips should be above the palm base (Y coordinate) - more lenient
+    // All fingertips should be above the palm base (Y coordinate) - very lenient
     const palmY = palmBase[1];
     const fingersAbovePalm = [indexTip, middleTip, ringTip, pinkyTip].every(
-      tip => tip[1] < palmY + 20 // Allow some tolerance for different hand orientations
+      tip => tip[1] < palmY + 50 // Much more tolerance for different hand orientations
     );
     
     if (!fingersAbovePalm) {
@@ -156,9 +161,68 @@ const ImprovedGestureController: React.FC<ImprovedGestureControllerProps> = ({
                      Math.min(indexTip[0], middleTip[0], ringTip[0], pinkyTip[0]);
     const handHeight = palmY - Math.min(indexTip[1], middleTip[1], ringTip[1], pinkyTip[1]);
     
-    // Hand should be wider than tall (reasonable aspect ratio) - more lenient
-    if (handWidth < handHeight * 0.3) {
+    // Hand should be wider than tall (reasonable aspect ratio) - very lenient
+    if (handWidth < handHeight * 0.1) {
       console.log('Hand too narrow:', handWidth, 'vs height:', handHeight);
+      return false;
+    }
+    
+    return true;
+  }, []);
+
+  // Additional validation: check for common false positive patterns
+  const validateFalsePositivePatterns = useCallback((landmarks: number[][], gesture: string) => {
+    const palmBase = landmarks[0];
+    const palmX = palmBase[0];
+    const palmY = palmBase[1];
+    
+    // Calculate hand size
+    const wrist = landmarks[1];
+    const middleFingerMcp = landmarks[9];
+    const handSize = Math.sqrt(
+      Math.pow(middleFingerMcp[0] - wrist[0], 2) + 
+      Math.pow(middleFingerMcp[1] - wrist[1], 2)
+    );
+    
+    // Pattern 1: Small "fist" in bottom area (likely shirt folds)
+    if (gesture === 'fist' && handSize < 40 && palmY > 350) {
+      console.log('Rejecting small fist in bottom area (likely shirt folds)');
+      return false;
+    }
+    
+    // Pattern 2: Very small hand with high confidence (likely false positive)
+    if (handSize < 30 && gesture === 'fist') {
+      console.log('Rejecting very small fist (likely false positive)');
+      return false;
+    }
+    
+    // Pattern 3: Any very small hand (likely false positive) - more lenient
+    if (handSize < 15) {
+      console.log('Rejecting very small hand (likely false positive)');
+      return false;
+    }
+    
+    // Pattern 4: Hand in bottom area with small size (likely shirt/background) - more lenient
+    if (palmY > 380 && handSize < 30) {
+      console.log('Rejecting small hand in bottom area (likely background)');
+      return false;
+    }
+    
+    // Pattern 5: Require a valid gesture - if it can't detect a proper gesture, it's probably not a hand
+    const validGestures = ['open_hand', 'fist', 'point'];
+    if (!validGestures.includes(gesture)) {
+      console.log('Rejecting invalid gesture:', gesture);
+      return false;
+    }
+    
+    // Pattern 6: Check finger spread - real hands should have reasonable finger spacing
+    const indexTip = landmarks[8];
+    const pinkyTip = landmarks[20];
+    const fingerSpread = Math.abs(indexTip[0] - pinkyTip[0]);
+    const minFingerSpread = handSize * 0.3; // Fingers should be reasonably spread
+    
+    if (fingerSpread < minFingerSpread && gesture === 'open_hand') {
+      console.log('Rejecting hand with insufficient finger spread:', fingerSpread, '<', minFingerSpread);
       return false;
     }
     
@@ -213,7 +277,7 @@ const ImprovedGestureController: React.FC<ImprovedGestureControllerProps> = ({
           const predictions = await model.estimateHands(videoRef.current);
           
           if (predictions.length > 0) {
-            console.log('Hand detected! Predictions:', predictions.length, 'First hand:', predictions[0]);
+            // console.log('Hand detected! Predictions:', predictions.length, 'First hand:', predictions[0]);
             const hand = predictions[0];
             const palmBase = hand.landmarks[0];
             
@@ -221,14 +285,14 @@ const ImprovedGestureController: React.FC<ImprovedGestureControllerProps> = ({
             const confidence = hand.handInViewConfidence || hand.score || 0;
             handConfidence.current = confidence;
             
-            console.log('Hand confidence:', confidence, 'threshold:', CONFIDENCE_THRESHOLD);
-            console.log('Hand landmarks:', hand.landmarks.length, 'palm position:', palmBase);
+            // console.log('Hand confidence:', confidence, 'threshold:', CONFIDENCE_THRESHOLD);
+            // console.log('Hand landmarks:', hand.landmarks.length, 'palm position:', palmBase);
             
             // Additional validation: check if landmarks are reasonable
             const hasValidLandmarks = hand.landmarks && hand.landmarks.length === 21;
             const palmInView = palmBase && palmBase[0] > 0 && palmBase[0] < 640 && palmBase[1] > 0 && palmBase[1] < 480;
             
-            console.log('Valid landmarks:', hasValidLandmarks, 'Palm in view:', palmInView);
+            // console.log('Valid landmarks:', hasValidLandmarks, 'Palm in view:', palmInView);
             
             if (!hasValidLandmarks || !palmInView) {
               console.log('Rejecting invalid hand data');
@@ -238,14 +302,16 @@ const ImprovedGestureController: React.FC<ImprovedGestureControllerProps> = ({
             
             // Geometric validation: check if landmarks form a reasonable hand shape
             const isValidHandShape = validateHandGeometry(hand.landmarks);
-            console.log('Valid hand geometry:', isValidHandShape);
+            // console.log('Valid hand geometry:', isValidHandShape);
             
-            // Temporarily disable geometric validation to debug
-            // if (!isValidHandShape) {
-            //   console.log('Rejecting invalid hand geometry');
-            //   drawEmptyVideoFrame();
-            //   return;
-            // }
+            // Re-enable geometric validation to filter false positives
+            if (!isValidHandShape) {
+              console.log('Rejecting invalid hand geometry');
+              // Clear tolerance history when geometry is invalid
+              handDetectedHistory.current = [];
+              drawEmptyVideoFrame();
+              return;
+            }
             
             // Debug: log confidence when it's low
             if (confidence < CONFIDENCE_THRESHOLD) {
@@ -272,8 +338,17 @@ const ImprovedGestureController: React.FC<ImprovedGestureControllerProps> = ({
               handTimeoutRef.current = null;
             }
             
-            // Update hand detection state
-            if (!handDetected) {
+            // Update hand detection history for tolerance
+            handDetectedHistory.current.push(true);
+            if (handDetectedHistory.current.length > TOLERANCE_FRAMES) {
+              handDetectedHistory.current.shift();
+            }
+            
+            // Only update state if we have consistent detection
+            const consistentDetection = handDetectedHistory.current.length === TOLERANCE_FRAMES && 
+                                      handDetectedHistory.current.every(detected => detected);
+            
+            if (!handDetected && consistentDetection) {
               setHandDetected(true);
             }
             
@@ -320,6 +395,25 @@ const ImprovedGestureController: React.FC<ImprovedGestureControllerProps> = ({
             const gesture = detectGestures(hand.landmarks);
             setCurrentGesture(gesture);
             
+            // Additional false positive validation
+            const isValidPattern = validateFalsePositivePatterns(hand.landmarks, gesture);
+            // console.log('Valid pattern:', isValidPattern);
+            
+            if (!isValidPattern) {
+              // Clear tolerance history and treat as no hand detected
+              handDetectedHistory.current = [];
+              if (handDetected) {
+                setHandDetected(false);
+                setControlsActive(false);
+                onControlActivated(false);
+                setCurrentGesture('none');
+                lastPosition.current = null;
+                lastValidPosition.current = null;
+              }
+              drawEmptyVideoFrame();
+              return;
+            }
+            
             // Control activation logic based on mode
             let shouldActivate = false;
             
@@ -353,9 +447,19 @@ const ImprovedGestureController: React.FC<ImprovedGestureControllerProps> = ({
             
             lastUpdate.current = now;
           } else {
-            // No hand detected - immediately deactivate controls
-            console.log('No hand detected in frame');
-            if (handDetected) {
+            // No hand detected - add to tolerance history
+            handDetectedHistory.current.push(false);
+            if (handDetectedHistory.current.length > TOLERANCE_FRAMES) {
+              handDetectedHistory.current.shift();
+            }
+            
+            // Only deactivate if we have consistent no-detection
+            const consistentNoDetection = handDetectedHistory.current.length === TOLERANCE_FRAMES && 
+                                        handDetectedHistory.current.every(detected => !detected);
+            
+            // console.log('No hand detected in frame, tolerance:', consistentNoDetection ? 'deactivating' : 'waiting');
+            
+            if (handDetected && consistentNoDetection) {
               setHandDetected(false);
               setControlsActive(false);
               onControlActivated(false);
@@ -375,7 +479,7 @@ const ImprovedGestureController: React.FC<ImprovedGestureControllerProps> = ({
     };
 
     detectHands();
-  }, [model, isTracking, handDetected, controlsActive, detectGestures, validateHandGeometry, onHandMove, onControlActivated, onGestureDetected, mode]);
+  }, [model, isTracking, handDetected, controlsActive, detectGestures, validateHandGeometry, validateFalsePositivePatterns, onHandMove, onControlActivated, onGestureDetected, mode]);
 
   const drawHandLandmarks = (landmarks: number[][], gesture: string, active: boolean) => {
     const canvas = canvasRef.current;

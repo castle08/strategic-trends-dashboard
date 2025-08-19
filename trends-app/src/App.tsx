@@ -11,7 +11,7 @@ import ErrorScreen from './components/ErrorScreen';
 import SimpleTrendTest from './components/SimpleTrendTest';
 import Dashboard from './components/Dashboard';
 import TrendsWallV2 from './components/TrendsWallV2';
-import ImprovedGestureController from './components/ImprovedGestureController';
+import MediaPipeGestureController from './components/MediaPipeGestureController';
 import GestureTestEnvironment from './components/GestureTestEnvironment';
 import { TrendItem as DashboardTrendItem } from './data/dummy-dashboard-data';
 
@@ -199,7 +199,7 @@ function App() {
       try {
         // Always use the live API endpoint since CORS is now fixed
         const apiUrl = 'https://trends-dashboard-six.vercel.app/api/trends-individual';
-        console.log('🔄 Fetching trends from:', apiUrl);
+        // console.log('🔄 Fetching trends from:', apiUrl);
         
         const response = await fetch(apiUrl);
         if (!response.ok) {
@@ -208,26 +208,26 @@ function App() {
         const data = await response.json();
         
         // Debug: Log the received data
-        console.log('🔍 Received trends data:', data);
-        console.log('📊 Number of trends:', data.trends?.length || 0);
+        // console.log('🔍 Received trends data:', data);
+        // console.log('📊 Number of trends:', data.trends?.length || 0);
         if (data.trends && data.trends.length > 0) {
-          console.log('🔍 First trend creative object:', data.trends[0].creative);
-          console.log('🔍 Has imageUrl in first trend:', !!data.trends[0].creative?.imageUrl);
-          console.log('🔍 First trend whyItMatters:', data.trends[0].whyItMatters);
-          console.log('🔍 First trend scores:', data.trends[0].scores);
+                      // console.log('🔍 First trend creative object:', data.trends[0].creative);
+            // console.log('🔍 Has imageUrl in first trend:', !!data.trends[0].creative?.imageUrl);
+            // console.log('🔍 First trend whyItMatters:', data.trends[0].whyItMatters);
+            // console.log('🔍 First trend scores:', data.trends[0].scores);
           
           // Compare trends with and without images
           const trendsWithImages = data.trends.filter((t: TrendItem) => t.creative?.imageUrl);
           const trendsWithoutImages = data.trends.filter((t: TrendItem) => !t.creative?.imageUrl);
           
-          console.log('🔍 Trends WITH images:', trendsWithImages.length);
+          // console.log('🔍 Trends WITH images:', trendsWithImages.length);
           if (trendsWithImages.length > 0) {
-            console.log('🔍 Sample trend WITH image:', trendsWithImages[0]);
+            // console.log('🔍 Sample trend WITH image:', trendsWithImages[0]);
           }
           
-          console.log('🔍 Trends WITHOUT images:', trendsWithoutImages.length);
+          // console.log('🔍 Trends WITHOUT images:', trendsWithoutImages.length);
           if (trendsWithoutImages.length > 0) {
-            console.log('🔍 Sample trend WITHOUT image:', trendsWithoutImages[0]);
+            // console.log('🔍 Sample trend WITHOUT image:', trendsWithoutImages[0]);
           }
         }
         
@@ -382,8 +382,9 @@ function App() {
                   isDemoMode={isDemoMode}
                 />
                 
-                <ImprovedGestureController
+                <MediaPipeGestureController
                   onHandMove={(x, y, z) => {
+                    console.log('App: Received hand position:', { x, y, z });
                     if (x === 0 && y === 0 && z === 0) {
                       // Reset hand position when no hand detected
                       setHandPosition(null);

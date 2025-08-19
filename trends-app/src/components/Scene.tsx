@@ -56,6 +56,7 @@ const Scene: React.FC<SceneProps> = ({ trends, onTrendSelect, selectedTrend, han
     
     // Handle hand controls when active
     if (handPosition && controlsActive && !isDragging && groupRef.current) {
+      console.log('Scene: Applying hand controls:', { handPosition, controlsActive });
       // Map hand X position to horizontal rotation (left/right)
       const targetRotationY = handPosition.x * Math.PI * 2; // Full rotation range
       const currentRotationY = groupRef.current.rotation.y;

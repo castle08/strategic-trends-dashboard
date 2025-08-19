@@ -156,7 +156,7 @@ function getCategoryIndex(category: string): number {
   categoryColorMap[normalizedCategory] = assignedIndex;
   usedIndices.add(assignedIndex);
   
-  console.log(`🎨 Category: "${category}" -> Priority Index: ${assignedIndex} -> ${COLOR_PALETTE[assignedIndex].name} -> Color: ${COLOR_PALETTE[assignedIndex].color}`);
+      // console.log(`🎨 Category: "${category}" -> Priority Index: ${assignedIndex} -> ${COLOR_PALETTE[assignedIndex].name} -> Color: ${COLOR_PALETTE[assignedIndex].color}`);
   
   return assignedIndex;
 }
